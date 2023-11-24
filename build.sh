@@ -25,4 +25,4 @@ fi
 echo "End Script!"
 echo "executable is located ./build.out"
 
-### Command to execute ->         ./build.sh main.cpp
+### Command to execute -> ./build.sh main.cpp <-
