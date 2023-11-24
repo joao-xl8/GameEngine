@@ -5,11 +5,13 @@ echo "Building!"
 
 PROG_NAME=$1
 IMGUI_DIR=include/imgui
+SFML_INCLUDE_DIR=include/sfml
+SFML_LIB_DIR=lib
 GLFW_DIR=include/GLFW
 output=$(g++ $PROG_NAME $IMGUI_DIR/imgui*.cpp \
   -std=c++20 -Wno-unused-result \
-  -I/opt/homebrew/Cellar/sfml/2.6.1/include -I $IMGUI_DIR -I $GLFW_DIR \
-  -L/opt/homebrew/Cellar/sfml/2.6.1/lib -lsfml-graphics -lsfml-window -lsfml-system  \
+  -I $SFML_INCLUDE_DIR -I $IMGUI_DIR -I $GLFW_DIR \
+  -L $SFML_LIB_DIR -lsfml-graphics -lsfml-window -lsfml-system  \
   -framework OpenGL \
   -o build.out \
   )
