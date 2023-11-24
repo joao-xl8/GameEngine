@@ -1,0 +1,49 @@
+In this assignment you will be writing a C++/SFML+ImGUI program which will read descriptions of shapes from a configuration file, and then drawing those shapes
+to the screen. Each shape will have a name, position, speed, color, as well as properties unique to each shape type. For example,  a Rectangle will have
+width and height, and a circle will have a Radius. For this assignment, the position of a shape refers to its SFML default of the upper-left corner of the 
+shape.
+
+You are also required to make these shapes "bounce" off the sides of the window which contains them. This means if the shape's left side hits the left side
+of the window, its X speeds reverses. If the top of the shape hits the top of the window, its Y speed reverses. Similarly, if it hits the right side or bottom
+of the window. you can assume that all shapes will always be configured to start entirely within the window, and you don't have to worry about what happens if
+they start outside the window. Each shape's name should be drawn on the react center of the shape in the given font size and color specified in the file.
+
+You are also required to implement an ImGUI user interface which is able to:
+- List all of the shapes and select any one of them to edit their properties
+- Toggle whether or not the selected shape will be drawn     done
+- Change the scale of the shape (0 to 4)                        done
+- Change the x and y velocity of the shape (-8 to 8)        done
+- Change the color of the shape                             
+- Change the name of the shape
+
+A sample configuration file is given to you in config.txt, however marking will be done with an unseen configuration file in order to test more completely. Be 
+sure to add and remove your own shapes to this file to test if they all work correctly.
+
+Each line of the configuration file specifies one of the config settings of the assignment program, with the first string in each line being the type of setting
+that the rest of the line specified. Lines in the config file can be one of the following types, and lines can appear in any order in the file.
+
+Window W H 
+- This line declares that the SFML Window must be constructed with width W and height H, each of which will be integers.
+
+Font F S R G B
+- This lines defines the font which is to be used to draw tet for this program. The format of the line is as follows:
+Font File   F       std::string (it will have no spaces)
+Font Size   S       int
+RGB Color   (R,G,B) int, int, int
+
+Rectangle N X Y SX SY R G B W H 
+- Defines a Rectangle Shape with:
+    Shape Name          N       std::string
+    Initial Position    (X,Y)   float, float
+    Initial Speed       (SX,SY) float, float
+    RGB Color           (R,G,B) int, int, int
+    Size                (W,H)   float, float
+
+Circle N X Y SX SY R G B R
+- Defines a Circle Shape with:
+    Shape Name          N       std::string
+    Initial Position    (X,Y)   float, float
+    Initial Speed       (SX,SY) float, float
+    RGB Color           (R,G,B) int, int, int
+    Size                R       float
+
