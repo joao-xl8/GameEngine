@@ -42,3 +42,59 @@ An ECS Component is just DATA!
 No helper functionality within components, don’t do game logic.
 A component class has some intuitive meaning to an Entity which contains it
 Ex: Position, Gravity, Health, etc.
+
+Data Management
+
+One of the most important concepts: separate logic & data
+Create data structures which manage data so your logic code doesn't worry about it
+Complex algorithm shouldn't have to know whether set, vector, map implementation
+
+Entity Manager - Factory design pattern (Will trade some memory for functionality)
+
+Handle the creation, storage, and lifetime of ALL Entity objects
+Functions like: add, remove, storage, bookkeeping
+Factory should somehow ensure that user cannot create its own Entities
+Entity Tags: We may want to group Entities by functionality(e.g. Tile, Player, Bullet, Enemy or an int for optimization). Entity Manager should have functionality for quickly getting Entities of a given tag
+Will also store separate data structures(vectors) of Entity objects by their tag for quick retrieval. We
+store double the number of pointers to save on computation in our engine
+
+Be careful with Iterator Invalidation
+
+Caused by modifying the contents of a collection as we are iteration through it. And in games this happens
+all the time (e.g. spawn explosion entity, remove entities that died). One way to avoid iterator invalidation is to delay the effects of actions that modify collections until it is safe to do so
+
+2D Math
+
+2D Games - Every game's graphics are drawn to a screen, screens are a plane (2D). Screens are made of small,
+discrete elements: pixels, which are (usually) squares and have RGB elements.
+
+Color Space - RGB, RGBA, CMYK, Grayscale, Monochrome
+
+2D Positions - Systems display: pixel grid. Grid is in two dimensions (x,y) and we can use Euclidean plane to
+visualize individual positions in which each integer position in a display pixel. Most APIs have (0,0)
+in top-left
+   basic notes:
+      a 4,2
+      b 6,7
+      subtraction
+         destination - origin = distance
+      addition
+         origin + distance = destination
+      SOH CAH TOA
+      sin Ø = opposite / hypotenuse
+      cos Ø = adjacent / hypotenuse
+      tan Ø = opposite / adjacent
+
+      Unit Circle
+      Opposite = Y
+      Adjacent = X
+      Hypotenuse = R
+      sin(Ø) = Y/R = Y
+      cons (Ø) = X/R = X
+      tan(Ø) = Y/X = R
+
+      Vector Normalization
+
+      lenght - L = sqrtf(x*x + y*y);
+
+      Normalized - Vec2(V.x/L, V.y/L)
