@@ -10,7 +10,7 @@ ECS - Entities, Components, Systems   software design paradigm
 
 Engine Architecture:
 
-GameEngine
+Game
  > Scene
   > Systems
   > EntityManager

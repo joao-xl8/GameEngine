@@ -72,30 +72,30 @@ RGB Color   (R,G,B) int, int, int
 
 Player SX SY FR FG FB OR OG OB OT SR CR V
 - Defines a Player Shape with:
-    Initial Speed       (SX,SY) float, float
-    Fill Color          (FR,FG,FB) int, int, int
-    Outline Color       (OR,OG,OB) int, int, int
-    Outline Thickness   OT      int
-    Shape Radius        SR      float
-    Collision Radius    CR      float
-    Sides               V       int
+    Initial Speed       (SX,SY)     float, float
+    Fill Color          (FR,FG,FB)  int, int, int
+    Outline Color       (OR,OG,OB)  int, int, int
+    Outline Thickness   OT          int
+    Shape Radius        SR          float
+    Collision Radius    CR          float
+    Sides               V           int
 
-Bullet SX SY FR FG FB SR CR V L
+Bullet SX SY FR FG FB OR OG OB OT SR CR V L
 - Defines a Bullet Shape with:
-    Initial Speed       (SX,SY) float, float
-    Fill Color           (FR,FG,FB) int, int, int
-    Outline Color       (OR,OG,OB) int, int, int
-    Outline Thickness   OT      int
-    Shape Radius        SR      float
-    Collision Radius    CR      float
-    Sides               V       int 
-    Lifespan            L       float
+    Initial Speed       (SX,SY)     float, float
+    Fill Color          (FR,FG,FB)  int, int, int
+    Outline Color       (OR,OG,OB)  int, int, int
+    Outline Thickness   OT          int
+    Shape Radius        SR          float
+    Collision Radius    CR          float
+    Sides               V           int 
+    Lifespan            L           int 
 
-Enemy RS1 RS2 R G B SR CR SF RV1 RV2 L
+Enemy RS1 RS2 FR FG FB OR OG OB OT SR CR SF RV1 RV2 L
 - Defines a Enemy Shape with:
     Range Speed (min)   RS1         float
     Range Speed (max)   RS2         float
-    Fill Color           (FR,FG,FB) int, int, int
+    Fill Color          (FR,FG,FB)  int, int, int
     Outline Color       (OR,OG,OB)  int, int, int
     Outline Thickness   OT          int
     Shape Radius        SR          float
