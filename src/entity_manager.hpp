@@ -1,4 +1,4 @@
-
+#pragma once
 #include "entity.hpp"
 #include <vector>
 #include <map>

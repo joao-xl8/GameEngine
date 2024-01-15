@@ -1,3 +1,4 @@
+#pragma once
 #include <SFML/Graphics/CircleShape.hpp>
 #include "vec2.hpp"
 
