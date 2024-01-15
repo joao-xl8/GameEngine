@@ -113,6 +113,7 @@ void Game::update()
         if (!m_paused)
         {
             sCollisions(m_entities.getEntities());
+            sDeath(m_entities.getEntities());
             sEnemySpawner();
             sMovement(m_entities.getEntities());
             sLifespan(m_entities.getEntities());
@@ -130,31 +131,21 @@ void Game::update()
 
 void Game::sMovement(EntityVec &entities)
 {
-
     for (auto &e : entities)
     {
         if (e->cTransform)
         {
-            if (e->tag() == "Player")
+            if (e->cInput)
             {
                 m_player->cTransform->speed = {0, 0};
-
-                if (m_player->cInput)
-                {
-                    if (m_player->cInput->up)
-                        m_player->cTransform->pos.y -= m_playerConfig.SY;
-                    if (m_player->cInput->down)
-                        m_player->cTransform->pos.y += m_playerConfig.SY;
-                    if (m_player->cInput->left)
-                        m_player->cTransform->pos.x -= m_playerConfig.SX;
-                    if (m_player->cInput->right)
-                        m_player->cTransform->pos.x += m_playerConfig.SX;
-                }
-            }
-            else if (e->tag() == "SmallEnemies")
-            {
-                Vec2 dir = {std::cosf(e->cTransform->angle) * std::abs(e->cTransform->speed.x), std::sinf(e->cTransform->angle) * std::abs(e->cTransform->speed.y)};
-                e->cTransform->pos += dir;
+                if (m_player->cInput->up)
+                    m_player->cTransform->pos.y -= m_playerConfig.SY;
+                if (m_player->cInput->down)
+                    m_player->cTransform->pos.y += m_playerConfig.SY;
+                if (m_player->cInput->left)
+                    m_player->cTransform->pos.x -= m_playerConfig.SX;
+                if (m_player->cInput->right)
+                    m_player->cTransform->pos.x += m_playerConfig.SX;
             }
             else
             {
@@ -164,18 +155,25 @@ void Game::sMovement(EntityVec &entities)
     }
 }
 
-void Game::getOutOfBounce(auto &e, float min_bound, float max_bound_width, float max_bound, int window_width, int window_height)
+std::pair<int, int> Game::isOutOfBounds(auto &e)
 {
+    std::pair<int, int> result = {0, 0};
     if (!e->cTransform || !e->cCollision)
-        return;
+        return result;
+
+    float min_bound = 0 + e->cCollision->radius;
+    float max_h_bound = window_height - e->cCollision->radius;
+    float max_w_bound = window_width - e->cCollision->radius;
     if (e->cTransform->pos.x < min_bound)
-        e->cTransform->pos.x = e->cCollision->radius;
-    if (e->cTransform->pos.x > max_bound_width)
-        e->cTransform->pos.x = window_width - e->cCollision->radius;
+        result.first = -1;
+    if (e->cTransform->pos.x > max_w_bound)
+        result.first = 1;
     if (e->cTransform->pos.y < min_bound)
-        e->cTransform->pos.y = e->cCollision->radius;
-    if (e->cTransform->pos.y > max_bound)
-        e->cTransform->pos.y = window_height - e->cCollision->radius;
+        result.second = -1;
+    if (e->cTransform->pos.y > max_h_bound)
+        result.second = 1;
+
+    return result;
 }
 
 void Game::sCollisions(EntityVec &entities)
@@ -184,54 +182,63 @@ void Game::sCollisions(EntityVec &entities)
     {
         if (e->cTransform && e->cShape && e->cCollision)
         {
-            float max_bound_width = window_width - e->cCollision->radius;
-            float min_bound = 0 + e->cCollision->radius;
-            float max_bound = window_height - e->cCollision->radius;
+            auto [x_ob, y_ob] = isOutOfBounds(e);
             if (e->tag() == "Player")
             {
-                getOutOfBounce(e, min_bound, max_bound_width, max_bound, window_width, window_height);
+                if (x_ob != 0 || y_ob != 0)
+                {
+                    if (x_ob > 0)
+                        e->cTransform->pos.x = window_width - e->cCollision->radius - 1;
+                    if (x_ob < 0)
+                        e->cTransform->pos.x = e->cCollision->radius + 1;
+                    if (y_ob > 0)
+                        e->cTransform->pos.y = window_height - e->cCollision->radius - 1;
+                    if (y_ob < 0)
+                        e->cTransform->pos.y = e->cCollision->radius + 1;
+                }
             }
             else if (e->tag() == "Enemy")
             {
-                EntityVec bullets = m_entities.getEntities("Bullet");
-                EntityVec specialBullets = m_entities.getEntities("SpecialBullet");
-                EntityVec unionOfBullets;
-                unionOfBullets.reserve(bullets.size() + specialBullets.size());
-                unionOfBullets.insert(unionOfBullets.end(), bullets.begin(), bullets.end());
-                unionOfBullets.insert(unionOfBullets.end(), specialBullets.begin(), specialBullets.end());
-                for (auto &b : unionOfBullets)
+                if (x_ob != 0)
                 {
-                    if (b->cTransform && b->cShape && b->cCollision)
-                    {
-                        if (e->cCollision->collidesWith(*b->cCollision) && e->isActive())
-                        {
-                            if (e->isActive())
-                                spawnSmallEnemies(e);
-                            e->destroy();
-                            if (b->tag() == "Bullet")
-                                b->destroy();
-                            m_score += e->cScore->score;
-                        }
-                    }
-                }
-                if (e->cCollision)
-                {
-                    if (e->cCollision->collidesWith(*m_player->cCollision) && e->isActive())
-                    {
-                        m_player->destroy();
-                        spawnPlayer();
-                    }
-                }
-                if (e->cTransform->pos.x < min_bound || e->cTransform->pos.x > max_bound_width)
                     e->cTransform->speed.x *= -1;
-                if (e->cTransform->pos.y < min_bound || e->cTransform->pos.y > max_bound)
+                }
+                if (y_ob != 0)
+                {
                     e->cTransform->speed.y *= -1;
+                }
+                EntityVec &bullets = m_entities.getEntities("Bullet");
+                EntityVec &specialBullets = m_entities.getEntities("SpecialBullet");
+                EntityVec targets;
+                targets.reserve(bullets.size() + specialBullets.size());
+                targets.insert(targets.end(), bullets.begin(), bullets.end());
+                targets.insert(targets.end(), specialBullets.begin(), specialBullets.end());
+                targets.push_back(m_player);
+                for (auto &t : targets)
+                {
+                    if (t->cCollision && e->cCollision->collidesWith(*t->cCollision) && e->isActive())
+                    {
+                        e->destroy();
+                        t->destroy();
+
+                        if (t->tag() != "Player" && t->cScore)
+                        {
+                            m_score += e->cScore->score;
+                        } else {    
+                            if (t->cScore)
+                                m_score += t->cScore->score;
+                        }               
+                        if (m_score < 0)
+                            m_score = 0;
+                    }
+                }
             }
-            else if (e->tag() == "Bullet")
+            else
             {
-                if (e->cTransform->pos.x < min_bound || e->cTransform->pos.x > max_bound_width ||
-                    e->cTransform->pos.y < min_bound || e->cTransform->pos.y > max_bound)
+                if (x_ob != 0 || y_ob != 0)
+                {
                     e->destroy();
+                }
             }
         }
     }
@@ -321,28 +328,34 @@ void Game::sLifespan(EntityVec &entities)
     }
 }
 
+void Game::sDeath(EntityVec &entities)
+{
+    for (auto &e : entities)
+    {
+        if (e->tag() == "Enemy")
+        {
+            if (!e->isActive())
+            {
+                spawnSmallEnemies(e);
+            }
+        }    
+    }
+    if (!m_player->isActive())
+    {
+        spawnPlayer();
+    }
+}
+
 void Game::sEnemySpawner()
 {
     if (m_currentFrame - m_lastEnemySpawnTime > 150)
         spawnEnemy();
 }
 
-void Game::sSmallEnemySpawner()
-{
-    for (auto &e : m_entities.getEntities("Enemy"))
-    {
-        if (!e->isActive())
-        {
-            spawnSmallEnemies(e);
-        }
-    }
-}
-
 void Game::updateUI()
 {
     ImGui::Begin("Game");
     ImGui::Text("Score: %d", m_score);
-    ImGui::Text("Frame: %d", m_currentFrame);
     if (!m_paused)
     {
         if (ImGui::Button("Pause"))
@@ -360,9 +373,6 @@ void Game::updateUI()
 
 void Game::spawnPlayer()
 {
-    m_score -= 100;
-    if (m_score < 0)
-        m_score = 0;
     auto e = m_entities.addEntity("Player");
     sf::Color fill = sf::Color(m_playerConfig.FR, m_playerConfig.FG, m_playerConfig.FB);
     sf::Color outline = sf::Color(m_playerConfig.OR, m_playerConfig.OG, m_playerConfig.OB);
@@ -373,6 +383,7 @@ void Game::spawnPlayer()
     e->cRotate = std::make_shared<CRotate>(0.0f);
     e->cCollision = std::make_shared<CCollision>(m_playerConfig.CR, e->cTransform);
     e->cInput = std::make_shared<CInput>();
+    e->cScore = std::make_shared<CScore>(-100);
     m_player = e;
 }
 
@@ -387,15 +398,19 @@ void Game::spawnEnemy()
     sf::Color outline = sf::Color(m_enemyConfig.OR, m_enemyConfig.OG, m_enemyConfig.OB);
     e->cShape = std::make_shared<CCShape>(m_enemyConfig.SR, r_num_sides, fill, outline, m_enemyConfig.OT);
     float r_speed_value = (float)(m_enemyConfig.RS1 + (std::rand() % (1 + m_enemyConfig.RS2 - m_enemyConfig.RS1)));
-    Vec2 i_speed = {r_speed_value, r_speed_value};
+    
     // make sure enemy is not spawned on top of player and outside of screen or too close to the edge
     Vec2 i_pos = {0, 0};
-    while ((i_pos.x < 50 || i_pos.x > window_width - 50 || i_pos.y < 50 || i_pos.y > window_height - 50) || (i_pos.x > window_width / 2 - 50 && i_pos.x < window_width / 2 + 50 && i_pos.y > window_height / 2 - 50 && i_pos.y < window_height / 2 + 50) || (i_pos.x > m_player->cTransform->pos.x - 50 && i_pos.x < m_player->cTransform->pos.x + 50 && i_pos.y > m_player->cTransform->pos.y - 50 && i_pos.y < m_player->cTransform->pos.y + 50))
+    while ((i_pos.x < 50 || i_pos.x > window_width - 50 || i_pos.y < 50 || i_pos.y > window_height - 50) 
+        || (i_pos.x - m_player->cTransform->pos.x < 100 && i_pos.y - m_player->cTransform->pos.y < 100))
     {
         i_pos = {float(std::rand() % window_width), float(std::rand() % window_height)};
     }
-    // make random angle from 0 to 2pi
-    float angle = (float)(std::rand() % 360) * M_PI / 180;
+    // make random direction
+    Vec2 target = {float(std::rand() % window_width), float(std::rand() % window_height)};
+    Vec2 dir = target - m_player->cTransform->pos;
+    float angle = std::atan2(dir.y, dir.x);
+    Vec2 i_speed = {std::cos(angle) * r_speed_value, std::sin(angle) * r_speed_value};
     e->cTransform = std::make_shared<CTransform>(i_pos, i_speed, angle);
     e->cRotate = std::make_shared<CRotate>(0.0f);
     e->cCollision = std::make_shared<CCollision>(m_enemyConfig.CR, e->cTransform);

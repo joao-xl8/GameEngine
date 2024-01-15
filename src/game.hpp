@@ -51,8 +51,6 @@ class Game
     int m_score = 0;
     int m_lastEnemySpawnTime = 0;
     int m_lastSpecialTime = -500;
-    std::chrono::seconds m_enemySpawnInterval = std::chrono::seconds(2);
-    std::chrono::seconds m_specialCooldown = std::chrono::seconds(5);
 
     std::shared_ptr<Entity> m_player;
 
@@ -61,13 +59,15 @@ class Game
 
     void sMovement(EntityVec &entities);
     void sCollisions(EntityVec &entities);
-    void getOutOfBounce(auto& e, float min_bound, float max_bound_width, float max_bound, int window_width, int window_height);
+    std::pair<int, int> isOutOfBounds(auto& e);
     void sRender(EntityVec &entities, sf::RenderWindow& win);
     void sUserInput(); 
     void sLifespan(EntityVec &entities);
+    void sDeath(EntityVec &entities);
     void sEnemySpawner();
     void sSmallEnemySpawner();
     void updateUI();
+    void sScore(EntityVec &entities);
     void spawnPlayer();
     void spawnEnemy();
     void spawnSmallEnemies(std::shared_ptr<Entity> enemy);
