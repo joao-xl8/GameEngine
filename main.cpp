@@ -1,9 +1,8 @@
-#include "src/game.hpp"
+#include "src/game_engine.hpp"
 
 int main()
 {
-    Game game_engine;
-    game_engine.init();
+    GameEngine game_engine;
     game_engine.update();
     return 0;
 }
