@@ -15,7 +15,7 @@
 
 class Scene;
 
-class GameEngine 
+class GameEngine
 {
 protected:
     sf::RenderWindow m_window;
@@ -23,23 +23,28 @@ protected:
     Assets assets;
     std::string m_currentScene;
     bool m_running = true;
+    bool m_fullscreen = false;
 
     void init();
     std::shared_ptr<Scene> currentScene();
     void run();
     void sUserInput();
+
 public:
-    sf::RenderWindow&  window();
-    GameEngine() {
+    sf::RenderWindow &window();
+    GameEngine()
+    {
         // ImGui::SFML::Init(m_window);
         init();
     };
-    ~GameEngine(){
+    ~GameEngine()
+    {
         ImGui::SFML::Shutdown();
     };
+    void toggleFullscreen(sf::RenderWindow& currentWindow);
 
-    Assets& getAssets();
-    void changeScene(const std::string& sceneName, std::shared_ptr<Scene> scene, bool endCurrentScene = true);
+    Assets &getAssets();
+    void changeScene(const std::string &sceneName, std::shared_ptr<Scene> scene, bool endCurrentScene = true);
     void quit();
     void update();
 };

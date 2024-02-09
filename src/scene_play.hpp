@@ -18,7 +18,7 @@ protected:
     sf::Text m_tileText;
 
     void init(const std::string &levelPath);
-    void init(){};
+    void init();
     void onEnd();
     void sAnimation();
     void sCollision();

@@ -6,7 +6,7 @@
 void Scene_Play::init(const std::string &levelPath)
 {
     registerAction(sf::Keyboard::P, "PAUSE");
-    registerAction(sf::Keyboard::Escape, "QUIT");
+    registerAction(sf::Keyboard::Escape, "PAUSE");
     registerAction(sf::Keyboard::T, "TOGGLE_TEXTURE");
     registerAction(sf::Keyboard::C, "TOGGLE_COLLISION");
     registerAction(sf::Keyboard::G, "TOGGLE_GRID");
@@ -48,11 +48,15 @@ void Scene_Play::init(const std::string &levelPath)
             auto e = m_entityManager.addEntity(type);
             e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
             e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
-            e->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(m_tileSize));
         }
     }
     file.close();
     std::printf("Level loaded\n");
+}
+
+void Scene_Play::init()
+{
+    init(m_levelPath);
 }
 
 void Scene_Play::onEnd()
@@ -94,20 +98,19 @@ void Scene_Play::sMovement()
 void Scene_Play::sRender()
 {
     m_game->window().clear(sf::Color::Cyan);
-    for (auto &entity : m_entityManager.getEntities())
-    {
-        // std::printf("Drawing entity\n");
-        // std::printf("Entity has sprite: %d\n", entity->hasComponent<CSprite>());
-        // std::printf("Entity has transform: %d\n", entity->hasComponent<CTransform>());
-        if (entity->hasComponent<CSprite>() && entity->hasComponent<CTransform>())
+    if(m_drawTextures){
+        for (auto &entity : m_entityManager.getEntities())
         {
-            auto sprite = entity->getComponent<CSprite>();
-            auto transform = entity->getComponent<CTransform>();
-            // Calculate the bottom-left coordinate of the sprite
-            float posX = transform->pos.x;
-            float posY = m_game->window().getSize().y - transform->pos.y - sprite->sprite.getGlobalBounds().height; // Adjust posY
-            sprite->sprite.setPosition(posX, posY);
-            m_game->window().draw(sprite->sprite);
+            if (entity->hasComponent<CSprite>() && entity->hasComponent<CTransform>())
+            {
+                auto sprite = entity->getComponent<CSprite>();
+                auto transform = entity->getComponent<CTransform>();
+                // Calculate the bottom-left coordinate of the sprite
+                float posX = transform->pos.x;
+                float posY = m_game->window().getSize().y - transform->pos.y - sprite->sprite.getGlobalBounds().height; // Adjust posY
+                sprite->sprite.setPosition(posX, posY);
+                m_game->window().draw(sprite->sprite);
+            }
         }
     }
     if (m_drawGrid)
@@ -137,6 +140,25 @@ void Scene_Play::sRender()
             }
         }
     }
+    if(m_drawCollision){
+        for (auto &entity : m_entityManager.getEntities())
+        {
+            if (entity->hasComponent<CBoundingBox>() && entity->hasComponent<CTransform>())
+            {
+                auto boundingBox = entity->getComponent<CBoundingBox>();
+                auto transform = entity->getComponent<CTransform>();
+                float posX = transform->pos.x;
+                float posY = m_game->window().getSize().y - transform->pos.y - boundingBox->size.y; // Adjust posY
+                sf::RectangleShape rect;
+                rect.setSize({boundingBox->size.x, boundingBox->size.y});
+                rect.setPosition(posX, posY);
+                rect.setFillColor(sf::Color::Transparent);
+                rect.setOutlineColor(sf::Color::Red);
+                rect.setOutlineThickness(1);
+                m_game->window().draw(rect);
+            }
+        }
+    }
 }
 
 void Scene_Play::sDoAction(const Action &action)
@@ -148,17 +170,13 @@ void Scene_Play::sDoAction(const Action &action)
         {
             m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
         }
-        else if (action.getName() == "QUIT")
-        {
-            m_game->quit();
-        }
         else if (action.getName() == "TOGGLE_TEXTURE")
         {
-            // m_showTexture = !m_showTexture;
+            m_drawTextures = !m_drawTextures;
         }
         else if (action.getName() == "TOGGLE_COLLISION")
         {
-            // m_showCollision = !m_showCollision;
+            m_drawCollision = !m_drawCollision;
         }
         else if (action.getName() == "TOGGLE_GRID")
         {
@@ -194,9 +212,7 @@ Vec2 Scene_Play::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity
 
 Scene_Play::Scene_Play(GameEngine *game, const std::string &levelPath)
     : Scene(game), m_levelPath(levelPath)
-{
-    init(levelPath);
-}
+{}
 
 void Scene_Play::update()
 {

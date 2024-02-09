@@ -38,5 +38,4 @@ public:
 
     std::map<int, std::string>& getActionMap();
     bool hasEnded() const;
-    // void drawLine(const sf::Vector2f& start, const sf::Vector2f& end, const sf::Color& color);
 };

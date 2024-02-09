@@ -1,9 +1,9 @@
 #include "scene_menu.hpp"
-#include "scene_play.hpp"
 #include "scene_options.hpp"
+#include "scene_play.hpp"
 #include "game_engine.hpp"
 
-void Scene_Menu::init()
+void Scene_Options::init()
 {
     registerAction(sf::Keyboard::W, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
@@ -14,15 +14,14 @@ void Scene_Menu::init()
 
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_menuText.setFillColor(sf::Color::White);
-    m_menuStrings.push_back("Start Game");
-    m_menuStrings.push_back("Options");
-    m_menuStrings.push_back("Exit");
+    m_menuStrings.push_back("Full Screen");
+    m_menuStrings.push_back("Back");
 }
 
-void Scene_Menu::sRender()
+void Scene_Options::sRender()
 {
     m_game->window().clear(sf::Color::Black);
-    m_menuText.setString("Menu");
+    m_menuText.setString("Options");
     m_menuText.setCharacterSize(24);
     m_menuText.setFillColor(sf::Color::White);
     m_menuText.setPosition(100, 100);
@@ -44,7 +43,7 @@ void Scene_Menu::sRender()
     }
 }
 
-void Scene_Menu::sDoAction(const Action &action)
+void Scene_Options::sDoAction(const Action &action)
 {
     if (action.getType() == "START")
     {
@@ -65,35 +64,31 @@ void Scene_Menu::sDoAction(const Action &action)
         }
         else if (action.getName() == "SELECT")
         {
-            if (m_menuStrings[m_menuIndex] == "Exit")
+            if (m_menuStrings[m_menuIndex] == "Back")
             {
-                m_game->quit();
+                m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
             }
-            else if (m_menuStrings[m_menuIndex] == "Options")
+            else if (m_menuStrings[m_menuIndex] == "Full Screen")
             {
-                m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
-            }
-            else
-            {
-                m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/level1.txt"));
+                m_game->toggleFullscreen(m_game->window());
             }
         }
         else if (action.getName() == "QUIT")
         {
-            m_game->quit();
+            m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
         }
     }
 }
 
-Scene_Menu::Scene_Menu(GameEngine *game)
+Scene_Options::Scene_Options(GameEngine *game)
     : Scene(game) {}
 
-void Scene_Menu::update()
+void Scene_Options::update()
 {
     sRender();
 }
 
-void Scene_Menu::onEnd()
+void Scene_Options::onEnd()
 {
     m_currentScene = -1;
 }

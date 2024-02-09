@@ -4,19 +4,23 @@
 
 void GameEngine::init()
 {
-    m_window.create(sf::VideoMode(800, 600), "Game Engine");
-    if (ImGui::SFML::Init(m_window)) {
+    m_window.create(sf::VideoMode(800, 600), "Game Engine", sf::Style::Default);
+    if (ImGui::SFML::Init(m_window))
+    {
         m_running = true;
-    } else {
-        // Handle initialization failure
     }
-    m_currentScene = "Play";
+    else
+    {
+        m_running = false;
+    }
+    m_currentScene = "Menu";
 
     assets.loadAssets("metadata/assets.txt");
 
     m_scenes["Menu"] = std::make_shared<Scene_Menu>(this);
-    m_scenes["Play"] = std::make_shared<Scene_Play>(this, "metadata/level1.txt");
+    // m_scenes["Play"] = std::make_shared<Scene_Play>(this, "metadata/level1.txt");
 
+    m_scenes[m_currentScene]->init();
 }
 
 void GameEngine::update()
@@ -28,7 +32,7 @@ void GameEngine::update()
         ImGui::SFML::Update(m_window, delta_clock.restart());
         sUserInput();
         // std::printf("Current scene: %s\n", m_currentScene.c_str());
-        // std::printf("Current scene: %d\n",  m_scenes[m_currentScene]->width()); 
+        // std::printf("Current scene: %d\n",  m_scenes[m_currentScene]->width());
         m_scenes[m_currentScene]->update();
 
         ImGui::SFML::Render(m_window);
@@ -47,9 +51,9 @@ void GameEngine::sUserInput()
         }
         if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)
         {
-            if(currentScene()->getActionMap().find(event.key.code) == currentScene()->getActionMap().end())
+            if (currentScene()->getActionMap().find(event.key.code) == currentScene()->getActionMap().end())
                 continue;
-            
+
             const std::string &actionType = event.type == sf::Event::KeyPressed ? "START" : "END";
 
             currentScene()->sDoAction(Action(currentScene()->getActionMap()[event.key.code], actionType));
@@ -70,7 +74,7 @@ void GameEngine::run()
     }
 }
 
-void GameEngine::changeScene(const std::string& sceneName, std::shared_ptr<Scene> scene, bool endCurrentScene)
+void GameEngine::changeScene(const std::string &sceneName, std::shared_ptr<Scene> scene, bool endCurrentScene)
 {
     if (endCurrentScene)
     {
@@ -78,12 +82,20 @@ void GameEngine::changeScene(const std::string& sceneName, std::shared_ptr<Scene
     }
     m_currentScene = sceneName;
     m_scenes[m_currentScene] = scene;
-    m_scenes[m_currentScene]->init();
+    scene->init();
 }
 
 void GameEngine::quit()
 {
     m_running = false;
+}
+
+void GameEngine::toggleFullscreen(sf::RenderWindow &currentWindow)
+{
+    m_fullscreen = !m_fullscreen;
+    sf::VideoMode mode = m_fullscreen ? sf::VideoMode::getFullscreenModes()[0] : sf::VideoMode(800, 600);
+    currentWindow.close();
+    currentWindow.create(mode, "Game Engine", m_fullscreen ? sf::Style::Fullscreen : sf::Style::Default);
 }
 
 Assets &GameEngine::getAssets()

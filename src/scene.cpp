@@ -1,39 +1,9 @@
 #include "scene.hpp"
 #include "game_engine.hpp"
 
-// void Scene::simulate(int frame)
-// {
-//     m_entityManager.update();
-//     if (m_paused)
-//     {
-//         return;
-//     }
-//     update();
-//     for (auto &action : m_game->getAssets().getActions())
-//     {
-//         if (action.frame == frame)
-//         {
-//             doAction(action);
-//         }
-//     }
-//     sRender();
-// }
-
-// void Scene::doAction(const Action &action)
-// {
-//     if (action.getType() == "START")
-//     {
-//         // m_entityManager.startAction(action);
-//     }
-//     else if (action.getType() == "END")
-//     {
-//         // m_entityManager.endAction(action);
-//     }
-// }
-
 void Scene::registerAction(int inputKey, std::string actionName)
 {
-    std::printf("Registering action %s for key %d\n", actionName.c_str(), inputKey);
+    // std::printf("Registering action %s for key %d\n", actionName.c_str(), inputKey);
     m_actionMap[inputKey] = actionName;
 }
 
@@ -62,14 +32,6 @@ bool Scene::hasEnded() const
 {
     return m_currentScene == -1;
 }
-
-// void Scene::drawLine(const sf::Vector2f &start, const sf::Vector2f &end, const sf::Color &color)
-// {
-//     sf::Vertex line[] = {
-//         sf::Vertex(start, color),
-//         sf::Vertex(end, color)};
-//     m_game->window().draw(line, 2, sf::Lines);
-// }
 
 void Scene::setPaused(bool paused)
 {
