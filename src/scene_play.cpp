@@ -3,6 +3,7 @@
 #include "game_engine.hpp"
 #include "components.hpp"
 #include <sstream>
+
 void Scene_Play::init(const std::string &levelPath)
 {
     registerAction(sf::Keyboard::P, "PAUSE");
@@ -10,6 +11,12 @@ void Scene_Play::init(const std::string &levelPath)
     registerAction(sf::Keyboard::T, "TOGGLE_TEXTURE");
     registerAction(sf::Keyboard::C, "TOGGLE_COLLISION");
     registerAction(sf::Keyboard::G, "TOGGLE_GRID");
+    
+    // Player movement controls
+    registerAction(sf::Keyboard::W, "UP");
+    registerAction(sf::Keyboard::A, "LEFT");
+    registerAction(sf::Keyboard::S, "DOWN");
+    registerAction(sf::Keyboard::D, "RIGHT");
 
     m_tileText.setCharacterSize(16);
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
@@ -48,10 +55,14 @@ void Scene_Play::init(const std::string &levelPath)
             auto e = m_entityManager.addEntity(type);
             e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
             e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
+            // DONT HAVE COLLISION
         }
     }
     file.close();
     std::printf("Level loaded\n");
+    
+    // Create player entity
+    spawnPlayer();
 }
 
 void Scene_Play::init()
@@ -67,16 +78,116 @@ void Scene_Play::sAnimation()
 {
     for (auto &entity : m_entityManager.getEntities())
     {
-        // if (entity->hasComponent(ComponentType::ANIMATION))
-        // {
-        //     auto animation = entity->getComponent<Animation>(ComponentType::ANIMATION);
-        //     animation->update();
-        // }
+        if (entity->hasComponent<CAnimation>() && entity->hasComponent<CSprite>())
+        {
+            auto animation = entity->getComponent<CAnimation>();
+            auto sprite = entity->getComponent<CSprite>();
+            
+            // Let the animation component handle its own logic
+            animation->update(m_deltaTime, sprite->sprite);
+        }
     }
 }
 
 void Scene_Play::sCollision()
 {
+    // Skip collision handling for grid-based movement
+    // Grid movement handles collisions during movement planning
+    if (m_player && m_player->hasComponent<CGridMovement>()) {
+        return;
+    }
+    
+    // Player collision with tiles (for non-grid movement)
+    if (m_player && m_player->hasComponent<CTransform>() && m_player->hasComponent<CBoundingBox>())
+    {
+        auto playerTransform = m_player->getComponent<CTransform>();
+        auto playerBBox = m_player->getComponent<CBoundingBox>();
+        
+        // Store original position
+        Vec2 originalPos = playerTransform->pos;
+        
+        // Check collision with all tile entities
+        for (auto &entity : m_entityManager.getEntities("Tile"))
+        {
+            if (entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
+            {
+                auto tileTransform = entity->getComponent<CTransform>();
+                auto tileBBox = entity->getComponent<CBoundingBox>();
+                
+                // Check if player overlaps with tile
+                if (isColliding(playerTransform->pos, playerBBox->size, 
+                               tileTransform->pos, tileBBox->size))
+                {
+                    // Play collision sound (when sound files are available)
+                    if (m_player->hasComponent<CSound>())
+                    {
+                        auto sound = m_player->getComponent<CSound>();
+                        // Uncomment when you have sound files:
+                        // sound->playSound("collision");
+                    }
+                    
+                    // Calculate overlap amounts
+                    float overlapX = std::min(playerTransform->pos.x + playerBBox->size.x - tileTransform->pos.x,
+                                            tileTransform->pos.x + tileBBox->size.x - playerTransform->pos.x);
+                    float overlapY = std::min(playerTransform->pos.y + playerBBox->size.y - tileTransform->pos.y,
+                                            tileTransform->pos.y + tileBBox->size.y - playerTransform->pos.y);
+                    
+                    // Resolve collision by moving player out of tile
+                    if (overlapX < overlapY)
+                    {
+                        // Horizontal collision
+                        if (playerTransform->pos.x < tileTransform->pos.x)
+                        {
+                            playerTransform->pos.x = tileTransform->pos.x - playerBBox->size.x;
+                        }
+                        else
+                        {
+                            playerTransform->pos.x = tileTransform->pos.x + tileBBox->size.x;
+                        }
+                        playerTransform->velocity.x = 0;
+                    }
+                    else
+                    {
+                        // Vertical collision
+                        if (playerTransform->pos.y < tileTransform->pos.y)
+                        {
+                            playerTransform->pos.y = tileTransform->pos.y - playerBBox->size.y;
+                        }
+                        else
+                        {
+                            playerTransform->pos.y = tileTransform->pos.y + tileBBox->size.y;
+                        }
+                        playerTransform->velocity.y = 0;
+                    }
+                }
+            }
+        }
+        
+        // Keep player within window bounds
+        float windowWidth = m_game->window().getSize().x;
+        float windowHeight = m_game->window().getSize().y;
+        
+        if (playerTransform->pos.x < 0)
+        {
+            playerTransform->pos.x = 0;
+            playerTransform->velocity.x = 0;
+        }
+        if (playerTransform->pos.x + playerBBox->size.x > windowWidth)
+        {
+            playerTransform->pos.x = windowWidth - playerBBox->size.x;
+            playerTransform->velocity.x = 0;
+        }
+        if (playerTransform->pos.y < 0)
+        {
+            playerTransform->pos.y = 0;
+            playerTransform->velocity.y = 0;
+        }
+        if (playerTransform->pos.y + playerBBox->size.y > windowHeight)
+        {
+            playerTransform->pos.y = windowHeight - playerBBox->size.y;
+            playerTransform->velocity.y = 0;
+        }
+    }
 }
 
 void Scene_Play::sEnemySpawner()
@@ -85,13 +196,80 @@ void Scene_Play::sEnemySpawner()
 
 void Scene_Play::sMovement()
 {
+    // Handle player grid movement
+    if (m_player && m_player->hasComponent<CInput>() && m_player->hasComponent<CTransform>() && m_player->hasComponent<CGridMovement>())
+    {
+        auto input = m_player->getComponent<CInput>();
+        auto transform = m_player->getComponent<CTransform>();
+        auto gridMovement = m_player->getComponent<CGridMovement>();
+        auto animation = m_player->getComponent<CAnimation>();
+        auto boundingBox = m_player->getComponent<CBoundingBox>();
+        
+        // Create collision check function
+        auto collisionCheck = [this](Vec2 pos, Vec2 size) -> bool {
+            return wouldCollideAtPosition(pos, size);
+        };
+        
+        // Handle grid movement based on key presses (not held keys)
+        bool moved = false;
+        if (input->upPressed && !gridMovement->isMoving) 
+        {
+            if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
+                if (animation) animation->play("walk_up");
+                moved = true;
+            }
+        }
+        else if (input->downPressed && !gridMovement->isMoving) 
+        {
+            if (gridMovement->startMoveWithCollisionCheck(Vec2{0, 1}, transform->pos, boundingBox->size, collisionCheck)) {
+                if (animation) animation->play("walk_down");
+                moved = true;
+            }
+        }
+        else if (input->leftPressed && !gridMovement->isMoving) 
+        {
+            if (gridMovement->startMoveWithCollisionCheck(Vec2{-1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
+                if (animation) animation->play("walk_left");
+                moved = true;
+            }
+        }
+        else if (input->rightPressed && !gridMovement->isMoving) 
+        {
+            if (gridMovement->startMoveWithCollisionCheck(Vec2{1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
+                if (animation) animation->play("walk_right");
+                moved = true;
+            }
+        }
+        
+        // Update position based on grid movement
+        transform->pos = gridMovement->updateMovement(m_deltaTime, transform->pos);
+        
+        // Set idle animation if not moving
+        if (!gridMovement->isMoving && !moved && animation)
+        {
+            animation->play("idle");
+        }
+        
+        // Reset input press flags
+        input->resetPressFlags();
+        
+        // Play movement sound if moving (when sound files are available)
+        if (moved && m_player->hasComponent<CSound>())
+        {
+            auto sound = m_player->getComponent<CSound>();
+            // Uncomment when you have sound files:
+            // sound->playSound("footstep");
+        }
+    }
+    
+    // Handle other entity movement
     for (auto &entity : m_entityManager.getEntities())
     {
-        // if (entity->hasComponent(ComponentType::MOVEMENT))
-        // {
-        //     auto movement = entity->getComponent<Movement>(ComponentType::MOVEMENT);
-        //     movement->update();
-        // }
+        if (entity->hasComponent<CTransform>())
+        {
+            auto transform = entity->getComponent<CTransform>();
+            // Apply any general movement logic here
+        }
     }
 }
 
@@ -182,10 +360,40 @@ void Scene_Play::sDoAction(const Action &action)
         {
             m_drawGrid = !m_drawGrid;
         }
+        // Player movement input
+        else if (m_player && m_player->hasComponent<CInput>())
+        {
+            auto input = m_player->getComponent<CInput>();
+            if (action.getName() == "UP") {
+                input->up = true;
+                input->upPressed = true;
+            }
+            else if (action.getName() == "DOWN") {
+                input->down = true;
+                input->downPressed = true;
+            }
+            else if (action.getName() == "LEFT") {
+                input->left = true;
+                input->leftPressed = true;
+            }
+            else if (action.getName() == "RIGHT") {
+                input->right = true;
+                input->rightPressed = true;
+            }
+        }
     }
     else if (action.getType() == "END")
     {
         std::printf("End action: %s\n", action.getName().c_str());
+        // Handle key release for player movement
+        if (m_player && m_player->hasComponent<CInput>())
+        {
+            auto input = m_player->getComponent<CInput>();
+            if (action.getName() == "UP") input->up = false;
+            else if (action.getName() == "DOWN") input->down = false;
+            else if (action.getName() == "LEFT") input->left = false;
+            else if (action.getName() == "RIGHT") input->right = false;
+        }
     }
 }
 
@@ -216,6 +424,9 @@ Scene_Play::Scene_Play(GameEngine *game, const std::string &levelPath)
 
 void Scene_Play::update()
 {
+    // Calculate delta time
+    m_deltaTime = m_deltaClock.restart().asSeconds();
+    
     m_entityManager.update();
     sMovement();
     sCollision();
@@ -223,4 +434,97 @@ void Scene_Play::update()
     sAnimation();
     sRender();
     sDebug();
+}
+
+void Scene_Play::spawnPlayer()
+{
+    m_player = m_entityManager.addEntity("Player");
+    
+    // Set player starting position (adjust as needed)
+    Vec2 startPos = {100, 100};
+    m_player->addComponent<CTransform>(std::make_shared<CTransform>(startPos));
+    
+    // Add sprite component with player texture
+    auto& playerTexture = m_game->getAssets().getTexture("Player");
+    m_player->addComponent<CSprite>(std::make_shared<CSprite>("Player", playerTexture));
+    
+    // Set up sprite sheet frame (32x32 pixel frames based on the sprite sheet)
+    auto sprite = m_player->getComponent<CSprite>();
+    sprite->sprite.setTextureRect(sf::IntRect(0, 0, m_playerScale, m_playerScale)); // First frame
+    
+    // Add animation component with flexible animation definitions (using configurable scale)
+    auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_playerScale), static_cast<float>(m_playerScale)});
+
+    // Define animations - you can use the same texture with different rows
+    // or different textures for each animation
+    animationComponent->addAnimation("idle", "Player", 6, 0.2f, false, 0);        // Row 0, 6 frames, slow
+    animationComponent->addAnimation("walk_down", "Player", 6, 0.15f, false, 3);  // Row 3, 6 frames
+    animationComponent->addAnimation("walk_up", "Player", 6, 0.15f, false, 2);    // Row 2, 6 frames
+    animationComponent->addAnimation("walk_right", "Player", 6, 0.15f, false, 1); // Row 1, 6 frames
+    animationComponent->addAnimation("walk_left", "Player", 6, 0.15f, true, 1);   // Row 1, flipped
+
+    // Example of how you could add animations from separate files:
+    // animationComponent->addAnimation("attack", "PlayerAttack", 4, 0.1f, false, 0);  // Different texture
+    // animationComponent->addAnimation("jump", "PlayerJump", 8, 0.08f, false, 0);     // Different texture
+    // animationComponent->addAnimation("death", "PlayerDeath", 10, 0.12f, false, 0);  // Different texture
+
+    animationComponent->play("idle"); // Start with idle animation
+    m_player->addComponent<CAnimation>(animationComponent);
+    
+    // Add grid movement component (using configurable scale)
+    auto gridMovement = std::make_shared<CGridMovement>(m_gameScale, 3.0f, true); // Scale-based grid, 3 moves/sec, smooth
+    gridMovement->snapToGrid(startPos); // Snap player to nearest grid position
+    m_player->addComponent<CGridMovement>(gridMovement);
+    
+    // Add bounding box (using configurable scale)
+    m_player->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)}));
+    
+    // Add input component
+    m_player->addComponent<CInput>(std::make_shared<CInput>());
+    
+    // Add sound component
+    auto soundComponent = std::make_shared<CSound>();
+    // Note: You would add actual sound files here
+    // soundComponent->addSound("footstep", "assets/sounds/footstep.wav");
+    // soundComponent->addSound("jump", "assets/sounds/jump.wav");
+    m_player->addComponent<CSound>(soundComponent);
+    
+    std::printf("Player spawned at position: %f, %f\n", startPos.x, startPos.y);
+}
+
+bool Scene_Play::isColliding(const Vec2& pos1, const Vec2& size1, const Vec2& pos2, const Vec2& size2)
+{
+    return (pos1.x < pos2.x + size2.x &&
+            pos1.x + size1.x > pos2.x &&
+            pos1.y < pos2.y + size2.y &&
+            pos1.y + size1.y > pos2.y);
+}
+
+bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
+{
+    // Check window boundaries
+    float windowWidth = m_game->window().getSize().x;
+    float windowHeight = m_game->window().getSize().y;
+    
+    if (position.x < 0 || position.y < 0 || 
+        position.x + size.x > windowWidth || 
+        position.y + size.y > windowHeight) {
+        return true; // Would be outside window bounds
+    }
+    
+    // Check collision with all tile entities at the given position
+    for (auto &entity : m_entityManager.getEntities("Tile"))
+    {
+        if (entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
+        {
+            auto tileTransform = entity->getComponent<CTransform>();
+            auto tileBBox = entity->getComponent<CBoundingBox>();
+            
+            if (isColliding(position, size, tileTransform->pos, tileBBox->size))
+            {
+                return true; // Would collide with this tile
+            }
+        }
+    }
+    return false; // No collision detected
 }

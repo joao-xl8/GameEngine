@@ -27,6 +27,12 @@ void Assets::loadAssets(const std::string &filename)
             fin >> name >> filename;
             addFont(name, filename);
         }
+        else if (type == "Sound")
+        {
+            std::string name, filename;
+            fin >> name >> filename;
+            addSound(name, filename);
+        }
     }
 }
 Assets::~Assets()
@@ -103,23 +109,41 @@ const sf::Font &Assets::getFont(const std::string &name) const
     return it->second;
 }
 
-// void Assets::addSound(const std::string &name, const std::string &filename)
-// {
-//     sf::SoundBuffer buffer;
-//     if (!buffer.loadFromFile(filename))
-//     {
-//         std::cerr << "Failed to load sound: " << filename << std::endl;
-//         return;
-//     }
-//     sf::Sound sound;
-//     sound.setBuffer(buffer);
-//     m_sounds[name] = sound;
-// }
+void Assets::addSound(const std::string &name, const std::string &filename)
+{
+    sf::SoundBuffer buffer;
+    if (!buffer.loadFromFile(filename))
+    {
+        std::cerr << "Failed to load sound: " << filename << std::endl;
+        return;
+    }
+    if (m_soundBuffers.find(name) == m_soundBuffers.end())
+    {
+        std::printf("Adding sound: %s\n", name.c_str());
+        m_soundBuffers[name] = buffer;
+    }
+    else
+    {
+        std::printf("Sound already exists: %s\n", name.c_str());
+    }    
+}
 
-// const sf::Sound &Assets::getSound(const std::string &name) const
-// {
-//     return m_sounds.at(name);
-// }
+const sf::SoundBuffer &Assets::getSoundBuffer(const std::string &name) const
+{
+    auto it = m_soundBuffers.find(name);
+    if (it == m_soundBuffers.end())
+    {
+        std::cerr << "Error: Sound '" << name << "' not found!" << std::endl;
+        std::cerr << "Available sounds: ";
+        for (const auto& pair : m_soundBuffers)
+        {
+            std::cerr << pair.first << " ";
+        }
+        std::cerr << std::endl;
+        throw std::runtime_error("Sound not found: " + name);
+    }
+    return it->second;
+}
 
 // const Animation &Assets::getAnimation(const std::string &name) const
 // {
