@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <stdexcept>
 #include <SFML/Graphics.hpp>
 #include "animation.hpp"
 #include <fstream>

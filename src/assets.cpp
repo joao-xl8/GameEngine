@@ -53,7 +53,19 @@ void Assets::addTexture(const std::string &name, const std::string &filename)
 
 const sf::Texture &Assets::getTexture(const std::string &name) const
 {
-    return m_textures.at(name);
+    auto it = m_textures.find(name);
+    if (it == m_textures.end())
+    {
+        std::cerr << "Error: Texture '" << name << "' not found!" << std::endl;
+        std::cerr << "Available textures: ";
+        for (const auto& pair : m_textures)
+        {
+            std::cerr << pair.first << " ";
+        }
+        std::cerr << std::endl;
+        throw std::runtime_error("Texture not found: " + name);
+    }
+    return it->second;
 }
 
 void Assets::addFont(const std::string &name, const std::string &filename)
@@ -76,7 +88,19 @@ void Assets::addFont(const std::string &name, const std::string &filename)
 
 const sf::Font &Assets::getFont(const std::string &name) const
 {
-    return m_fonts.at(name);
+    auto it = m_fonts.find(name);
+    if (it == m_fonts.end())
+    {
+        std::cerr << "Error: Font '" << name << "' not found!" << std::endl;
+        std::cerr << "Available fonts: ";
+        for (const auto& pair : m_fonts)
+        {
+            std::cerr << pair.first << " ";
+        }
+        std::cerr << std::endl;
+        throw std::runtime_error("Font not found: " + name);
+    }
+    return it->second;
 }
 
 // void Assets::addSound(const std::string &name, const std::string &filename)
