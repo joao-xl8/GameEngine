@@ -1,4 +1,5 @@
-COMP4300
+COMP4300 - (https://www.youtube.com/@DaveChurchill/videos) 
+Credits to Dave Churchill
 
 Game Programming
 
