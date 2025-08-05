@@ -5,21 +5,23 @@ echo "Building!"
 
 PROG_NAME=$1
 IMGUI_DIR=include/imgui
-SFML_INCLUDE_DIR=include/sfml
-SFML_LIB_DIR=lib
+SFML_PREFIX=/opt/homebrew/opt/sfml@2
 GLFW_DIR=include/GLFW
 ROOT_DIR=src
 CPPFLAGS="-v -Wall -Wunused-result"
+
+echo "Using SFML from: $SFML_PREFIX"
+
 output=$(g++ main.cpp $IMGUI_DIR/imgui*.cpp $ROOT_DIR/*.cpp \
   -std=c++20 \
-  -I $SFML_INCLUDE_DIR -I $IMGUI_DIR -I $GLFW_DIR -I $ROOT_DIR \
-  -L $SFML_LIB_DIR -lsfml-graphics -lsfml-window -lsfml-system  \
+  -I $SFML_PREFIX/include -I $IMGUI_DIR -I $GLFW_DIR -I $ROOT_DIR \
+  -L $SFML_PREFIX/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio \
   -framework OpenGL \
   -o build.out \
-  )
+  2>&1)
 
 if [[ $? != 0 ]]; then
-  echo -e "Error:$output"
+  echo -e "Error: $output"
 else
   echo "Success build!! Running the output!"
   ./build.out
