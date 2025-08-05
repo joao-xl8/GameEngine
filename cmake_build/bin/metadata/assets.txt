@@ -1,4 +1,0 @@
-Texture Ground assets/imgs/ground.png
-Texture Bushing assets/imgs/ground.png
-Font ShareTech assets/fonts/ShareTech-Regular.ttf 
-Font Techno assets/fonts/Techno.ttf  
