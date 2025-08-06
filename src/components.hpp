@@ -297,34 +297,77 @@ class CSound : public Component {
 public:
     std::map<std::string, sf::Sound> sounds;
     std::map<std::string, sf::SoundBuffer> soundBuffers;
+    std::map<std::string, sf::Music*> music;  // For background music (streaming)
     
     CSound() {};
-    ~CSound(){};
+    ~CSound() {
+        // Clean up music pointers
+        for (auto& pair : music) {
+            delete pair.second;
+        }
+    };
     
-    void addSound(const std::string& name, const std::string& filename)
-    {
+    // Add a sound effect (loaded into memory)
+    bool addSound(const std::string& name, const std::string& filename) {
         sf::SoundBuffer buffer;
-        if (buffer.loadFromFile(filename))
-        {
+        if (buffer.loadFromFile(filename)) {
             soundBuffers[name] = buffer;
             sounds[name].setBuffer(soundBuffers[name]);
+            return true;
         }
+        std::printf("Failed to load sound: %s\n", filename.c_str());
+        return false;
     }
     
-    void playSound(const std::string& name)
-    {
-        if (sounds.find(name) != sounds.end())
-        {
+    // Add background music (streamed from file)
+    bool addMusic(const std::string& name, const std::string& filename) {
+        sf::Music* musicPtr = new sf::Music();
+        if (musicPtr->openFromFile(filename)) {
+            music[name] = musicPtr;
+            return true;
+        }
+        std::printf("Failed to load music: %s\n", filename.c_str());
+        delete musicPtr;
+        return false;
+    }
+    
+    // Play a sound effect
+    void playSound(const std::string& name, float volume = 100.0f) {
+        if (sounds.find(name) != sounds.end()) {
+            sounds[name].setVolume(volume);
             sounds[name].play();
         }
     }
     
-    void stopSound(const std::string& name)
-    {
-        if (sounds.find(name) != sounds.end())
-        {
+    // Play background music
+    void playMusic(const std::string& name, bool loop = true, float volume = 50.0f) {
+        if (music.find(name) != music.end()) {
+            music[name]->setVolume(volume);
+            music[name]->setLoop(loop);
+            music[name]->play();
+        }
+    }
+    
+    // Stop a sound effect
+    void stopSound(const std::string& name) {
+        if (sounds.find(name) != sounds.end()) {
             sounds[name].stop();
         }
+    }
+    
+    // Stop background music
+    void stopMusic(const std::string& name) {
+        if (music.find(name) != music.end()) {
+            music[name]->stop();
+        }
+    }
+    
+    // Check if music is playing
+    bool isMusicPlaying(const std::string& name) {
+        if (music.find(name) != music.end()) {
+            return music[name]->getStatus() == sf::Music::Playing;
+        }
+        return false;
     }
 };
 

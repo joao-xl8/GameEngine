@@ -10,6 +10,7 @@ class Scene_Play : public Scene
 protected:
     std::string m_levelPath;
     std::shared_ptr<Entity> m_player;
+    std::shared_ptr<CSound> m_soundManager;  // Global sound manager for music and global sounds
     PlayerConfig m_playerConfig;
     bool m_drawTextures = true;
     bool m_drawCollision = false;

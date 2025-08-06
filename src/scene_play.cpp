@@ -22,6 +22,25 @@ void Scene_Play::init(const std::string &levelPath)
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_tileText.setFillColor(sf::Color::White);
 
+    // Initialize sound manager
+    m_soundManager = std::make_shared<CSound>();
+    
+    // Load background music
+    m_soundManager->addMusic("background", "assets/music/time_for_adventure.mp3");
+    
+    // Load sound effects
+    m_soundManager->addSound("walk", "assets/sounds/tap.wav");
+    m_soundManager->addSound("hurt", "assets/sounds/hurt.wav");
+    m_soundManager->addSound("jump", "assets/sounds/jump.wav");
+    m_soundManager->addSound("coin", "assets/sounds/coin.wav");
+    m_soundManager->addSound("power_up", "assets/sounds/power_up.wav");
+    m_soundManager->addSound("explosion", "assets/sounds/explosion.wav");
+    
+    // Start background music
+    m_soundManager->playMusic("background", true, 30.0f); // Loop, 30% volume
+    
+    std::printf("Sound system initialized with background music and sound effects\n");
+
     // load levels
     // Tile Ground 0 0
     // Tile Ground 1 0
@@ -256,6 +275,7 @@ void Scene_Play::sMovement()
         auto gridMovement = m_player->getComponent<CGridMovement>();
         auto animation = m_player->getComponent<CAnimation>();
         auto boundingBox = m_player->getComponent<CBoundingBox>();
+        auto sound = m_player->getComponent<CSound>();  // Get sound component
         
         // Create collision check function
         auto collisionCheck = [this](Vec2 pos, Vec2 size) -> bool {
@@ -270,6 +290,7 @@ void Scene_Play::sMovement()
             {
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{0, 1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_up");
+                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                 }
@@ -278,6 +299,7 @@ void Scene_Play::sMovement()
             {
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_down");
+                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                 }
@@ -286,6 +308,7 @@ void Scene_Play::sMovement()
             {
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{-1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_left");
+                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                 }
@@ -294,6 +317,7 @@ void Scene_Play::sMovement()
             {
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_right");
+                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                 }
@@ -581,9 +605,10 @@ void Scene_Play::spawnPlayer()
     
     // Add sound component
     auto soundComponent = std::make_shared<CSound>();
-    // Note: You would add actual sound files here
-    // soundComponent->addSound("footstep", "assets/sounds/footstep.wav");
-    // soundComponent->addSound("jump", "assets/sounds/jump.wav");
+    // Load player-specific sounds
+    soundComponent->addSound("footstep", "assets/sounds/tap.wav");
+    soundComponent->addSound("hurt", "assets/sounds/hurt.wav");
+    soundComponent->addSound("jump", "assets/sounds/jump.wav");
     m_player->addComponent<CSound>(soundComponent);
     
     std::printf("Player spawned at position: %f, %f\n", startPos.x, startPos.y);
