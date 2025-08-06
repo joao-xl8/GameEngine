@@ -3,13 +3,15 @@
 
 void EntityManager::removeDeadEntities()
 {
+    // Remove dead entities from main vector
+    m_entities.erase(std::remove_if(m_entities.begin(), m_entities.end(), 
+        [](auto &e) { return !e->isActive(); }), m_entities.end());
 
-    m_entities.erase(std::remove_if(m_entities.begin(), m_entities.end(), [](auto &e) { return !e->isActive(); }), m_entities.end());
-
-    for (auto &e : m_entities)
+    // Remove dead entities from each tag map
+    for (auto &pair : m_entityMap)
     {
-        const std::string &tag = e->tag();
-        m_entityMap[tag].erase(std::remove_if(m_entityMap[tag].begin(), m_entityMap[tag].end(), [](auto &e) { return !e->isActive(); }), m_entityMap[tag].end());
+        pair.second.erase(std::remove_if(pair.second.begin(), pair.second.end(), 
+            [](auto &e) { return !e->isActive(); }), pair.second.end());
     }
 }
 

@@ -2,6 +2,7 @@
 #include "scene_options.hpp"
 #include "scene_play.hpp"
 #include "game_engine.hpp"
+#include <exception>
 
 void Scene_Options::init()
 {
@@ -20,7 +21,7 @@ void Scene_Options::init()
 
 void Scene_Options::sRender()
 {
-    m_game->window().clear(sf::Color::Black);
+    // GameEngine now handles window clearing - just draw options elements
     m_menuText.setString("Options");
     m_menuText.setCharacterSize(24);
     m_menuText.setFillColor(sf::Color::White);
@@ -64,18 +65,39 @@ void Scene_Options::sDoAction(const Action &action)
         }
         else if (action.getName() == "SELECT")
         {
-            if (m_menuStrings[m_menuIndex] == "Back")
+            // Add bounds checking to prevent crashes
+            if (m_menuIndex >= 0 && m_menuIndex < m_menuStrings.size())
             {
-                m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
-            }
-            else if (m_menuStrings[m_menuIndex] == "Full Screen")
-            {
-                m_game->toggleFullscreen(m_game->window());
+                if (m_menuStrings[m_menuIndex] == "Back")
+                {
+                    // Use try-catch to handle potential memory allocation failures
+                    try {
+                        m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit to prevent crash
+                        m_game->quit();
+                    }
+                }
+                else if (m_menuStrings[m_menuIndex] == "Full Screen")
+                {
+                    // Safe fullscreen toggle
+                    try {
+                        m_game->toggleFullscreen(m_game->window());
+                    } catch (const std::exception& e) {
+                        // Ignore fullscreen toggle errors
+                    }
+                }
             }
         }
         else if (action.getName() == "QUIT")
         {
-            m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
+            // Use try-catch for scene change
+            try {
+                m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
+            } catch (const std::exception& e) {
+                // If scene creation fails, just quit
+                m_game->quit();
+            }
         }
     }
 }

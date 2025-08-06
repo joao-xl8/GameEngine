@@ -22,7 +22,7 @@ void Scene_Play::init(const std::string &levelPath)
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_tileText.setFillColor(sf::Color::White);
 
-    // load level
+    // load levels
     // Tile Ground 0 0
     // Tile Ground 1 0
     // Tile Ground 2 0
@@ -89,6 +89,42 @@ void Scene_Play::sAnimation()
     }
 }
 
+void Scene_Play::sCamera()
+{
+    // Update camera to follow player
+    if (m_player && m_player->hasComponent<CCamera>() && m_player->hasComponent<CTransform>())
+    {
+        auto camera = m_player->getComponent<CCamera>();
+        auto transform = m_player->getComponent<CTransform>();
+        
+        if (camera && transform) {
+            // Store previous camera position for debugging
+            Vec2 prevCameraPos = camera->position;
+            
+            // Update camera to follow player position
+            camera->followTarget(transform->pos, m_deltaTime);
+            
+            // Update the game view to match camera position (account for coordinate conversion)
+            sf::View& gameView = m_game->getGameView();
+            sf::Vector2f viewSize = gameView.getSize();
+            float screenCenterY = viewSize.y / 2.0f;
+            gameView.setCenter(camera->position.x, (viewSize.y - 128.0f) - camera->position.y);
+            
+            // Enhanced debug output
+            static int debugCounter = 0;
+            if (debugCounter++ % 30 == 0) { // Print every 30 frames (roughly 0.5 seconds)
+                Vec2 offset = transform->pos - camera->position;
+                std::printf("Player: (%.1f, %.1f) | Camera: (%.1f, %.1f) | Offset: (%.1f, %.1f) | Following: %s | CameraMoved: %s\n", 
+                           transform->pos.x, transform->pos.y,
+                           camera->position.x, camera->position.y,
+                           offset.x, offset.y,
+                           camera->isFollowing ? "Yes" : "No",
+                           (prevCameraPos.x != camera->position.x || prevCameraPos.y != camera->position.y) ? "Yes" : "No");
+            }
+        }
+    }
+}
+
 void Scene_Play::sCollision()
 {
     // Skip collision handling for grid-based movement
@@ -107,12 +143,23 @@ void Scene_Play::sCollision()
         Vec2 originalPos = playerTransform->pos;
         
         // Check collision with all tile entities
-        for (auto &entity : m_entityManager.getEntities("Tile"))
+        auto& tileEntities = m_entityManager.getEntities("Tile");
+        for (auto &entity : tileEntities)
         {
+            // Safety check: ensure entity is valid and active
+            if (!entity || !entity->isActive()) {
+                continue;
+            }
+            
             if (entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
             {
                 auto tileTransform = entity->getComponent<CTransform>();
                 auto tileBBox = entity->getComponent<CBoundingBox>();
+                
+                // Additional safety checks
+                if (!tileTransform || !tileBBox) {
+                    continue;
+                }
                 
                 // Check if player overlaps with tile
                 if (isColliding(playerTransform->pos, playerBBox->size, 
@@ -196,6 +243,11 @@ void Scene_Play::sEnemySpawner()
 
 void Scene_Play::sMovement()
 {
+    // Update grid movement timer
+    if (m_gridMoveTimer > 0.0f) {
+        m_gridMoveTimer -= m_deltaTime;
+    }
+    
     // Handle player grid movement
     if (m_player && m_player->hasComponent<CInput>() && m_player->hasComponent<CTransform>() && m_player->hasComponent<CGridMovement>())
     {
@@ -211,33 +263,40 @@ void Scene_Play::sMovement()
         };
         
         // Handle grid movement based on key presses (not held keys)
+        // Only allow movement if cooldown timer has expired
         bool moved = false;
-        if (input->upPressed && !gridMovement->isMoving) 
-        {
-            if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
-                if (animation) animation->play("walk_up");
-                moved = true;
+        if (m_gridMoveTimer <= 0.0f && !gridMovement->isMoving) {
+            if (input->upPressed) 
+            {
+                if (gridMovement->startMoveWithCollisionCheck(Vec2{0, 1}, transform->pos, boundingBox->size, collisionCheck)) {
+                    if (animation) animation->play("walk_up");
+                    moved = true;
+                    m_gridMoveTimer = m_changeGridSleep; // Start cooldown
+                }
             }
-        }
-        else if (input->downPressed && !gridMovement->isMoving) 
-        {
-            if (gridMovement->startMoveWithCollisionCheck(Vec2{0, 1}, transform->pos, boundingBox->size, collisionCheck)) {
-                if (animation) animation->play("walk_down");
-                moved = true;
+            else if (input->downPressed) 
+            {
+                if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
+                    if (animation) animation->play("walk_down");
+                    moved = true;
+                    m_gridMoveTimer = m_changeGridSleep; // Start cooldown
+                }
             }
-        }
-        else if (input->leftPressed && !gridMovement->isMoving) 
-        {
-            if (gridMovement->startMoveWithCollisionCheck(Vec2{-1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
-                if (animation) animation->play("walk_left");
-                moved = true;
+            else if (input->leftPressed) 
+            {
+                if (gridMovement->startMoveWithCollisionCheck(Vec2{-1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
+                    if (animation) animation->play("walk_left");
+                    moved = true;
+                    m_gridMoveTimer = m_changeGridSleep; // Start cooldown
+                }
             }
-        }
-        else if (input->rightPressed && !gridMovement->isMoving) 
-        {
-            if (gridMovement->startMoveWithCollisionCheck(Vec2{1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
-                if (animation) animation->play("walk_right");
-                moved = true;
+            else if (input->rightPressed) 
+            {
+                if (gridMovement->startMoveWithCollisionCheck(Vec2{1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
+                    if (animation) animation->play("walk_right");
+                    moved = true;
+                    m_gridMoveTimer = m_changeGridSleep; // Start cooldown
+                }
             }
         }
         
@@ -263,11 +322,20 @@ void Scene_Play::sMovement()
     }
     
     // Handle other entity movement
-    for (auto &entity : m_entityManager.getEntities())
+    auto& allEntities = m_entityManager.getEntities();
+    for (auto &entity : allEntities)
     {
+        // Safety check: ensure entity is valid and active
+        if (!entity || !entity->isActive()) {
+            continue;
+        }
+        
         if (entity->hasComponent<CTransform>())
         {
             auto transform = entity->getComponent<CTransform>();
+            if (!transform) {
+                continue;
+            }
             // Apply any general movement logic here
         }
     }
@@ -275,7 +343,14 @@ void Scene_Play::sMovement()
 
 void Scene_Play::sRender()
 {
-    m_game->window().clear(sf::Color::Cyan);
+    // GameEngine now handles window clearing and viewport setup
+    // Set background color by drawing a full-screen rectangle
+    sf::RectangleShape background;
+    background.setSize(sf::Vector2f(m_game->window().getSize().x, m_game->window().getSize().y));
+    background.setFillColor(sf::Color::Cyan);
+    background.setPosition(0, 0);
+    m_game->window().draw(background);
+    
     if(m_drawTextures){
         for (auto &entity : m_entityManager.getEntities())
         {
@@ -432,6 +507,7 @@ void Scene_Play::update()
     sCollision();
     sEnemySpawner();
     sAnimation();
+    sCamera();  // Update camera system
     sRender();
     sDebug();
 }
@@ -482,6 +558,27 @@ void Scene_Play::spawnPlayer()
     // Add input component
     m_player->addComponent<CInput>(std::make_shared<CInput>());
     
+    // Add camera component with 1-tile dead zone
+    Vec2 deadZoneSize = {static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)}; // 1 tile dead zone
+    auto cameraComponent = std::make_shared<CCamera>(startPos, deadZoneSize, 3.0f); // Follow speed of 3.0
+    
+    // Ensure camera starts exactly at player position (centered)
+    cameraComponent->setPosition(startPos);  // This sets both position and targetPosition
+    
+    m_player->addComponent<CCamera>(cameraComponent);
+    
+    // Initialize game view to center player in middle of screen
+    sf::View& gameView = m_game->getGameView();
+    
+    // Get the game view size to calculate proper center
+    sf::Vector2f viewSize = gameView.getSize();
+    float screenCenterY = viewSize.y / 2.0f;
+    
+    // Set camera center accounting for coordinate system conversion
+    gameView.setCenter(startPos.x, (viewSize.y - 128.0f) - startPos.y);
+    
+    std::printf("Camera initialized at position: %f, %f (player centered)\n", startPos.x, startPos.y);
+    
     // Add sound component
     auto soundComponent = std::make_shared<CSound>();
     // Note: You would add actual sound files here
@@ -513,12 +610,23 @@ bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
     }
     
     // Check collision with all tile entities at the given position
-    for (auto &entity : m_entityManager.getEntities("Tile"))
+    auto& tileEntities = m_entityManager.getEntities("Tile");
+    for (auto &entity : tileEntities)
     {
+        // Safety check: ensure entity is valid and active
+        if (!entity || !entity->isActive()) {
+            continue;
+        }
+        
         if (entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
         {
             auto tileTransform = entity->getComponent<CTransform>();
             auto tileBBox = entity->getComponent<CBoundingBox>();
+            
+            // Additional safety checks
+            if (!tileTransform || !tileBBox) {
+                continue;
+            }
             
             if (isColliding(position, size, tileTransform->pos, tileBBox->size))
             {

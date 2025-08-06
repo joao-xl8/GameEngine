@@ -327,3 +327,103 @@ public:
         }
     }
 };
+
+class CCamera : public Component {
+public:
+    Vec2 position = {0.0f, 0.0f};        // Current camera position (center of view)
+    Vec2 targetPosition = {0.0f, 0.0f};  // Target position to follow
+    Vec2 deadZone = {64.0f, 64.0f};      // Dead zone size (1 tile = 64x64)
+    float followSpeed = 5.0f;            // How fast camera catches up (multiplier)
+    bool isFollowing = false;            // Whether camera is actively following
+    
+    CCamera() {};
+    CCamera(const Vec2& pos, const Vec2& deadZoneSize, float speed) 
+        : position(pos), targetPosition(pos), deadZone(deadZoneSize), followSpeed(speed) {};
+    ~CCamera(){};
+    
+    // Update camera to follow a target position with dead zone
+    void followTarget(const Vec2& targetPos, float deltaTime) {
+        // Calculate the offset from camera center to target
+        Vec2 offset = targetPos - position;
+        
+        // Check if target is outside the dead zone
+        bool needsUpdate = false;
+        Vec2 newTargetPos = position;
+        
+        // Check horizontal movement
+        if (offset.x > deadZone.x / 2.0f) {
+            // Target is too far right, move camera right
+            newTargetPos.x = targetPos.x - deadZone.x / 2.0f;
+            needsUpdate = true;
+        } else if (offset.x < -deadZone.x / 2.0f) {
+            // Target is too far left, move camera left
+            newTargetPos.x = targetPos.x + deadZone.x / 2.0f;
+            needsUpdate = true;
+        }
+        
+        // Check vertical movement - Using same coordinate system as player movement
+        // Player UP = +Y, Player DOWN = -Y, Camera follows in same coordinate space
+        if (offset.y > deadZone.y / 2.0f) {
+            // Player is too far up (positive Y), move camera up
+            newTargetPos.y = targetPos.y - deadZone.y / 2.0f;
+            needsUpdate = true;
+        } else if (offset.y < -deadZone.y / 2.0f) {
+            // Player is too far down (negative Y), move camera down  
+            newTargetPos.y = targetPos.y + deadZone.y / 2.0f;
+            needsUpdate = true;
+        }
+        
+        if (needsUpdate) {
+            targetPosition = newTargetPos;
+            isFollowing = true;
+        }
+        
+        // Smoothly move camera towards target position
+        if (isFollowing) {
+            Vec2 direction = targetPosition - position;
+            float distance = direction.length();
+            
+            if (distance < 1.0f) {
+                // Close enough, snap to target
+                position = targetPosition;
+                isFollowing = false;
+            } else {
+                // Move towards target with smooth interpolation
+                Vec2 normalizedDir = direction.normalized();
+                float moveDistance = followSpeed * 100.0f * deltaTime; // Base speed of 100 pixels/second
+                
+                // Don't overshoot
+                if (moveDistance >= distance) {
+                    position = targetPosition;
+                    isFollowing = false;
+                } else {
+                    position = position + (normalizedDir * moveDistance);
+                }
+            }
+        }
+    }
+    
+    // Set camera position immediately (no smooth movement)
+    void setPosition(const Vec2& pos) {
+        position = pos;
+        targetPosition = pos;
+        isFollowing = false;
+    }
+    
+    // Get the camera's view bounds (useful for culling)
+    struct ViewBounds {
+        float left, right, top, bottom;
+    };
+    
+    ViewBounds getViewBounds(float viewWidth, float viewHeight) const {
+        float halfWidth = viewWidth / 2.0f;
+        float halfHeight = viewHeight / 2.0f;
+        
+        return ViewBounds{
+            position.x - halfWidth,   // left
+            position.x + halfWidth,   // right
+            position.y - halfHeight,  // top
+            position.y + halfHeight   // bottom
+        };
+    }
+};

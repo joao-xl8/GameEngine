@@ -17,6 +17,11 @@ protected:
     const int m_gameScale = 64; // Configurable scale for all game elements (tiles, player, grid)
     const int m_playerScale = 32;
     const Vec2 m_tileSize = {static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)};
+    
+    // Grid movement timing control
+    float m_changeGridSleep = 0.2f; // Delay in seconds after each grid movement (prevents multiple moves)
+    float m_gridMoveTimer = 0.0f;   // Current timer for grid movement cooldown
+    
     sf::Text m_tileText;
     sf::Clock m_deltaClock;
     float m_deltaTime = 0.0f;
@@ -25,6 +30,7 @@ protected:
     void init();
     void onEnd();
     void sAnimation();
+    void sCamera();
     void sCollision();
     void sEnemySpawner();
     void sMovement();

@@ -2,6 +2,7 @@
 #include "scene_play.hpp"
 #include "scene_options.hpp"
 #include "game_engine.hpp"
+#include <exception>
 
 void Scene_Menu::init()
 {
@@ -21,7 +22,7 @@ void Scene_Menu::init()
 
 void Scene_Menu::sRender()
 {
-    m_game->window().clear(sf::Color::Black);
+    // GameEngine now handles window clearing - just draw menu elements
     m_menuText.setString("Menu");
     m_menuText.setCharacterSize(24);
     m_menuText.setFillColor(sf::Color::White);
@@ -65,17 +66,33 @@ void Scene_Menu::sDoAction(const Action &action)
         }
         else if (action.getName() == "SELECT")
         {
-            if (m_menuStrings[m_menuIndex] == "Exit")
+            // Add bounds checking to prevent crashes
+            if (m_menuIndex >= 0 && m_menuIndex < m_menuStrings.size())
             {
-                m_game->quit();
-            }
-            else if (m_menuStrings[m_menuIndex] == "Options")
-            {
-                m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
-            }
-            else
-            {
-                m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/level1.txt"));
+                if (m_menuStrings[m_menuIndex] == "Exit")
+                {
+                    m_game->quit();
+                }
+                else if (m_menuStrings[m_menuIndex] == "Options")
+                {
+                    // Use try-catch to handle potential memory allocation failures
+                    try {
+                        m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit to prevent crash
+                        m_game->quit();
+                    }
+                }
+                else
+                {
+                    // Use try-catch for Play scene creation
+                    try {
+                        m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/level1.txt"));
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit
+                        m_game->quit();
+                    }
+                }
             }
         }
         else if (action.getName() == "QUIT")

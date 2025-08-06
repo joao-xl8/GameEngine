@@ -1,5 +1,283 @@
-Tile Ground 0 0
-Tile Ground 1 0
-Tile Ground 2 0
-Tile Ground 3 0
-Dec Bushing 0 1
+# Level 1 - Garden Path Environment
+# Format: Type SpriteName X Y
+# Tile = Solid collision (walls)
+# Dec = Decoration, no collision (bushes, items)
+# Ground tiles create the walkable path
+
+# Create a border of walls around the level (20x15 grid)
+Tile Wall 0 0
+Tile Wall 1 0
+Tile Wall 2 0
+Tile Wall 3 0
+Tile Wall 4 0
+Tile Wall 5 0
+Tile Wall 6 0
+Tile Wall 7 0
+Tile Wall 8 0
+Tile Wall 9 0
+Tile Wall 10 0
+Tile Wall 11 0
+Tile Wall 12 0
+Tile Wall 13 0
+Tile Wall 14 0
+Tile Wall 15 0
+Tile Wall 16 0
+Tile Wall 17 0
+Tile Wall 18 0
+Tile Wall 19 0
+
+Tile Wall 0 1
+Tile Wall 19 1
+Tile Wall 0 2
+Tile Wall 19 2
+Tile Wall 0 3
+Tile Wall 19 3
+Tile Wall 0 4
+Tile Wall 19 4
+Tile Wall 0 5
+Tile Wall 19 5
+Tile Wall 0 6
+Tile Wall 19 6
+Tile Wall 0 7
+Tile Wall 19 7
+Tile Wall 0 8
+Tile Wall 19 8
+Tile Wall 0 9
+Tile Wall 19 9
+Tile Wall 0 10
+Tile Wall 19 10
+Tile Wall 0 11
+Tile Wall 19 11
+Tile Wall 0 12
+Tile Wall 19 12
+Tile Wall 0 13
+Tile Wall 19 13
+
+Tile Wall 0 14
+Tile Wall 1 14
+Tile Wall 2 14
+Tile Wall 3 14
+Tile Wall 4 14
+Tile Wall 5 14
+Tile Wall 6 14
+Tile Wall 7 14
+Tile Wall 8 14
+Tile Wall 9 14
+Tile Wall 10 14
+Tile Wall 11 14
+Tile Wall 12 14
+Tile Wall 13 14
+Tile Wall 14 14
+Tile Wall 15 14
+Tile Wall 16 14
+Tile Wall 17 14
+Tile Wall 18 14
+Tile Wall 19 14
+
+# Create some internal walls to make interesting paths
+Tile Wall 5 5
+Tile Wall 6 5
+Tile Wall 7 5
+Tile Wall 8 5
+Tile Wall 9 5
+
+Tile Wall 12 8
+Tile Wall 13 8
+Tile Wall 14 8
+Tile Wall 15 8
+
+Tile Wall 3 10
+Tile Wall 4 10
+Tile Wall 5 10
+
+Tile Wall 15 3
+Tile Wall 16 3
+Tile Wall 17 3
+
+# Create ground tiles for walkable paths (now as decorations)
+Dec Ground 1 1
+Dec Ground 2 1
+Dec Ground 3 1
+Dec Ground 4 1
+Dec Ground 5 1
+Dec Ground 6 1
+Dec Ground 7 1
+Dec Ground 8 1
+Dec Ground 9 1
+Dec Ground 10 1
+Dec Ground 11 1
+Dec Ground 12 1
+Dec Ground 13 1
+Dec Ground 14 1
+Dec Ground 15 1
+Dec Ground 16 1
+Dec Ground 17 1
+Dec Ground 18 1
+
+Dec Ground 1 2
+Dec Ground 2 2
+Dec Ground 3 2
+Dec Ground 4 2
+Dec Ground 10 2
+Dec Ground 11 2
+Dec Ground 12 2
+Dec Ground 13 2
+Dec Ground 14 2
+Dec Ground 15 2
+Dec Ground 16 2
+Dec Ground 17 2
+Dec Ground 18 2
+
+Dec Ground 1 3
+Dec Ground 2 3
+Dec Ground 3 3
+Dec Ground 4 3
+Dec Ground 5 3
+Dec Ground 6 3
+Dec Ground 7 3
+Dec Ground 8 3
+Dec Ground 9 3
+Dec Ground 10 3
+Dec Ground 11 3
+Dec Ground 12 3
+Dec Ground 13 3
+Dec Ground 14 3
+Dec Ground 18 3
+
+Dec Ground 1 4
+Dec Ground 2 4
+Dec Ground 3 4
+Dec Ground 4 4
+Dec Ground 10 4
+Dec Ground 11 4
+Dec Ground 12 4
+Dec Ground 13 4
+Dec Ground 14 4
+Dec Ground 15 4
+Dec Ground 16 4
+Dec Ground 17 4
+Dec Ground 18 4
+
+Dec Ground 1 6
+Dec Ground 2 6
+Dec Ground 3 6
+Dec Ground 4 6
+Dec Ground 10 6
+Dec Ground 11 6
+Dec Ground 12 6
+Dec Ground 13 6
+Dec Ground 14 6
+Dec Ground 15 6
+Dec Ground 16 6
+Dec Ground 17 6
+Dec Ground 18 6
+
+Dec Ground 1 7
+Dec Ground 2 7
+Dec Ground 3 7
+Dec Ground 4 7
+Dec Ground 5 7
+Dec Ground 6 7
+Dec Ground 7 7
+Dec Ground 8 7
+Dec Ground 9 7
+Dec Ground 10 7
+Dec Ground 11 7
+Dec Ground 16 7
+Dec Ground 17 7
+Dec Ground 18 7
+
+Dec Ground 1 9
+Dec Ground 2 9
+Dec Ground 6 9
+Dec Ground 7 9
+Dec Ground 8 9
+Dec Ground 9 9
+Dec Ground 10 9
+Dec Ground 11 9
+Dec Ground 16 9
+Dec Ground 17 9
+Dec Ground 18 9
+
+Dec Ground 1 11
+Dec Ground 2 11
+Dec Ground 6 11
+Dec Ground 7 11
+Dec Ground 8 11
+Dec Ground 9 11
+Dec Ground 10 11
+Dec Ground 11 11
+Dec Ground 12 11
+Dec Ground 13 11
+Dec Ground 14 11
+Dec Ground 15 11
+Dec Ground 16 11
+Dec Ground 17 11
+Dec Ground 18 11
+
+Dec Ground 1 12
+Dec Ground 2 12
+Dec Ground 3 12
+Dec Ground 4 12
+Dec Ground 5 12
+Dec Ground 6 12
+Dec Ground 7 12
+Dec Ground 8 12
+Dec Ground 9 12
+Dec Ground 10 12
+Dec Ground 11 12
+Dec Ground 12 12
+Dec Ground 13 12
+Dec Ground 14 12
+Dec Ground 15 12
+Dec Ground 16 12
+Dec Ground 17 12
+Dec Ground 18 12
+
+Dec Ground 1 13
+Dec Ground 2 13
+Dec Ground 3 13
+Dec Ground 4 13
+Dec Ground 5 13
+Dec Ground 6 13
+Dec Ground 7 13
+Dec Ground 8 13
+Dec Ground 9 13
+Dec Ground 10 13
+Dec Ground 11 13
+Dec Ground 12 13
+Dec Ground 13 13
+Dec Ground 14 13
+Dec Ground 15 13
+Dec Ground 16 13
+Dec Ground 17 13
+Dec Ground 18 13
+
+# Add decorative bushes (no collision) scattered around
+Dec Bush 2 3
+Dec Bush 4 2
+Dec Bush 7 4
+Dec Bush 11 3
+Dec Bush 13 2
+Dec Bush 16 4
+Dec Bush 3 6
+Dec Bush 8 6
+Dec Bush 14 6
+Dec Bush 17 7
+Dec Bush 2 9
+Dec Bush 5 11
+Dec Bush 9 12
+Dec Bush 12 9
+Dec Bush 15 11
+Dec Bush 18 12
+Dec Bush 6 13
+Dec Bush 10 13
+Dec Bush 14 13
+
+# Add some bushes near walls for decoration
+Dec Bush 1 5
+Dec Bush 18 5
+Dec Bush 1 8
+Dec Bush 18 8
+Dec Bush 1 10
+Dec Bush 18 10
