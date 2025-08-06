@@ -39,6 +39,21 @@ void GameEngine::init()
             m_gameView.setSize(scaledWidth, scaledHeight);
             m_gameView.setCenter(scaledWidth / 2.0f, scaledHeight / 2.0f);
             
+            // Initialize global sound manager
+            m_globalSoundManager = std::make_shared<CSound>();
+            
+            // Load background music
+            m_globalSoundManager->addMusic("background", "assets/music/time_for_adventure.mp3");
+            
+            // Load global sound effects
+            m_globalSoundManager->addSound("menu_select", "assets/sounds/tap.wav");
+            m_globalSoundManager->addSound("menu_confirm", "assets/sounds/jump.wav");
+            
+            // Start background music immediately
+            m_globalSoundManager->playMusic("background", true, 25.0f); // Loop, 25% volume
+            
+            std::printf("Global sound system initialized with background music\n");
+            
             // Initialize letterbox rectangles with default values first
             m_letterboxTop.setSize(sf::Vector2f(0.0f, 0.0f));
             m_letterboxTop.setPosition(0.0f, 0.0f);

@@ -22,13 +22,10 @@ void Scene_Play::init(const std::string &levelPath)
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_tileText.setFillColor(sf::Color::White);
 
-    // Initialize sound manager
+    // Initialize local sound manager for scene-specific sounds
     m_soundManager = std::make_shared<CSound>();
     
-    // Load background music
-    m_soundManager->addMusic("background", "assets/music/time_for_adventure.mp3");
-    
-    // Load sound effects
+    // Load scene-specific sound effects (not background music)
     m_soundManager->addSound("walk", "assets/sounds/tap.wav");
     m_soundManager->addSound("hurt", "assets/sounds/hurt.wav");
     m_soundManager->addSound("jump", "assets/sounds/jump.wav");
@@ -36,10 +33,8 @@ void Scene_Play::init(const std::string &levelPath)
     m_soundManager->addSound("power_up", "assets/sounds/power_up.wav");
     m_soundManager->addSound("explosion", "assets/sounds/explosion.wav");
     
-    // Start background music
-    m_soundManager->playMusic("background", true, 30.0f); // Loop, 30% volume
-    
-    std::printf("Sound system initialized with background music and sound effects\n");
+    // Background music is handled by global sound manager - no need to start it here
+    std::printf("Scene_Play sound effects loaded (background music handled globally)\n");
 
     // load levels
     // Tile Ground 0 0

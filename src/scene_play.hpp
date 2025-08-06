@@ -20,7 +20,7 @@ protected:
     const Vec2 m_tileSize = {static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)};
     
     // Grid movement timing control
-    float m_changeGridSleep = 0.2f; // Delay in seconds after each grid movement (prevents multiple moves)
+    float m_changeGridSleep = 0.5f; // Delay in seconds after each grid movement (prevents multiple moves)
     float m_gridMoveTimer = 0.0f;   // Current timer for grid movement cooldown
     
     sf::Text m_tileText;

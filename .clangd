@@ -1,0 +1,20 @@
+CompileFlags:
+  Add: 
+    - -std=c++17
+    - -Wall
+    - -Wextra
+  Remove: 
+    - -W*
+    - -fcoroutines-ts
+
+Diagnostics:
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
+
+Hover:
+  ShowAKA: true

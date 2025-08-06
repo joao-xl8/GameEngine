@@ -50,6 +50,11 @@ void Scene_Options::sDoAction(const Action &action)
     {
         if (action.getName() == "UP")
         {
+            // Play menu navigation sound
+            if (auto globalSound = m_game->getGlobalSoundManager()) {
+                globalSound->playSound("menu_select", 60.0f);
+            }
+            
             if (m_menuIndex > 0)
             {
                 m_menuIndex--;
@@ -61,10 +66,20 @@ void Scene_Options::sDoAction(const Action &action)
         }
         else if (action.getName() == "DOWN")
         {
+            // Play menu navigation sound
+            if (auto globalSound = m_game->getGlobalSoundManager()) {
+                globalSound->playSound("menu_select", 60.0f);
+            }
+            
             m_menuIndex = (m_menuIndex + 1) % m_menuStrings.size();
         }
         else if (action.getName() == "SELECT")
         {
+            // Play menu confirm sound
+            if (auto globalSound = m_game->getGlobalSoundManager()) {
+                globalSound->playSound("menu_confirm", 80.0f);
+            }
+            
             // Add bounds checking to prevent crashes
             if (m_menuIndex >= 0 && m_menuIndex < m_menuStrings.size())
             {

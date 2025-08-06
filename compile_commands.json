@@ -1,0 +1,338 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/main.o",
+      "main.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/main.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/animation.o",
+      "src/animation.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/animation.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/animation.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/assets.o",
+      "src/assets.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/assets.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/assets.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/entity_manager.o",
+      "src/entity_manager.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/entity_manager.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/entity_manager.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/entity.o",
+      "src/entity.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/entity.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/entity.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/game_engine.o",
+      "src/game_engine.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/game_engine.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/game_engine.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/scene_menu.o",
+      "src/scene_menu.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/scene_menu.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/scene_menu.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/scene_options.o",
+      "src/scene_options.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/scene_options.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/scene_options.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/scene_play.o",
+      "src/scene_play.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/scene_play.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/scene_play.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/scene.o",
+      "src/scene.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/scene.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/scene.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/src/vec2.o",
+      "src/vec2.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/src/vec2.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/src/vec2.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/include/imgui/imgui_draw.o",
+      "include/imgui/imgui_draw.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/include/imgui/imgui_draw.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/include/imgui/imgui_draw.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/include/imgui/imgui_tables.o",
+      "include/imgui/imgui_tables.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/include/imgui/imgui_tables.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/include/imgui/imgui_tables.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/include/imgui/imgui_widgets.o",
+      "include/imgui/imgui_widgets.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/include/imgui/imgui_widgets.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/include/imgui/imgui_widgets.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/include/imgui/imgui-SFML.o",
+      "include/imgui/imgui-SFML.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/include/imgui/imgui-SFML.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/include/imgui/imgui-SFML.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-DNDEBUG",
+      "-O3",
+      "-I/opt/homebrew/opt/sfml@2/include",
+      "-Iinclude/imgui",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/release/include/imgui/imgui.o",
+      "include/imgui/imgui.cpp"
+    ],
+    "directory": "/Users/joaopauloarnoldbarros/Developer/GameEngine",
+    "file": "/Users/joaopauloarnoldbarros/Developer/GameEngine/include/imgui/imgui.cpp",
+    "output": "/Users/joaopauloarnoldbarros/Developer/GameEngine/build/release/include/imgui/imgui.o"
+  }
+]

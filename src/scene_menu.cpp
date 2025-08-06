@@ -18,6 +18,9 @@ void Scene_Menu::init()
     m_menuStrings.push_back("Start Game");
     m_menuStrings.push_back("Options");
     m_menuStrings.push_back("Exit");
+    
+    // Background music is handled by global sound manager - already playing
+    std::printf("Scene_Menu initialized (background music continues from global manager)\n");
 }
 
 void Scene_Menu::sRender()
@@ -51,6 +54,11 @@ void Scene_Menu::sDoAction(const Action &action)
     {
         if (action.getName() == "UP")
         {
+            // Play menu navigation sound
+            if (auto globalSound = m_game->getGlobalSoundManager()) {
+                globalSound->playSound("menu_select", 60.0f);
+            }
+            
             if (m_menuIndex > 0)
             {
                 m_menuIndex--;
@@ -62,10 +70,20 @@ void Scene_Menu::sDoAction(const Action &action)
         }
         else if (action.getName() == "DOWN")
         {
+            // Play menu navigation sound
+            if (auto globalSound = m_game->getGlobalSoundManager()) {
+                globalSound->playSound("menu_select", 60.0f);
+            }
+            
             m_menuIndex = (m_menuIndex + 1) % m_menuStrings.size();
         }
         else if (action.getName() == "SELECT")
         {
+            // Play menu confirm sound
+            if (auto globalSound = m_game->getGlobalSoundManager()) {
+                globalSound->playSound("menu_confirm", 80.0f);
+            }
+            
             // Add bounds checking to prevent crashes
             if (m_menuIndex >= 0 && m_menuIndex < m_menuStrings.size())
             {

@@ -21,6 +21,7 @@ protected:
     sf::RenderWindow m_window;
     std::map<std::string, std::shared_ptr<Scene>> m_scenes;
     Assets assets;
+    std::shared_ptr<CSound> m_globalSoundManager;  // Global sound manager for persistent music
     std::string m_currentScene;
     bool m_running = true;
     bool m_fullscreen = false;
@@ -42,6 +43,7 @@ protected:
 public:
     sf::RenderWindow &window();
     sf::View &getGameView() { return m_gameView; }  // Add method to access game view
+    std::shared_ptr<CSound> getGlobalSoundManager() { return m_globalSoundManager; }  // Access global sound manager
     void setZoom(float zoomFactor);  // Add method to control zoom level
     GameEngine()
     {
