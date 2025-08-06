@@ -2,9 +2,8 @@
 #include <memory>
 #include <map>
 #include <typeindex>
-#include <typeinfo>
 #include <string>
-#include "components.hpp"
+#include "components/base_component.hpp"
 
 
 class Entity {

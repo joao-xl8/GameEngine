@@ -5,7 +5,9 @@ GameEngine.exe
 *.exe
 *.out
 a.out
-
+.cache/
+.cache/*
+cache
 # Build directories
 build/
 cmake_build/
@@ -13,6 +15,7 @@ bin/
 obj/
 debug/
 release/
+*clangd*
 
 # Object files
 *.o

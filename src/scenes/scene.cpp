@@ -1,5 +1,5 @@
 #include "scene.hpp"
-#include "game_engine.hpp"
+#include "../game_engine.hpp"
 
 void Scene::registerAction(int inputKey, std::string actionName)
 {

@@ -26,6 +26,7 @@ RELEASE_FLAGS = -DNDEBUG -O3
 # Source files
 SOURCES = main.cpp \
           $(wildcard $(SRC_DIR)/*.cpp) \
+          $(wildcard $(SRC_DIR)/scenes/*.cpp) \
           $(wildcard $(IMGUI_DIR)/imgui*.cpp)
 
 # Object files
@@ -122,6 +123,7 @@ all: $(TARGET)
 $(BUILD_DIR):
 	@echo "Creating build directory..."
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR) 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)
+	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)scenes 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/scenes
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(IMGUI_DIR) 2>/dev/null || mkdir -p $(BUILD_DIR)/$(IMGUI_DIR)
 
 # Compile object files

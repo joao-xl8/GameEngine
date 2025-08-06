@@ -5,6 +5,7 @@ class Vec2
 public:
     float x = 0;
     float y = 0;
+    Vec2() = default;
     Vec2(float xin, float yin);
     ~Vec2(){};
     Vec2 operator+(const Vec2 &rhs) const;

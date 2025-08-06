@@ -1,0 +1,145 @@
+npc_name: "Mysterious Merchant"
+starting_node: 0
+
+dialogue_tree:
+  0:
+    id: 0
+    speaker: "Mysterious Merchant"
+    text: "Ah, a customer! I have rare wares from distant lands. Care to see what I offer?"
+    choices:
+      - text: "Show me your magical items."
+        next_node: 1
+        condition: null
+        action: null
+      - text: "Do you have any weapons?"
+        next_node: 2
+        condition: null
+        action: null
+      - text: "You look suspicious. I'm leaving."
+        next_node: 3
+        condition: null
+        action: null
+    on_enter: "play_sound:merchant_greeting"
+    on_exit: null
+    is_end_node: false
+
+  1:
+    id: 1
+    speaker: "Mysterious Merchant"
+    text: "Magical items, you say? I have just the thing... This amulet protects against dark magic."
+    choices:
+      - text: "How much for the amulet?"
+        next_node: 4
+        condition: null
+        action: null
+      - text: "What else do you have?"
+        next_node: 0
+        condition: null
+        action: null
+      - text: "I'm not interested in magic."
+        next_node: 2
+        condition: null
+        action: null
+    on_enter: null
+    on_exit: null
+    is_end_node: false
+
+  2:
+    id: 2
+    speaker: "Mysterious Merchant"
+    text: "Weapons? Indeed! This blade was forged in dragon fire. It never dulls and cuts through armor like silk."
+    choices:
+      - text: "That sounds expensive..."
+        next_node: 5
+        condition: null
+        action: null
+      - text: "I'll take it! How much?"
+        next_node: 6
+        condition: "has_gold:500"
+        action: null
+      - text: "Show me something else."
+        next_node: 0
+        condition: null
+        action: null
+    on_enter: null
+    on_exit: null
+    is_end_node: false
+
+  3:
+    id: 3
+    speaker: "Mysterious Merchant"
+    text: "Suspicious? Me? I'm just a humble merchant trying to make an honest living!"
+    choices:
+      - text: "Sorry, I didn't mean to offend."
+        next_node: 0
+        condition: null
+        action: "add_reputation:5"
+      - text: "I still don't trust you."
+        next_node: -1
+        condition: null
+        action: "set_flag:distrusts_merchant"
+    on_enter: null
+    on_exit: null
+    is_end_node: false
+
+  4:
+    id: 4
+    speaker: "Mysterious Merchant"
+    text: "For you, my friend, only 200 gold pieces. A bargain for such powerful protection!"
+    choices:
+      - text: "I'll buy it."
+        next_node: -1
+        condition: "has_gold:200"
+        action: "buy_item:protection_amulet:200"
+      - text: "Too expensive for me."
+        next_node: 0
+        condition: null
+        action: null
+    on_enter: null
+    on_exit: null
+    is_end_node: false
+
+  5:
+    id: 5
+    speaker: "Mysterious Merchant"
+    text: "Expensive, yes, but worth every coin! However, for a fellow adventurer, I could part with it for 500 gold."
+    choices:
+      - text: "Deal!"
+        next_node: 6
+        condition: "has_gold:500"
+        action: null
+      - text: "Still too much."
+        next_node: 0
+        condition: null
+        action: null
+    on_enter: null
+    on_exit: null
+    is_end_node: false
+
+  6:
+    id: 6
+    speaker: "Mysterious Merchant"
+    text: "Excellent choice! This blade will serve you well in your adventures. May it bring you victory!"
+    choices:
+      - text: "Thank you!"
+        next_node: -1
+        condition: null
+        action: "buy_item:dragon_blade:500"
+    on_enter: null
+    on_exit: "set_flag:bought_dragon_blade"
+    is_end_node: true
+
+# Metadata for the dialogue system
+metadata:
+  version: "1.0"
+  author: "Game Designer"
+  description: "Mysterious merchant encounter dialogue"
+  tags: ["merchant", "shop", "magical_items", "weapons"]
+  
+# Action definitions for reference
+actions:
+  buy_item: "format: item_id:price - Purchases item and deducts gold"
+  set_flag: "format: flag_name - Sets a boolean game flag"
+  add_reputation: "format: amount - Adds to reputation score"
+  has_gold: "format: amount - Condition: check if player has enough gold"
+  play_sound: "format: sound_name - Plays a sound effect"

@@ -1,9 +1,7 @@
 #pragma once
-#include <memory>
 #include <map>
-#include "action.hpp"
-#include "entity_manager.hpp"
-#include "vec2.hpp"
+#include "../action.hpp"
+#include "../entity_manager.hpp"
 #include <SFML/Graphics.hpp>
 
 class GameEngine; 

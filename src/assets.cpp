@@ -1,4 +1,5 @@
 #include "assets.hpp"
+#include <fstream>
 // assets file
 // Texture TexGround assets/imgs/ground.png
 // Animation Stand Text Stand 1 0

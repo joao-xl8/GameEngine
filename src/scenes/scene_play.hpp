@@ -1,4 +1,5 @@
 #pragma once
+#include "../components/engine_components.hpp"
 #include "scene.hpp"
 
 class Scene_Play : public Scene

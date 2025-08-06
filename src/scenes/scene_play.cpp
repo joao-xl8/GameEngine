@@ -1,7 +1,8 @@
 #include "scene_play.hpp"
+#include "../components/common_components.hpp"
 #include "scene_menu.hpp"
-#include "game_engine.hpp"
-#include "components.hpp"
+#include "../game_engine.hpp"
+#include <fstream>
 #include <sstream>
 
 void Scene_Play::init(const std::string &levelPath)
@@ -121,7 +122,6 @@ void Scene_Play::sCamera()
             // Update the game view to match camera position (account for coordinate conversion)
             sf::View& gameView = m_game->getGameView();
             sf::Vector2f viewSize = gameView.getSize();
-            float screenCenterY = viewSize.y / 2.0f;
             gameView.setCenter(camera->position.x, (viewSize.y - 128.0f) - camera->position.y);
             
             // Enhanced debug output
@@ -591,7 +591,6 @@ void Scene_Play::spawnPlayer()
     
     // Get the game view size to calculate proper center
     sf::Vector2f viewSize = gameView.getSize();
-    float screenCenterY = viewSize.y / 2.0f;
     
     // Set camera center accounting for coordinate system conversion
     gameView.setCenter(startPos.x, (viewSize.y - 128.0f) - startPos.y);

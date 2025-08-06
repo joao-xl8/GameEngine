@@ -1,12 +1,9 @@
 #pragma once
-#include <iostream>
 #include <map>
 #include <string>
-#include <stdexcept>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "animation.hpp"
-#include <fstream>
 
 class Assets {
     std::map<std::string, sf::Texture> m_textures;

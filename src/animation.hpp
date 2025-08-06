@@ -2,11 +2,11 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include "vec2.hpp"
+
 class Animation {
     sf::Sprite m_sprite;
     size_t m_frameCount = 1;
     size_t m_currentFrame = 0;
-    size_t m_frameSpeed = 0;
     Vec2 m_frameSize = { 1, 1};
     std::string m_name = "none";
 public:

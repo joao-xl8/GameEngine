@@ -1,0 +1,65 @@
+# Simple Dialogue Format
+# Lines starting with # are comments
+# Format: SPEAKER: Text
+# Choices are prefixed with > and followed by ->NODE_ID or ->END
+
+NPC_NAME: Shopkeeper
+START_NODE: 0
+
+NODE_0:
+Shopkeeper: Welcome to my shop! What can I do for you today?
+> "Show me your wares." ->1
+> "I'm just looking around." ->2
+> "Goodbye." ->END
+
+NODE_1:
+Shopkeeper: Here's what I have in stock. Everything's fairly priced!
+ACTION: open_shop_menu
+> "I'll take a look." ->END
+> "Maybe later." ->0
+
+NODE_2:
+Shopkeeper: Feel free to browse! Let me know if you need anything.
+> "Actually, I'd like to buy something." ->1
+> "Thanks, I'll be going now." ->END
+
+# Another example - Quest Giver
+NPC_NAME: Guard Captain
+START_NODE: 0
+
+NODE_0:
+Guard Captain: Halt! State your business in the city.
+> "I'm here on official business." ->1 [CONDITION:has_papers]
+> "Just visiting." ->2
+> "None of your concern!" ->3
+
+NODE_1:
+Guard Captain: Your papers check out. Welcome to the city, agent.
+ACTION: set_flag:city_access_granted
+> "Thank you, captain." ->END
+
+NODE_2:
+Guard Captain: Very well. Stay out of trouble while you're here.
+> "Of course, sir." ->END
+> "What kind of trouble?" ->4
+
+NODE_3:
+Guard Captain: Watch your tone, stranger! One more outburst and you'll be in the dungeons!
+ACTION: add_reputation:-5
+> "Sorry, I didn't mean to be rude." ->2
+> "Try it!" ->5
+
+NODE_4:
+Guard Captain: Bandits have been spotted near the trade routes. We could use help dealing with them.
+> "I can help with that." ->6
+> "That's not my problem." ->END
+
+NODE_5:
+Guard Captain: That's it! Guards, arrest this troublemaker!
+ACTION: start_combat:city_guards
+END_NODE: true
+
+NODE_6:
+Guard Captain: Excellent! Clear out the bandit camp and I'll reward you handsomely.
+ACTION: start_quest:bandit_camp
+> "Consider it done." ->END

@@ -1,17 +1,10 @@
 #pragma once
-#include <iostream>
 #include <memory>
-#include <fstream>
-#include <vector>
 #include <string>
-
 #include <SFML/Graphics.hpp>
-#include "imgui.h"
+#include "components/engine_components.hpp"
 #include "imgui-SFML.h"
-
-#include "entity.hpp"
 #include "assets.hpp"
-#include "action.hpp"
 
 class Scene;
 

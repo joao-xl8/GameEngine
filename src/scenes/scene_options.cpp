@@ -1,7 +1,6 @@
 #include "scene_menu.hpp"
 #include "scene_options.hpp"
-#include "scene_play.hpp"
-#include "game_engine.hpp"
+#include "../game_engine.hpp"
 #include <exception>
 
 void Scene_Options::init()
@@ -27,7 +26,7 @@ void Scene_Options::sRender()
     m_menuText.setFillColor(sf::Color::White);
     m_menuText.setPosition(100, 100);
     m_game->window().draw(m_menuText);
-    for (int i = 0; i < m_menuStrings.size(); i++)
+    for (size_t i = 0; i < m_menuStrings.size(); i++)
     {
         m_menuText.setString(m_menuStrings[i]);
         m_menuText.setCharacterSize(16);
