@@ -1,5 +1,7 @@
 #include "scene_menu.hpp"
 #include "scene_options.hpp"
+#include "scene_viewport_config.hpp"
+#include "scene_sound_settings.hpp"
 #include "../game_engine.hpp"
 #include <exception>
 
@@ -14,7 +16,8 @@ void Scene_Options::init()
 
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_menuText.setFillColor(sf::Color::White);
-    m_menuStrings.push_back("Full Screen");
+    m_menuStrings.push_back("Screen Settings");
+    m_menuStrings.push_back("Sound Settings");
     m_menuStrings.push_back("Back");
 }
 
@@ -121,13 +124,22 @@ void Scene_Options::sDoAction(const Action &action)
                         m_game->quit();
                     }
                 }
-                else if (m_menuStrings[m_menuIndex] == "Full Screen")
+                else if (m_menuStrings[m_menuIndex] == "Screen Settings")
                 {
-                    // Safe fullscreen toggle
                     try {
-                        m_game->toggleFullscreen(m_game->window());
+                        m_game->changeScene("ScreenConfig", std::make_shared<Scene_ScreenConfig>(m_game));
                     } catch (const std::exception& e) {
-                        // Ignore fullscreen toggle errors
+                        // If scene creation fails, just quit to prevent crash
+                        m_game->quit();
+                    }
+                }
+                else if (m_menuStrings[m_menuIndex] == "Sound Settings")
+                {
+                    try {
+                        m_game->changeScene("SoundSettings", std::make_shared<Scene_SoundSettings>(m_game));
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit to prevent crash
+                        m_game->quit();
                     }
                 }
             }

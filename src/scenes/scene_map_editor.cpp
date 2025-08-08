@@ -18,8 +18,10 @@ Scene_MapEditor::Scene_MapEditor(GameEngine* game)
 
 void Scene_MapEditor::init()
 {
-    // Register input actions
+    // Register standardized input actions
     registerAction(sf::Keyboard::Escape, "BACK");
+    
+    // Movement controls (WASD + Arrow keys)
     registerAction(sf::Keyboard::W, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
     registerAction(sf::Keyboard::A, "LEFT");
@@ -28,14 +30,33 @@ void Scene_MapEditor::init()
     registerAction(sf::Keyboard::Down, "DOWN");
     registerAction(sf::Keyboard::Left, "LEFT");
     registerAction(sf::Keyboard::Right, "RIGHT");
-    registerAction(sf::Keyboard::Space, "PLACE");
-    registerAction(sf::Keyboard::X, "REMOVE");
+    
+    // Confirm actions (Space/Enter/Left Click)
+    registerAction(sf::Keyboard::Space, "CONFIRM");
+    registerAction(sf::Keyboard::Enter, "CONFIRM");
+    // Note: Mouse clicks will be handled separately in mouse event handling
+    
+    // Cancel/Remove actions (Backspace/C/Right Click)
+    registerAction(sf::Keyboard::Backspace, "CANCEL");
+    registerAction(sf::Keyboard::C, "CANCEL");
+    // Note: Right click will be handled separately
+    
+    // Asset/Type selection
     registerAction(sf::Keyboard::Q, "PREV_ASSET");
     registerAction(sf::Keyboard::E, "NEXT_ASSET");
     registerAction(sf::Keyboard::Z, "PREV_TYPE");
-    registerAction(sf::Keyboard::C, "NEXT_TYPE");
+    // Note: C is now used for CANCEL, so we'll use V for next type
+    registerAction(sf::Keyboard::V, "NEXT_TYPE");
+    
+    // File operations
     registerAction(sf::Keyboard::F, "SAVE");
     registerAction(sf::Keyboard::L, "LOAD");
+    
+    // Register only number keys for filename input (development use)
+    for (int i = sf::Keyboard::Num0; i <= sf::Keyboard::Num9; i++) {
+        registerAction(static_cast<sf::Keyboard::Key>(i), "NUMBER_" + std::to_string(i - sf::Keyboard::Num0));
+    }
+    
     
     // Mouse support - use different approach to avoid key conflicts
     // We'll handle mouse input differently in the action system
@@ -161,6 +182,18 @@ void Scene_MapEditor::update()
 void Scene_MapEditor::sDoAction(const Action& action)
 {
     if (action.getType() == "START") {
+        // Handle save dialog input
+        if (m_showSaveDialog) {
+            handleSaveDialogInput(action);
+            return;
+        }
+        
+        // Handle overwrite dialog input
+        if (m_showOverwriteDialog) {
+            handleOverwriteDialogInput(action);
+            return;
+        }
+        
         // If level selector is open, handle its input
         if (m_showLevelSelector) {
             handleLevelSelectorInput(action);
@@ -186,10 +219,10 @@ void Scene_MapEditor::sDoAction(const Action& action)
             m_cursorPos.x++;
             updateCamera();
         }
-        else if (action.getName() == "PLACE") {
+        else if (action.getName() == "CONFIRM") {
             placeObject();
         }
-        else if (action.getName() == "REMOVE") {
+        else if (action.getName() == "CANCEL") {
             removeObject();
         }
         else if (action.getName() == "PREV_ASSET") {
@@ -217,12 +250,18 @@ void Scene_MapEditor::sDoAction(const Action& action)
             m_currentType = m_availableTypes[m_typeIndex];
         }
         else if (action.getName() == "SAVE") {
-            saveLevel();
+            if (!m_showSaveDialog && !m_showOverwriteDialog && !m_showLevelSelector) {
+                m_showSaveDialog = true;
+                m_inputFileName = "";
+                m_isInputMode = true;
+            }
         }
         else if (action.getName() == "LOAD") {
-            // Show level selector instead of directly loading level1.txt
-            scanAvailableLevels();
-            m_showLevelSelector = true;
+            if (!m_showSaveDialog && !m_showOverwriteDialog && !m_showLevelSelector) {
+                // Show level selector instead of directly loading level1.txt
+                scanAvailableLevels();
+                m_showLevelSelector = true;
+            }
         }
     }
 }
@@ -338,7 +377,7 @@ void Scene_MapEditor::scanAvailableLevels()
 
 void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
 {
-    if (action.getName() == "BACK") {
+    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
         m_showLevelSelector = false;
     }
     else if (action.getName() == "UP") {
@@ -351,7 +390,7 @@ void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
     else if (action.getName() == "DOWN") {
         m_selectedLevelIndex = (m_selectedLevelIndex + 1) % m_availableLevels.size();
     }
-    else if (action.getName() == "PLACE" || action.getName() == "LOAD") {
+    else if (action.getName() == "CONFIRM" || action.getName() == "LOAD") {
         // Load selected level from levels directory
         if (!m_availableLevels.empty()) {
             std::string selectedFile = "metadata/levels/" + m_availableLevels[m_selectedLevelIndex];
@@ -359,6 +398,84 @@ void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
         }
         m_showLevelSelector = false;
     }
+}
+
+void Scene_MapEditor::handleSaveDialogInput(const Action& action)
+{
+    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+        // Cancel save dialog
+        m_showSaveDialog = false;
+        m_inputFileName = "";
+        m_isInputMode = false;
+    }
+    else if (action.getName() == "CONFIRM" || action.getName() == "SAVE") {
+        // Confirm filename
+        if (!m_inputFileName.empty()) {
+            std::string filename = "level_" + m_inputFileName;
+            std::string fullPath = "metadata/levels/" + filename + ".txt";
+            
+            if (fileExists(fullPath)) {
+                // File exists, show overwrite dialog
+                m_saveFileName = fullPath;
+                m_showSaveDialog = false;
+                m_showOverwriteDialog = true;
+            } else {
+                // File doesn't exist, save directly
+                saveLevel(fullPath);
+                m_showSaveDialog = false;
+                m_isInputMode = false;
+            }
+        }
+    }
+    else if (action.getName() == "BACKSPACE") {
+        // Remove last character (backspace still works for editing)
+        if (!m_inputFileName.empty()) {
+            m_inputFileName.pop_back();
+        }
+    }
+    else if (action.getName().substr(0, 7) == "NUMBER_") {
+        // Add number to filename
+        int numberIndex = std::stoi(action.getName().substr(7));
+        char number = '0' + numberIndex;
+        if (m_inputFileName.length() < 10) { // Limit to 10 digits
+            m_inputFileName += number;
+        }
+    }
+}
+
+void Scene_MapEditor::handleOverwriteDialogInput(const Action& action)
+{
+    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+        // Cancel and go back to save dialog
+        m_showOverwriteDialog = false;
+        m_showSaveDialog = true;
+    }
+    else if (action.getName() == "UP" || action.getName() == "DOWN") {
+        // Toggle between Yes/No (we'll implement this in the draw method)
+    }
+    else if (action.getName() == "CONFIRM" || action.getName() == "SAVE") {
+        // Confirm overwrite
+        saveLevel(m_saveFileName);
+        m_showOverwriteDialog = false;
+        m_isInputMode = false;
+    }
+}
+
+bool Scene_MapEditor::fileExists(const std::string& filename)
+{
+    std::ifstream file(filename);
+    return file.good();
+}
+
+std::string Scene_MapEditor::sanitizeFileName(const std::string& input)
+{
+    std::string result;
+    for (char c : input) {
+        if (std::isdigit(c)) {
+            result += c;
+        }
+    }
+    return result;
 }
 
 void Scene_MapEditor::saveLevel()
@@ -393,6 +510,36 @@ void Scene_MapEditor::saveLevel()
     
     file.close();
     std::cout << "Level saved to " << filename << " (" << m_infiniteGrid.size() << " objects)" << std::endl;
+    m_currentFileName = filename;
+}
+
+void Scene_MapEditor::saveLevel(const std::string& filename)
+{
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cout << "Failed to save level to " << filename << std::endl;
+        return;
+    }
+    
+    file << "# Level created with Map Editor\n";
+    file << "# Format: Type SpriteName X Y\n\n";
+    
+    // Save all placed objects from infinite grid
+    int objectCount = 0;
+    for (const auto& pair : m_infiniteGrid) {
+        int x = pair.first.first;
+        int y = pair.first.second;
+        const GridCell& cell = pair.second;
+        
+        if (cell.occupied) {
+            file << cell.type << " " << cell.asset 
+                 << " " << x << " " << y << "\n";
+            objectCount++;
+        }
+    }
+    
+    file.close();
+    std::cout << "Level saved to " << filename << " (" << objectCount << " objects)" << std::endl;
     m_currentFileName = filename;
 }
 
@@ -459,8 +606,10 @@ void Scene_MapEditor::sRender()
     drawUI();
     drawAssetPreview();
     
-    // Draw level selector on top of everything if active
+    // Draw dialogs on top of everything if active
     drawLevelSelector();
+    drawSaveDialog();
+    drawOverwriteDialog();
 }
 
 void Scene_MapEditor::drawInfiniteGrid()
@@ -525,7 +674,7 @@ void Scene_MapEditor::drawPlacedObjects()
 void Scene_MapEditor::drawUI()
 {
     // Draw UI background - increased height to accommodate all text
-    sf::RectangleShape uiBackground(sf::Vector2f(320, 280));
+    sf::RectangleShape uiBackground(sf::Vector2f(320, 300));
     uiBackground.setPosition(10, 10);
     uiBackground.setFillColor(sf::Color(0, 0, 0, 180));
     uiBackground.setOutlineColor(sf::Color::White);
@@ -535,6 +684,20 @@ void Scene_MapEditor::drawUI()
     // Draw UI text with smaller font size to fit more content
     std::ostringstream oss;
     oss << "MAP EDITOR (Infinite Grid)\n";
+    
+    // Show current loaded map info
+    if (!m_currentFileName.empty()) {
+        // Extract just the filename from the full path
+        std::string displayName = m_currentFileName;
+        size_t lastSlash = displayName.find_last_of("/\\");
+        if (lastSlash != std::string::npos) {
+            displayName = displayName.substr(lastSlash + 1);
+        }
+        oss << "Current Map: " << displayName << "\n";
+    } else {
+        oss << "Current Map: <new map>\n";
+    }
+    
     oss << "Current Type: " << m_currentType << "\n";
     oss << "Current Asset: " << m_currentAsset << "\n";
     oss << "Cursor: (" << static_cast<int>(m_cursorPos.x) << ", " << static_cast<int>(m_cursorPos.y) << ")\n";
@@ -542,12 +705,10 @@ void Scene_MapEditor::drawUI()
     oss << "Save to: metadata/levels/\n\n";
     oss << "Controls:\n";
     oss << "WASD/Arrows: Move cursor\n";
-    oss << "Space: Place object\n";
-    oss << "X: Remove object\n";
-    oss << "Left Click: Place at mouse\n";
-    oss << "Right Click: Remove at mouse\n";
+    oss << "Space/Enter/LClick: Confirm/Place\n";
+    oss << "Backspace/C/RClick: Cancel/Remove\n";
     oss << "Q/E: Change asset\n";
-    oss << "Z/C: Change type\n";
+    oss << "Z/V: Change type\n";
     oss << "F: Save level\n";
     oss << "L: Select level to load\n";
     oss << "ESC: Back to menu";
@@ -643,6 +804,83 @@ void Scene_MapEditor::drawLevelSelector()
     m_levelSelectorText.setString(oss.str());
     m_levelSelectorText.setPosition(selectorX + 20, selectorY + 20);
     m_game->window().draw(m_levelSelectorText);
+}
+
+void Scene_MapEditor::drawSaveDialog()
+{
+    if (!m_showSaveDialog) return;
+    
+    // Calculate dialog size and position
+    float dialogWidth = 500;
+    float dialogHeight = 200;
+    sf::Vector2u windowSize = m_game->window().getSize();
+    float dialogX = (windowSize.x - dialogWidth) / 2;
+    float dialogY = (windowSize.y - dialogHeight) / 2;
+    
+    // Draw background
+    sf::RectangleShape background;
+    background.setSize(sf::Vector2f(dialogWidth, dialogHeight));
+    background.setPosition(dialogX, dialogY);
+    background.setFillColor(sf::Color(40, 40, 60));
+    background.setOutlineColor(sf::Color::White);
+    background.setOutlineThickness(2);
+    m_game->window().draw(background);
+    
+    // Draw dialog text
+    sf::Text dialogText;
+    dialogText.setFont(m_game->getAssets().getFont("ShareTech"));
+    dialogText.setCharacterSize(16);
+    dialogText.setFillColor(sf::Color::White);
+    
+    std::ostringstream oss;
+    oss << "SAVE LEVEL\n\n";
+    oss << "Enter level number (numbers only):\n";
+    oss << "Filename will be: level_" << m_inputFileName << ".txt\n\n";
+    oss << "Current input: " << m_inputFileName << "_\n\n";
+    oss << "Use number keys (0-9), Backspace to edit\n";
+    oss << "Press SPACE/ENTER to confirm, ESC to cancel";
+    
+    dialogText.setString(oss.str());
+    dialogText.setPosition(dialogX + 20, dialogY + 20);
+    m_game->window().draw(dialogText);
+}
+
+void Scene_MapEditor::drawOverwriteDialog()
+{
+    if (!m_showOverwriteDialog) return;
+    
+    // Calculate dialog size and position
+    float dialogWidth = 450;
+    float dialogHeight = 150;
+    sf::Vector2u windowSize = m_game->window().getSize();
+    float dialogX = (windowSize.x - dialogWidth) / 2;
+    float dialogY = (windowSize.y - dialogHeight) / 2;
+    
+    // Draw background
+    sf::RectangleShape background;
+    background.setSize(sf::Vector2f(dialogWidth, dialogHeight));
+    background.setPosition(dialogX, dialogY);
+    background.setFillColor(sf::Color(60, 40, 40));
+    background.setOutlineColor(sf::Color::Red);
+    background.setOutlineThickness(2);
+    m_game->window().draw(background);
+    
+    // Draw dialog text
+    sf::Text dialogText;
+    dialogText.setFont(m_game->getAssets().getFont("ShareTech"));
+    dialogText.setCharacterSize(16);
+    dialogText.setFillColor(sf::Color::White);
+    
+    std::ostringstream oss;
+    oss << "FILE ALREADY EXISTS\n\n";
+    oss << "The file already exists:\n";
+    oss << m_saveFileName << "\n\n";
+    oss << "Do you want to overwrite it?\n";
+    oss << "Press SPACE/ENTER to overwrite, ESC to cancel";
+    
+    dialogText.setString(oss.str());
+    dialogText.setPosition(dialogX + 20, dialogY + 20);
+    m_game->window().draw(dialogText);
 }
 
 Vec2 Scene_MapEditor::screenToGrid(const Vec2& screenPos)

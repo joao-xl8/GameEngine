@@ -49,23 +49,19 @@ void Scene_Loading::init()
 
 void Scene_Loading::setupVisuals()
 {
-    // Get the game view size instead of window size
+    // Get the game view for proper positioning (same approach as menu scene)
     sf::View gameView = m_game->getGameView();
     sf::Vector2f viewSize = gameView.getSize();
     sf::Vector2f viewCenter = gameView.getCenter();
     
-    // Calculate view bounds
-    float viewLeft = viewCenter.x - viewSize.x / 2;
-    float viewTop = viewCenter.y - viewSize.y / 2;
-    
-    // Set up background to cover the entire game view
+    // Set up background using the same approach as menu scene
     m_background.setSize(viewSize);
-    m_background.setPosition(viewLeft, viewTop);
-    m_background.setFillColor(sf::Color(20, 20, 30)); // Dark blue background
+    m_background.setPosition(viewCenter.x - viewSize.x / 2, viewCenter.y - viewSize.y / 2);
+    m_background.setFillColor(sf::Color(25, 35, 50)); // Dark blue-gray background
     
     // Set up loading text
     m_loadingText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_loadingText.setCharacterSize(32);
+    m_loadingText.setCharacterSize(36);
     m_loadingText.setFillColor(sf::Color::White);
     m_loadingText.setString("Loading...");
     
@@ -73,29 +69,29 @@ void Scene_Loading::setupVisuals()
     sf::FloatRect textBounds = m_loadingText.getLocalBounds();
     m_loadingText.setPosition(
         viewCenter.x - textBounds.width / 2,
-        viewCenter.y - 100
+        viewCenter.y - 80
     );
     
     // Set up progress text
     m_progressText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_progressText.setCharacterSize(18);
-    m_progressText.setFillColor(sf::Color(200, 200, 200));
+    m_progressText.setFillColor(sf::Color(180, 180, 200));
     
     // Set up progress bar in game view coordinates
-    float barWidth = 300; // Smaller to fit in game view
-    float barHeight = 20;
+    float barWidth = std::min(400.0f, viewSize.x * 0.6f); // Responsive width
+    float barHeight = 24;
     float barX = viewCenter.x - barWidth / 2;
-    float barY = viewCenter.y + 50;
+    float barY = viewCenter.y + 20;
     
     m_progressBarBackground.setSize(sf::Vector2f(barWidth, barHeight));
     m_progressBarBackground.setPosition(barX, barY);
-    m_progressBarBackground.setFillColor(sf::Color(60, 60, 60));
-    m_progressBarBackground.setOutlineColor(sf::Color::White);
+    m_progressBarBackground.setFillColor(sf::Color(40, 40, 60));
+    m_progressBarBackground.setOutlineColor(sf::Color(120, 120, 140));
     m_progressBarBackground.setOutlineThickness(2);
     
     m_progressBarFill.setSize(sf::Vector2f(0, barHeight));
     m_progressBarFill.setPosition(barX, barY);
-    m_progressBarFill.setFillColor(sf::Color(100, 200, 100)); // Green fill
+    m_progressBarFill.setFillColor(sf::Color(80, 160, 220)); // Nice blue fill
     
     updateProgress();
 }
@@ -159,17 +155,18 @@ void Scene_Loading::updateProgress()
     
     // Center progress text in game view
     sf::View gameView = m_game->getGameView();
+    sf::Vector2f viewSize = gameView.getSize();
     sf::Vector2f viewCenter = gameView.getCenter();
     sf::FloatRect textBounds = m_progressText.getLocalBounds();
     m_progressText.setPosition(
         viewCenter.x - textBounds.width / 2,
-        viewCenter.y + 20
+        viewCenter.y + 60
     );
     
-    // Update progress bar
-    float barWidth = 300; // Match the width from setupVisuals
+    // Update progress bar with responsive width
+    float barWidth = std::min(400.0f, viewSize.x * 0.6f); // Match setupVisuals
     float fillWidth = barWidth * progress;
-    m_progressBarFill.setSize(sf::Vector2f(fillWidth, 20));
+    m_progressBarFill.setSize(sf::Vector2f(fillWidth, 24)); // Match height from setupVisuals
 }
 
 void Scene_Loading::update()
@@ -181,6 +178,9 @@ void Scene_Loading::update()
         // Load one asset per frame to avoid blocking
         loadNextAsset();
     }
+    
+    // Call render method (this is required since GameEngine doesn't call sRender separately)
+    sRender();
     
     // Transition to next scene when loading is complete and minimum time has passed
     if (m_loadingComplete && m_loadingTimer >= m_minLoadingTime && m_nextScene) {
@@ -216,24 +216,38 @@ void Scene_Loading::sRender()
     m_game->window().draw(m_progressBarBackground);
     m_game->window().draw(m_progressBarFill);
     
-    // Add a simple loading animation (rotating dots)
+    // Add a smooth loading animation (pulsing dots)
     static float animTimer = 0;
     animTimer += m_game->getDeltaTime();
     
-    std::string dots = "";
-    int numDots = static_cast<int>(animTimer * 2) % 4;
-    for (int i = 0; i < numDots; i++) {
-        dots += ".";
+    // Create animated dots with different phases
+    sf::View gameView = m_game->getGameView();
+    sf::Vector2f viewCenter = gameView.getCenter();
+    
+    for (int i = 0; i < 3; i++) {
+        sf::CircleShape dot(4);
+        float phase = animTimer * 3.0f + i * 0.5f;
+        float alpha = (sin(phase) + 1.0f) * 0.5f; // Oscillate between 0 and 1
+        
+        dot.setFillColor(sf::Color(80, 160, 220, static_cast<sf::Uint8>(alpha * 255)));
+        dot.setPosition(
+            viewCenter.x + 120 + i * 15, 
+            viewCenter.y - 90
+        );
+        m_game->window().draw(dot);
     }
     
-    sf::Text animText;
-    animText.setFont(m_game->getAssets().getFont("ShareTech"));
-    animText.setCharacterSize(32);
-    animText.setFillColor(sf::Color::White);
-    animText.setString(dots);
-    animText.setPosition(m_loadingText.getPosition().x + m_loadingText.getLocalBounds().width + 10,
-                        m_loadingText.getPosition().y);
-    m_game->window().draw(animText);
+    // Add a subtle progress glow effect
+    if (m_totalAssets > 0) {
+        float progress = static_cast<float>(m_currentAssetIndex) / static_cast<float>(m_totalAssets);
+        if (progress > 0) {
+            sf::RectangleShape glow = m_progressBarFill;
+            glow.setFillColor(sf::Color(80, 160, 220, 60)); // Semi-transparent blue
+            glow.setSize(sf::Vector2f(glow.getSize().x, glow.getSize().y + 4));
+            glow.setPosition(glow.getPosition().x, glow.getPosition().y - 2);
+            m_game->window().draw(glow);
+        }
+    }
 }
 
 void Scene_Loading::onEnd()

@@ -21,7 +21,6 @@ void Scene_Menu::init()
     m_menuStrings.push_back("Start Game");
     m_menuStrings.push_back("Map Editor");
     m_menuStrings.push_back("Options");
-    m_menuStrings.push_back("Screen Settings");
     m_menuStrings.push_back("Exit");
     
     // Background music is handled by global sound manager - already playing
@@ -140,15 +139,6 @@ void Scene_Menu::sDoAction(const Action &action)
                     // Use try-catch to handle potential memory allocation failures
                     try {
                         m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
-                    } catch (const std::exception& e) {
-                        // If scene creation fails, just quit to prevent crash
-                        m_game->quit();
-                    }
-                }
-                else if (m_menuStrings[m_menuIndex] == "Screen Settings")
-                {
-                    try {
-                        m_game->changeScene("ScreenConfig", std::make_shared<Scene_ScreenConfig>(m_game));
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit to prevent crash
                         m_game->quit();

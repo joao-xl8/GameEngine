@@ -72,6 +72,7 @@ public:
     void setScalingMode(ViewportConfig::ScalingMode mode);
     void updateViewport(); // Public method to update viewport
     void toggleFullscreen(); // Toggle fullscreen mode
+    bool isFullscreen() const { return m_fullscreen; } // Get fullscreen state
     
     // Configuration file methods
     void loadScreenConfig();

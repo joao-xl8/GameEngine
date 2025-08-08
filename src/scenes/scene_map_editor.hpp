@@ -55,7 +55,10 @@ protected:
     // File management
     std::string m_currentFileName;
     bool m_showSaveDialog = false;
+    bool m_showOverwriteDialog = false;
     std::string m_saveFileName;
+    std::string m_inputFileName;
+    bool m_isInputMode = false;
     
     void init();
     void update();
@@ -68,12 +71,19 @@ protected:
     void drawAssetPreview();
     void drawPlacedObjects();
     void drawLevelSelector();
+    void drawSaveDialog();
+    void drawOverwriteDialog();
     void scanAvailableLevels();
     void handleLevelSelectorInput(const Action& action);
+    void handleSaveDialogInput(const Action& action);
+    void handleOverwriteDialogInput(const Action& action);
     void placeObject();
     void removeObject();
     void saveLevel();
+    void saveLevel(const std::string& filename);
     void loadLevel(const std::string& filename);
+    bool fileExists(const std::string& filename);
+    std::string sanitizeFileName(const std::string& input);
     Vec2 screenToGrid(const Vec2& screenPos);
     Vec2 gridToScreen(const Vec2& gridPos);
     Vec2 getVisibleGridMin();

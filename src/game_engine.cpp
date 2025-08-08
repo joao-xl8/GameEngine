@@ -12,13 +12,25 @@ void GameEngine::init()
         // Load screen configuration first
         loadScreenConfig();
         
-        // Create window with size from loaded viewport config
-        m_window.create(sf::VideoMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight), "Game Engine", sf::Style::Default);
+        // Create window with size and mode from loaded viewport config
+        sf::VideoMode windowMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight);
+        sf::Uint32 windowStyle = m_fullscreen ? sf::Style::Fullscreen : sf::Style::Default;
+        
+        // If fullscreen mode was loaded, validate the resolution
+        if (m_fullscreen && !windowMode.isValid()) {
+            std::cout << "Configured fullscreen resolution not supported, using desktop resolution" << std::endl;
+            windowMode = sf::VideoMode::getDesktopMode();
+        }
+        
+        m_window.create(windowMode, "Game Engine", windowStyle);
         if (!m_window.isOpen()) {
             std::cerr << "Failed to create SFML window" << std::endl;
             m_running = false;
             return;
         }
+        
+        std::cout << "Window created: " << windowMode.width << "x" << windowMode.height 
+                  << " (" << (m_fullscreen ? "fullscreen" : "windowed") << ")" << std::endl;
 
         // Initialize ImGui with error checking
         if (ImGui::SFML::Init(m_window)) {
@@ -317,13 +329,21 @@ void GameEngine::toggleFullscreen(sf::RenderWindow &currentWindow)
         
         sf::VideoMode mode;
         if (m_fullscreen) {
-            // Use fullscreen mode
-            mode = sf::VideoMode::getFullscreenModes()[0];
+            // Use configured resolution for fullscreen mode
+            mode = sf::VideoMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight);
+            
+            // Verify the mode is supported, fallback to desktop mode if not
+            if (!mode.isValid()) {
+                std::cout << "Configured resolution " << m_viewportConfig.windowWidth << "x" 
+                          << m_viewportConfig.windowHeight << " not supported for fullscreen, using desktop resolution" << std::endl;
+                mode = sf::VideoMode::getDesktopMode();
+            }
+            
+            std::cout << "Fullscreen mode: " << mode.width << "x" << mode.height << std::endl;
         } else {
-            // Use windowed mode with minimum size enforcement
-            int windowWidth = std::max(800, 480);   // Ensure minimum width of 480
-            int windowHeight = std::max(600, 640);  // Ensure minimum height of 640
-            mode = sf::VideoMode(windowWidth, windowHeight);
+            // Use configured resolution for windowed mode
+            mode = sf::VideoMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight);
+            std::cout << "Windowed mode: " << mode.width << "x" << mode.height << std::endl;
         }
         
         currentWindow.close();
@@ -331,12 +351,14 @@ void GameEngine::toggleFullscreen(sf::RenderWindow &currentWindow)
         
         // Recalculate viewport after fullscreen toggle
         calculateViewport();
+        
+        // Save the fullscreen state to configuration
+        saveScreenConfig();
     } catch (const std::exception& e) {
-        // If fullscreen toggle fails, ensure we have a valid window with minimum size
+        // If fullscreen toggle fails, ensure we have a valid window with configured resolution
         if (!currentWindow.isOpen()) {
-            int windowWidth = std::max(800, 480);   // Ensure minimum width of 480
-            int windowHeight = std::max(600, 640);  // Ensure minimum height of 640
-            currentWindow.create(sf::VideoMode(windowWidth, windowHeight), "Game Engine", sf::Style::Default);
+            sf::VideoMode fallbackMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight);
+            currentWindow.create(fallbackMode, "Game Engine", sf::Style::Default);
             m_fullscreen = false;
             calculateViewport();
         }
@@ -368,14 +390,28 @@ void GameEngine::setViewportConfig(const ViewportConfig& config)
     // Save configuration to file
     saveScreenConfig(config);
     
-    // Recreate window if size changed
+    // Recreate window if size changed, maintaining current fullscreen state
     if (m_window.isOpen()) {
         sf::Vector2u currentSize = m_window.getSize();
         if (currentSize.x != static_cast<unsigned int>(config.windowWidth) || 
             currentSize.y != static_cast<unsigned int>(config.windowHeight)) {
             
-            m_window.create(sf::VideoMode(config.windowWidth, config.windowHeight), "Game Engine");
+            // Maintain current fullscreen state
+            sf::VideoMode newMode(config.windowWidth, config.windowHeight);
+            sf::Uint32 windowStyle = m_fullscreen ? sf::Style::Fullscreen : sf::Style::Default;
+            
+            // If fullscreen mode and resolution not supported, fallback to desktop resolution
+            if (m_fullscreen && !newMode.isValid()) {
+                std::cout << "New resolution " << config.windowWidth << "x" << config.windowHeight 
+                          << " not supported for fullscreen, using desktop resolution" << std::endl;
+                newMode = sf::VideoMode::getDesktopMode();
+            }
+            
+            m_window.create(newMode, "Game Engine", windowStyle);
             m_window.setFramerateLimit(60);
+            
+            std::cout << "Window recreated: " << newMode.width << "x" << newMode.height 
+                      << " (" << (m_fullscreen ? "fullscreen" : "windowed") << ")" << std::endl;
         }
     }
     
@@ -478,6 +514,11 @@ void GameEngine::loadScreenConfig()
             if (iss >> value) {
                 m_viewportConfig.backgroundColor.b = static_cast<sf::Uint8>(value);
             }
+        } else if (setting == "FULLSCREEN") {
+            int value;
+            if (iss >> value) {
+                m_fullscreen = (value == 1);
+            }
         }
     }
     
@@ -518,11 +559,15 @@ void GameEngine::saveScreenConfig(const ViewportConfig& config)
     configFile << "# Background color (RGB values 0-255)\n";
     configFile << "BACKGROUND_COLOR_R " << static_cast<int>(config.backgroundColor.r) << "\n";
     configFile << "BACKGROUND_COLOR_G " << static_cast<int>(config.backgroundColor.g) << "\n";
-    configFile << "BACKGROUND_COLOR_B " << static_cast<int>(config.backgroundColor.b) << "\n";
+    configFile << "BACKGROUND_COLOR_B " << static_cast<int>(config.backgroundColor.b) << "\n\n";
+    
+    configFile << "# Fullscreen mode (0=windowed, 1=fullscreen)\n";
+    configFile << "FULLSCREEN " << (m_fullscreen ? 1 : 0) << "\n";
     
     configFile.close();
     std::cout << "Screen configuration saved: " << config.windowWidth << "x" << config.windowHeight 
-              << ", mode: " << config.scalingMode << ", zoom: " << config.zoomFactor << std::endl;
+              << ", mode: " << config.scalingMode << ", zoom: " << config.zoomFactor 
+              << ", fullscreen: " << (m_fullscreen ? "ON" : "OFF") << std::endl;
 }
 
 void GameEngine::toggleFullscreen()
@@ -530,17 +575,30 @@ void GameEngine::toggleFullscreen()
     m_fullscreen = !m_fullscreen;
     
     if (m_fullscreen) {
-        // Get desktop resolution for fullscreen
-        sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
-        m_window.create(desktopMode, "Game Engine", sf::Style::Fullscreen);
+        // Use configured resolution for fullscreen mode
+        sf::VideoMode fullscreenMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight);
+        
+        // Verify the mode is supported, fallback to desktop mode if not
+        if (!fullscreenMode.isValid()) {
+            std::cout << "Configured resolution " << m_viewportConfig.windowWidth << "x" 
+                      << m_viewportConfig.windowHeight << " not supported for fullscreen, using desktop resolution" << std::endl;
+            fullscreenMode = sf::VideoMode::getDesktopMode();
+        }
+        
+        m_window.create(fullscreenMode, "Game Engine", sf::Style::Fullscreen);
+        std::cout << "Fullscreen mode: " << fullscreenMode.width << "x" << fullscreenMode.height << std::endl;
     } else {
         // Return to windowed mode with configured resolution
         m_window.create(sf::VideoMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight), 
                        "Game Engine", sf::Style::Default);
+        std::cout << "Windowed mode: " << m_viewportConfig.windowWidth << "x" << m_viewportConfig.windowHeight << std::endl;
     }
     
     m_window.setFramerateLimit(60);
     calculateViewport();
+    
+    // Save the fullscreen state to configuration
+    saveScreenConfig();
     
     std::cout << "Toggled to " << (m_fullscreen ? "fullscreen" : "windowed") << " mode" << std::endl;
 }

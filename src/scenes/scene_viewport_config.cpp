@@ -1,5 +1,6 @@
 #include "scene_viewport_config.hpp"
 #include "scene_menu.hpp"
+#include "scene_options.hpp"
 #include "../game_engine.hpp"
 #include <sstream>
 #include <iomanip>
@@ -29,9 +30,10 @@ Scene_ScreenConfig::Scene_ScreenConfig(GameEngine* game) : Scene(game)
         "Screen Resolution",
         "Display Mode", 
         "Zoom Level",
+        "Fullscreen Toggle",
         "Apply Changes",
         "Reset to Default",
-        "Back to Menu"
+        "Back to Options"
     };
     
     // Get current configuration
@@ -53,7 +55,8 @@ Scene_ScreenConfig::Scene_ScreenConfig(GameEngine* game) : Scene(game)
 
 void Scene_ScreenConfig::init()
 {
-    // Register input actions
+    // Register standardized input actions
+    // Movement controls (WASD + Arrow keys)
     registerAction(sf::Keyboard::W, "UP");
     registerAction(sf::Keyboard::Up, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
@@ -62,8 +65,14 @@ void Scene_ScreenConfig::init()
     registerAction(sf::Keyboard::Left, "LEFT");
     registerAction(sf::Keyboard::D, "RIGHT");
     registerAction(sf::Keyboard::Right, "RIGHT");
-    registerAction(sf::Keyboard::Space, "SELECT");
-    registerAction(sf::Keyboard::Enter, "SELECT");
+    
+    // Confirm actions (Space/Enter)
+    registerAction(sf::Keyboard::Space, "CONFIRM");
+    registerAction(sf::Keyboard::Enter, "CONFIRM");
+    
+    // Cancel actions (Backspace/C/Escape)
+    registerAction(sf::Keyboard::Backspace, "CANCEL");
+    registerAction(sf::Keyboard::C, "CANCEL");
     registerAction(sf::Keyboard::Escape, "BACK");
     
     setupUI();
@@ -81,7 +90,7 @@ void Scene_ScreenConfig::setupUI()
     m_instructionsText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_instructionsText.setCharacterSize(16);
     m_instructionsText.setFillColor(sf::Color(200, 200, 200));
-    m_instructionsText.setString("Use WASD/Arrows to navigate, Left/Right to change values, Space/Enter to select");
+    m_instructionsText.setString("Use WASD/Arrows to navigate, Left/Right to change values, Space/Enter to confirm, Backspace/C/ESC to cancel\nFullscreen mode uses the configured resolution above");
     
     // Current config text
     m_currentConfigText.setFont(m_game->getAssets().getFont("ShareTech"));
@@ -112,6 +121,9 @@ void Scene_ScreenConfig::updateOptionTexts()
             std::ostringstream oss;
             oss << std::fixed << std::setprecision(1) << m_zoomFactor;
             displayText += ": " + oss.str() + "x";
+        } else if (i == 3) { // Fullscreen Toggle
+            bool isFullscreen = m_game->isFullscreen();
+            displayText += ": " + std::string(isFullscreen ? "ON" : "OFF") + " (Press to toggle)";
         }
         
         // Highlight selected option
@@ -233,10 +245,16 @@ void Scene_ScreenConfig::sDoAction(const Action& action)
             } else if (m_selectedOption == 2) { // Zoom Factor
                 m_zoomFactor = std::min(2.0f, m_zoomFactor + 0.1f);
             }
-        } else if (action.getName() == "SELECT") {
-            if (m_selectedOption == 3) { // Apply Changes
+        } else if (action.getName() == "CONFIRM") {
+            if (m_selectedOption == 3) { // Fullscreen Toggle
+                try {
+                    m_game->toggleFullscreen(m_game->window());
+                } catch (const std::exception& e) {
+                    // Ignore fullscreen toggle errors
+                }
+            } else if (m_selectedOption == 4) { // Apply Changes
                 applyConfiguration();
-            } else if (m_selectedOption == 4) { // Reset to Default
+            } else if (m_selectedOption == 5) { // Reset to Default
                 ViewportConfig defaultConfig;
                 m_game->setViewportConfig(defaultConfig);
                 
@@ -244,11 +262,11 @@ void Scene_ScreenConfig::sDoAction(const Action& action)
                 m_selectedResolution = 0;
                 m_selectedScalingMode = static_cast<size_t>(defaultConfig.scalingMode);
                 m_zoomFactor = defaultConfig.zoomFactor;
-            } else if (m_selectedOption == 5) { // Back to Menu
-                m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
+            } else if (m_selectedOption == 6) { // Back to Options
+                m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
             }
-        } else if (action.getName() == "BACK") {
-            m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
+        } else if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+            m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
         }
     }
 }
