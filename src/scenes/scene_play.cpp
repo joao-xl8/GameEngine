@@ -3,6 +3,7 @@
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
 #include "scene_dialogue.hpp"
+#include "scene_battle.hpp"
 #include "scene_save_load.hpp"
 #include "../game_engine.hpp"
 #include <fstream>
@@ -17,6 +18,9 @@ void Scene_Play::init(const std::string &levelPath)
     registerAction(sf::Keyboard::T, "TOGGLE_TEXTURE");
     registerAction(sf::Keyboard::K, "TOGGLE_COLLISION");
     registerAction(sf::Keyboard::G, "TOGGLE_GRID");
+    
+    // Battle trigger for testing
+    registerAction(sf::Keyboard::B, "BATTLE");
     
     // Interaction controls
     registerAction(sf::Keyboard::E, "INTERACT");
@@ -123,18 +127,18 @@ void Scene_Play::init(const std::string &levelPath)
             e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
             
             // Add animations for NPCs
-            if (spriteName == "Actor_idle") {
-                // Add animation component for Actor_idle NPC
+            if (spriteName == "Dummy") {
+                // Add animation component for Dummy NPC
                 auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
                 
-                // Define idle animation for Actor_idle
+                // Define idle animation for Dummy
                 // Since we have a single-frame texture, create a simple animation
-                animationComponent->addAnimation("idle", "Actor_idle", 1, 1.0f, true, 0); // 1 frame, 1s duration, loop, row 0
+                animationComponent->addAnimation("idle", "Dummy", 1, 1.0f, true, 0); // 1 frame, 1s duration, loop, row 0
                 animationComponent->play("idle"); // Start playing the idle animation
                 
                 e->addComponent<CAnimation>(animationComponent);
                 
-                std::printf("Added idle animation to Actor_idle NPC at (%d, %d)\n", x, y);
+                std::printf("Added idle animation to Dummy NPC at (%d, %d)\n", x, y);
             }
             // Add more NPC animations here as needed
             // else if (spriteName == "Merchant") {
@@ -448,15 +452,44 @@ void Scene_Play::sRender()
     // Set background color by drawing a full-screen rectangle
     sf::RectangleShape background;
     background.setSize(sf::Vector2f(m_game->window().getSize().x, m_game->window().getSize().y));
-    background.setFillColor(sf::Color::Cyan);
+    background.setFillColor(sf::Color::Magenta);
     background.setPosition(0, 0);
     m_game->window().draw(background);
     
     if(m_drawTextures){
+        // Collect entities by type for layered rendering
+        std::vector<std::shared_ptr<Entity>> groundEntities;
+        std::vector<std::shared_ptr<Entity>> tileEntities;
+        std::vector<std::shared_ptr<Entity>> decorationEntities;
+        std::vector<std::shared_ptr<Entity>> npcEntities;
+        
         for (auto &entity : m_entityManager.getEntities())
         {
             if (entity->hasComponent<CSprite>() && entity->hasComponent<CTransform>())
             {
+                std::string tag = entity->tag();
+                auto sprite = entity->getComponent<CSprite>();
+                std::string spriteName = sprite->name;
+                
+                // Categorize entities for proper layering
+                if (spriteName == "Ground") {
+                    groundEntities.push_back(entity);
+                } else if (tag == "Tile") {
+                    tileEntities.push_back(entity);
+                } else if (tag == "Dec") {
+                    decorationEntities.push_back(entity);
+                } else if (tag == "NPC") {
+                    npcEntities.push_back(entity);
+                } else {
+                    // Default entities (like Player) go in decoration layer
+                    decorationEntities.push_back(entity);
+                }
+            }
+        }
+        
+        // Render in proper layer order: Ground -> Tiles -> Decorations -> NPCs
+        auto renderEntities = [&](const std::vector<std::shared_ptr<Entity>>& entities) {
+            for (auto &entity : entities) {
                 auto sprite = entity->getComponent<CSprite>();
                 auto transform = entity->getComponent<CTransform>();
                 
@@ -467,7 +500,13 @@ void Scene_Play::sRender()
                 sprite->sprite.setPosition(posX, posY);
                 m_game->window().draw(sprite->sprite);
             }
-        }
+        };
+        
+        // Render layers in order
+        renderEntities(groundEntities);  // Layer 0: Ground tiles
+        renderEntities(tileEntities);    // Layer 1: Walls and solid tiles
+        renderEntities(decorationEntities); // Layer 2: Decorations, save points, player
+        renderEntities(npcEntities);     // Layer 3: NPCs (on top)
     }
     if (m_drawGrid)
     {
@@ -567,6 +606,15 @@ void Scene_Play::sDoAction(const Action &action)
         else if (action.getName() == "TOGGLE_GRID")
         {
             m_drawGrid = !m_drawGrid;
+        }
+        else if (action.getName() == "BATTLE")
+        {
+            // Trigger simple battle scene
+            std::cout << "Battle triggered! Starting battle scene..." << std::endl;
+            
+            // Create simple battle scene
+            auto battleScene = std::make_shared<Scene_Battle>(m_game);
+            m_game->changeScene("Battle", battleScene);
         }
         else if (action.getName() == "INTERACT")
         {
@@ -891,8 +939,8 @@ void Scene_Play::startDialogue(std::shared_ptr<Entity> npc)
 std::string Scene_Play::getNPCDialogueFile(const std::string& npcName)
 {
     // Map NPC sprite names to their dialogue files
-    if (npcName == "Actor_idle") {
-        return "metadata/dialogues/npcs/actor_idle/enhanced_greeting.txt";
+    if (npcName == "Dummy") {
+        return "metadata/dialogues/npcs/dummy/enhanced_greeting.txt";
     }
     
     // Add more NPCs here as needed

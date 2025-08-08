@@ -1,4 +1,0 @@
-Screen configuration loaded: 800x600, mode: 2, zoom: 1
-Window created: 800x600 (windowed)
-Window: 800x600 | Game View: 960x720 | Viewport: 0,0 1x1 | Mode: 2
-Sound configuration loaded: Master=100%, Music=80%, Effects=100%, Enabled=OFF

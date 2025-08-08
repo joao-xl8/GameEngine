@@ -4,7 +4,7 @@ This guide explains how to create levels with walkable paths, decorative element
 
 ## Level File Format
 
-Level files are located in `metadata/level1.txt` and use this format:
+Level files are located in `metadata/level_1.txt` and use this format:
 ```
 Type SpriteName X Y
 ```
@@ -100,7 +100,7 @@ Tile Ground 11 11
 
 ## Current Level Layout
 
-The current level (`level1.txt`) features:
+The current level (`level_1.txt`) features:
 
 ### **Environment Design**
 - **20x15 grid** with wall borders

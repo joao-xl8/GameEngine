@@ -106,7 +106,7 @@ GameEngine/
 │   │       ├── intro.txt
 │   │       └── ending.txt
 │   ├── levels/                      # Level files
-│   │   ├── level1.txt
+│   │   ├── level_1.txt
 │   │   └── level2.txt
 │   └── assets.txt                   # Asset definitions
 └── config/                          # Configuration files
@@ -167,7 +167,7 @@ GameEngine/
 ### **Data Files**
 - **Dialogues**: `character_context.txt` (e.g., `actor_greeting.txt`)
 - **Configs**: `system_config.json` (e.g., `character_animations.json`)
-- **Levels**: `levelN.txt` (e.g., `level1.txt`)
+- **Levels**: `levelN.txt` (e.g., `level_1.txt`)
 
 ## 🎮 **Character Component Organization**
 

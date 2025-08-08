@@ -36,7 +36,7 @@ std::string CharacterFactory::getNPCDialogueFile(const std::string& npcName) con
 
 void CharacterFactory::setupDefaultNPCDialogues() {
     // Register default dialogue files for different NPC types
-    registerNPCDialogue("Actor_idle", "metadata/dialogues/sample_dialogue.txt");
+    registerNPCDialogue("Dummy", "metadata/dialogues/sample_dialogue.txt");
     
     // Add more NPCs as needed
     // registerNPCDialogue("Merchant", "metadata/dialogues/merchant_dialogue.txt");

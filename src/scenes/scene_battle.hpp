@@ -3,7 +3,7 @@
 #include "../components.hpp"
 #include <vector>
 #include <memory>
-#include <vector>
+#include <queue>
 
 class Scene_Battle : public Scene {
 public:
@@ -17,7 +17,7 @@ public:
     FLEEING      // Player attempting to flee
   };
 
-  enum class BattleAction { ATTACK, DEFEND, ITEM, SKILL, FLEE };
+  enum class BattleAction { ATTACK, DEFEND, ITEM, SPELL, FLEE };
 
   struct BattleCharacter {
     std::shared_ptr<Entity> entity;
@@ -27,25 +27,40 @@ public:
     int attack;
     int defense;
     int speed;
+    int mp;
+    int maxMP;
     bool isPlayer;
     bool isAlive;
+    bool isDefending;
     Vec2 battlePosition;
+    std::string spriteTexture;
 
-    BattleCharacter(const std::string &n, int hp, int att, int def, int spd, bool player = false)
+    BattleCharacter(const std::string &n, int hp, int att, int def, int spd, int magic = 20, bool player = false)
         : name(n), currentHP(hp), maxHP(hp), attack(att), defense(def),
-          speed(spd), isPlayer(player), isAlive(true), battlePosition(0, 0) {}
+          speed(spd), mp(magic), maxMP(magic), isPlayer(player), isAlive(true), 
+          isDefending(false), battlePosition(0, 0) {}
   };
 
   struct ActionCommand {
     BattleCharacter *actor;
     BattleCharacter *target;
     BattleAction action;
-    std::string skillName;
+    std::string spellName;
     int damage;
     bool executed;
 
-    ActionCommand(BattleCharacter *a, BattleCharacter *t, BattleAction act)
-        : actor(a), target(t), action(act), damage(0), executed(false) {}
+    ActionCommand(BattleCharacter *a, BattleCharacter *t, BattleAction act, const std::string& spell = "")
+        : actor(a), target(t), action(act), spellName(spell), damage(0), executed(false) {}
+  };
+
+  struct Spell {
+    std::string name;
+    int mpCost;
+    int baseDamage;
+    std::string description;
+    
+    Spell(const std::string& n, int cost, int damage, const std::string& desc)
+        : name(n), mpCost(cost), baseDamage(damage), description(desc) {}
   };
 
 protected:
@@ -53,23 +68,33 @@ protected:
   BattleState m_battleState;
   std::vector<BattleCharacter> m_playerParty;
   std::vector<BattleCharacter> m_enemies;
-  std::vector<ActionCommand> m_actionQueue;
+  std::queue<ActionCommand> m_actionQueue;
+  
+  // Available spells
+  std::vector<Spell> m_availableSpells;
+  bool m_selectingSpell;
+  int m_selectedSpellIndex;
 
-  // UI and positioning
-  Vec2 m_playerAreaTopLeft; // Top-left corner of player area (bottom-left of
-                            // screen)
-  Vec2 m_playerAreaSize;    // Size of player positioning area
-  Vec2
-      m_enemyAreaTopLeft; // Top-left corner of enemy area (top-right of screen)
-  Vec2 m_enemyAreaSize;   // Size of enemy positioning area
-  Vec2 m_uiAreaTopLeft;   // Top-left corner of UI area (bottom 1/3 of screen)
-  Vec2 m_uiAreaSize;      // Size of UI area
+  // UI and positioning (using game view)
+  Vec2 m_playerAreaTopLeft;
+  Vec2 m_playerAreaSize;
+  Vec2 m_enemyAreaTopLeft;
+  Vec2 m_enemyAreaSize;
+  Vec2 m_uiAreaTopLeft;
+  Vec2 m_uiAreaSize;
 
   // Current selections
-  int m_selectedPlayerIndex; // Which player character is acting
-  int m_selectedActionIndex; // Which action is selected
-  int m_selectedTargetIndex; // Which target is selected
-  bool m_selectingTarget;    // Whether we're in target selection mode
+  int m_selectedPlayerIndex;
+  int m_selectedActionIndex;
+  int m_selectedTargetIndex;
+  bool m_selectingTarget;
+
+  // State persistence (like dialogue scene)
+  std::string m_returnLevel;
+  Vec2 m_returnPosition;
+  int m_returnHealth;
+  float m_returnPlayTime;
+  bool m_preserveState;
 
   // Visual elements
   std::shared_ptr<Entity> m_background;
@@ -82,8 +107,8 @@ protected:
   // Timing
   sf::Clock m_deltaClock;
   float m_deltaTime;
-  float m_actionTimer;  // Timer for action animations
-  float m_messageTimer; // Timer for battle messages
+  float m_actionTimer;
+  float m_messageTimer;
 
   // Battle flow methods
   void init() override;
@@ -100,26 +125,30 @@ protected:
   void processEnemyTurn();
   void executeActions();
   void checkBattleEnd();
+  void initializeSpells();
 
   // Action processing
   void queuePlayerAction(BattleAction action);
+  void queuePlayerSpell(const std::string& spellName);
   void generateEnemyActions();
   void sortActionsBySpeed();
   void executeAction(ActionCommand &command);
-  int calculateDamage(const BattleCharacter &attacker,
-                      const BattleCharacter &defender);
+  int calculateDamage(const BattleCharacter &attacker, const BattleCharacter &defender);
+  int calculateSpellDamage(const BattleCharacter &caster, const std::string& spellName);
 
   // UI methods
   void renderBattleField();
   void renderCharacters();
   void renderUI();
   void renderActionMenu();
+  void renderSpellMenu();
   void renderTargetSelection();
   void renderStatusBars();
   void updateCharacterPositions();
 
   // Input handling
   void handleMenuNavigation(const Action &action);
+  void handleSpellSelection(const Action &action);
   void handleTargetSelection(const Action &action);
 
   // Utility methods
@@ -132,11 +161,14 @@ protected:
 public:
   Scene_Battle(GameEngine *game);
   Scene_Battle(GameEngine *game, const std::vector<std::string> &enemyTypes);
+  
+  // Constructor with state preservation (like dialogue scene)
+  Scene_Battle(GameEngine *game, const std::vector<std::string> &enemyTypes,
+               const std::string& returnLevel, const Vec2& returnPos, 
+               int returnHealth, float returnPlayTime);
 
   // Public interface for starting battles
-  void addPlayerCharacter(const std::string &name, int hp, int attack,
-                          int defense, int speed);
-  void addEnemy(const std::string &name, int hp, int attack, int defense,
-                int speed);
+  void addPlayerCharacter(const std::string &name, int hp, int attack, int defense, int speed, int mp = 20);
+  void addEnemy(const std::string &name, int hp, int attack, int defense, int speed);
   void startBattle();
 };

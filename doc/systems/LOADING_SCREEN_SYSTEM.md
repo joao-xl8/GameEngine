@@ -39,7 +39,7 @@ The Loading Screen System provides:
 // m_game->changeScene("Play", std::make_shared<Scene_Play>(game, levelPath));
 
 // Use loading screen:
-Scene_Loading::loadPlayScene(m_game, "metadata/levels/level1.txt");
+Scene_Loading::loadPlayScene(m_game, "metadata/levels/level_1.txt");
 ```
 
 ### Custom Asset Loading
@@ -109,7 +109,7 @@ MapEditor texture Bush
 ```cpp
 // In Scene_Menu button handler
 if (selectedOption == "Play") {
-    Scene_Loading::loadPlayScene(m_game, "metadata/levels/level1.txt");
+    Scene_Loading::loadPlayScene(m_game, "metadata/levels/level_1.txt");
 }
 ```
 

@@ -1,0 +1,52 @@
+# Enhanced Dialogue Configuration with Dummy Portrait
+# Format: SETTING VALUE or DIALOGUE_LINE ACTOR PORTRAIT TEXT
+
+# Asset Declarations - All assets needed for this dialogue
+ASSETS_START
+PORTRAIT_LEFT Dummy Dummy_Portrait
+BACKGROUND_IMAGE dialogue_bg.png
+BACKGROUND_SOUND dialogue_ambient.wav
+TEXT_SOUND dialogue_text.wav
+ASSETS_END
+
+# Portrait Assignments - Define which actors go on which side and slot
+PORTRAIT_ASSIGNMENT Dummy LEFT 0
+PORTRAIT_ASSIGNMENT Player LEFT 1
+PORTRAIT_ASSIGNMENT Narrator LEFT 2
+
+# Dialogue Settings
+BACKGROUND_IMAGE dialogue_bg.png
+BACKGROUND_SOUND dialogue_ambient.wav
+TEXT_SOUND dialogue_text.wav
+
+# Dialogue Flow with Labels and Branching
+# Format: LABEL label_name or LINE ACTOR PORTRAIT TEXT or CHOICE "Option Text" label_to_jump
+
+LABEL start
+LINE Dummy Dummy_Portrait Hello there, traveler. Welcome to this place!
+LINE Dummy Dummy_Portrait I am just a simple dummy, standing here quietly.
+LINE Dummy Dummy_Portrait But I'm happy to chat with anyone who passes by.
+
+# Present choices to the player
+CHOICE "Nice to meet you!" friendly_path
+CHOICE "What do you do here?" curious_path
+CHOICE "I'm in a hurry" quick_path
+
+LABEL friendly_path
+LINE Dummy Dummy_Portrait How wonderful! It's always nice to meet friendly travelers.
+LINE Dummy Dummy_Portrait I hope your journey goes well from here.
+JUMP ending
+
+LABEL curious_path
+LINE Dummy Dummy_Portrait Well, I mostly just stand here and observe.
+LINE Dummy Dummy_Portrait Sometimes I chat with visitors like yourself.
+LINE Dummy Dummy_Portrait It's a simple life, but I find it quite peaceful.
+JUMP ending
+
+LABEL quick_path
+LINE Dummy Dummy_Portrait Of course! Don't let me keep you.
+LINE Dummy Dummy_Portrait Safe travels, and perhaps we'll chat again sometime.
+JUMP ending
+
+LABEL ending
+LINE Dummy Dummy_Portrait Take care now, and remember - even dummies can be good company!

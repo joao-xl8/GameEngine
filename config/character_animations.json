@@ -37,7 +37,7 @@
     }
   },
   "npcs": {
-    "Actor_idle": {
+    "Dummy": {
       "sprite_size": [64, 64],
       "animations": {
         "idle": {

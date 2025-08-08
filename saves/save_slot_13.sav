@@ -1,7 +1,7 @@
 SAVE_VERSION 1.0
 SAVE_NAME OLD SAVE - Before Overwrite
 LEVEL_NAME Original Level
-CURRENT_LEVEL metadata/levels/level1.txt
+CURRENT_LEVEL metadata/levels/level_1.txt
 PLAYER_X 100
 PLAYER_Y 200
 PLAYER_HEALTH 50

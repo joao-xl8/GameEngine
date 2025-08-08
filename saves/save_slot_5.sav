@@ -1,7 +1,7 @@
 SAVE_VERSION 1.0
 SAVE_NAME Position Test 1
 LEVEL_NAME Test Level
-CURRENT_LEVEL metadata/levels/level1.txt
+CURRENT_LEVEL metadata/levels/level_1.txt
 PLAYER_X 320
 PLAYER_Y 240
 PLAYER_HEALTH 100

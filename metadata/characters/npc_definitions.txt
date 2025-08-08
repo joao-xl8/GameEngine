@@ -2,7 +2,7 @@
 # Format: NPC_TYPE SPRITE_NAME ANIMATION_FRAMES FRAME_DURATION DIALOGUE_FILE BEHAVIOR_TYPE
 
 # Actor NPCs
-Actor_idle Actor_idle 4 0.5 npcs/actor_idle/greeting.txt IDLE
+Dummy Dummy 4 0.5 npcs/dummy/greeting.txt IDLE
 
 # Future NPCs (examples)
 # Merchant Merchant_idle 6 0.3 npcs/merchant/shop_intro.txt SHOPKEEPER

@@ -141,7 +141,7 @@ void Scene_Menu::sDoAction(const Action &action)
                 {
                     // Start a new game
                     try {
-                        Scene_Loading::loadPlayScene(m_game, "metadata/levels/level1.txt");
+                        Scene_Loading::loadPlayScene(m_game, "metadata/levels/level_1.txt");
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit
                         m_game->quit();
@@ -182,7 +182,7 @@ void Scene_Menu::sDoAction(const Action &action)
                 {
                     // Use loading screen for Play scene transition
                     try {
-                        Scene_Loading::loadPlayScene(m_game, "metadata/levels/level1.txt");
+                        Scene_Loading::loadPlayScene(m_game, "metadata/levels/level_1.txt");
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit
                         m_game->quit();

@@ -28,7 +28,7 @@ void Scene_MapEditor::init()
 
     // Standard confirm/cancel controls
     registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::C, "CANCEL"); // X for remove in map editor
+    registerAction(sf::Keyboard::C, "CANCEL");
     
     // Asset/Type selection
     registerAction(sf::Keyboard::Q, "PREV_ASSET");
@@ -113,6 +113,7 @@ void Scene_MapEditor::loadAvailableAssets()
     // Add available asset types
     m_availableTypes.push_back("Tile");
     m_availableTypes.push_back("Dec");
+    m_availableTypes.push_back("NPC");  // Add NPC support
     
     // Add available assets (these should match what's in assets.txt)
     m_availableAssets.push_back("Ground");
@@ -121,6 +122,7 @@ void Scene_MapEditor::loadAvailableAssets()
     m_availableAssets.push_back("SavePoint");
     m_availableAssets.push_back("PlayerSpawn");
     m_availableAssets.push_back("Player");
+    m_availableAssets.push_back("Dummy");  // Add Dummy NPC
     
     // Set defaults
     if (!m_availableAssets.empty()) {
@@ -246,7 +248,7 @@ void Scene_MapEditor::sDoAction(const Action& action)
         }
         else if (action.getName() == "LOAD") {
             if (!m_showSaveDialog && !m_showOverwriteDialog && !m_showLevelSelector) {
-                // Show level selector instead of directly loading level1.txt
+                // Show level selector instead of directly loading level_1.txt
                 scanAvailableLevels();
                 m_showLevelSelector = true;
             }
@@ -352,7 +354,7 @@ void Scene_MapEditor::scanAvailableLevels()
     } catch (const std::exception& e) {
         std::cout << "Error scanning levels directory: " << e.what() << std::endl;
         // Add some default levels if directory scan fails
-        m_availableLevels.push_back("level1.txt");
+        m_availableLevels.push_back("level_1.txt");
         m_availableLevels.push_back("demo_level.txt");
         m_availableLevels.push_back("infinite_test.txt");
     }
@@ -820,7 +822,7 @@ void Scene_MapEditor::drawSaveDialog()
     oss << "Filename will be: level_" << m_inputFileName << ".txt\n\n";
     oss << "Current input: " << m_inputFileName << "_\n\n";
     oss << "Use number keys (0-9), Backspace to edit\n";
-    oss << "Press SPACE/ENTER to confirm, ESC to cancel";
+    oss << "Press SPACE to confirm, C to cancel";
     
     dialogText.setString(oss.str());
     dialogText.setPosition(dialogX + 20, dialogY + 20);
@@ -833,7 +835,7 @@ void Scene_MapEditor::drawOverwriteDialog()
     
     // Calculate dialog size and position
     float dialogWidth = 450;
-    float dialogHeight = 150;
+    float dialogHeight = 170;
     sf::Vector2u windowSize = m_game->window().getSize();
     float dialogX = (windowSize.x - dialogWidth) / 2;
     float dialogY = (windowSize.y - dialogHeight) / 2;
@@ -858,7 +860,7 @@ void Scene_MapEditor::drawOverwriteDialog()
     oss << "The file already exists:\n";
     oss << m_saveFileName << "\n\n";
     oss << "Do you want to overwrite it?\n";
-    oss << "Press SPACE/ENTER to overwrite, ESC to cancel";
+    oss << "Press SPACE to overwrite, C to cancel";
     
     dialogText.setString(oss.str());
     dialogText.setPosition(dialogX + 20, dialogY + 20);

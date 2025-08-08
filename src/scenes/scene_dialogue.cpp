@@ -515,7 +515,7 @@ void Scene_Dialogue::update()
         } else {
             // Fallback to default behavior (shouldn't happen with new system)
             std::cout << "Warning: No preserved state, using default level" << std::endl;
-            m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
+            m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level_1.txt"));
         }
     }
     

@@ -1,7 +1,7 @@
 SAVE_VERSION 1.0
 SAVE_NAME SLOT NUMBER TEST - Original
 LEVEL_NAME Test Level
-CURRENT_LEVEL metadata/levels/level1.txt
+CURRENT_LEVEL metadata/levels/level_1.txt
 PLAYER_X 999
 PLAYER_Y 888
 PLAYER_HEALTH 50

@@ -41,7 +41,7 @@ GameEngine/
 ├── metadata/               # Game configuration files
 │   ├── assets.txt          # Asset definitions
 │   └── levels/             # Level files directory
-│       ├── level1.txt      # Main game level
+│       ├── level_1.txt      # Main game level
 │       └── *.txt           # Other level files
 ├── doc/                    # Documentation (organized)
 │   ├── build/              # Build and setup guides
@@ -217,7 +217,7 @@ The built-in Map Editor is a powerful level creation tool with modern features a
 metadata/
 ├── assets.txt          # Asset configuration (protected)
 └── levels/             # Level files (organized)
-    ├── level1.txt          # Main game level
+    ├── level_1.txt          # Main game level
     ├── demo_level.txt      # Demo level
     ├── infinite_test.txt   # Test level
     └── level_editor_*.txt  # Generated levels
@@ -252,7 +252,7 @@ Dec Player -5 10
 6. **Preview**: Check the asset preview on the right to confirm selection
 7. **Save**: Press F to save your level with timestamp to `metadata/levels/`
 8. **Load Existing**: Press L to open level browser and load existing levels
-9. **Test**: Rename saved file to `level1.txt` to play it in the main game
+9. **Test**: Rename saved file to `level_1.txt` to play it in the main game
 
 ### ⚡ Performance Features
 
@@ -314,10 +314,10 @@ A comprehensive validation system ensures level files are properly formatted and
 ### Usage
 ```bash
 # Validate specific level
-python3 validate_level.py metadata/levels/level1.txt
+python3 validate_level.py metadata/levels/level_1.txt
 
 # Auto-detection (searches in levels directory)
-python3 validate_level.py level1.txt
+python3 validate_level.py level_1.txt
 
 # Validate infinite grid level
 python3 validate_level.py infinite_test.txt
@@ -504,7 +504,7 @@ Created levels work seamlessly with the main game:
 1. **Create Level**: Use Map Editor to create your level
 2. **Save Level**: Press F to save with timestamp to `metadata/levels/`
 3. **Test Level**: Use L to load and test existing levels in editor
-4. **Deploy Level**: Rename your level file to `level1.txt` to make it the default game level
+4. **Deploy Level**: Rename your level file to `level_1.txt` to make it the default game level
 5. **Play**: The game automatically loads and parses the level format
 
 All object types, coordinates, and properties are preserved between editor and game.
