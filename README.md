@@ -102,6 +102,8 @@ GameEngine/
 - **ImGui Integration**: Immediate mode GUI for debugging
 - **Asset Management**: Centralized texture and sound loading
 - **Global Sound System**: Persistent background music with scene-specific effects
+- **Loading Screen System**: Asset preloading for smooth scene transitions
+- **Configurable Viewport**: Multiple scaling modes without letterboxing
 
 ---
 
@@ -545,6 +547,8 @@ This README provides a comprehensive overview of the GameEngine. Additional deta
 - **[doc/systems/VIEWPORT_SYSTEM.md](doc/systems/VIEWPORT_SYSTEM.md)** - Viewport and rendering system
 - **[doc/systems/CENTERED_VIEWPORT_SYSTEM.md](doc/systems/CENTERED_VIEWPORT_SYSTEM.md)** - Centered viewport implementation
 - **[doc/systems/CONFIGURABLE_SCALE_SYSTEM.md](doc/systems/CONFIGURABLE_SCALE_SYSTEM.md)** - Configurable scaling system
+- **[doc/systems/CONFIGURABLE_VIEWPORT_SYSTEM.md](doc/systems/CONFIGURABLE_VIEWPORT_SYSTEM.md)** - Modern configurable viewport without letterboxing
+- **[doc/systems/LOADING_SCREEN_SYSTEM.md](doc/systems/LOADING_SCREEN_SYSTEM.md)** - Asset preloading and loading screens
 
 ### 🎮 Game Features
 - **[doc/features/BATTLE_SYSTEM.md](doc/features/BATTLE_SYSTEM.md)** - Turn-based battle system implementation

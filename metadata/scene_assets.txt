@@ -1,0 +1,26 @@
+# Scene Asset Configuration
+# Format: SceneName AssetType AssetName
+# AssetType can be: texture, sound
+
+# Play Scene Assets
+Play texture Ground
+Play texture Wall
+Play texture Bush
+Play texture Player
+Play sound walk
+
+# Map Editor Assets
+MapEditor texture Ground
+MapEditor texture Wall
+MapEditor texture Bush
+MapEditor texture Player
+
+# Menu Scene Assets (minimal)
+Menu texture Player
+
+# Battle Scene Assets (if implemented)
+Battle texture Ground
+Battle texture Wall
+Battle texture Bush
+Battle texture Player
+Battle sound walk

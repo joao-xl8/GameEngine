@@ -1,5 +1,6 @@
 #include "scene_map_editor.hpp"
 #include "scene_menu.hpp"
+#include "scene_loading.hpp"
 #include "../game_engine.hpp"
 #include <iostream>
 #include <sstream>
@@ -167,7 +168,7 @@ void Scene_MapEditor::sDoAction(const Action& action)
         }
         
         if (action.getName() == "BACK") {
-            m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
+            Scene_Loading::loadMenuScene(m_game);
         }
         else if (action.getName() == "UP") {
             m_cursorPos.y--;

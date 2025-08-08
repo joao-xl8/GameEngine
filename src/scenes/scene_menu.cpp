@@ -2,6 +2,8 @@
 #include "scene_play.hpp"
 #include "scene_options.hpp"
 #include "scene_map_editor.hpp"
+#include "scene_loading.hpp"
+#include "scene_viewport_config.hpp"
 #include "../game_engine.hpp"
 #include <exception>
 
@@ -19,6 +21,7 @@ void Scene_Menu::init()
     m_menuStrings.push_back("Start Game");
     m_menuStrings.push_back("Map Editor");
     m_menuStrings.push_back("Options");
+    m_menuStrings.push_back("Screen Settings");
     m_menuStrings.push_back("Exit");
     
     // Background music is handled by global sound manager - already playing
@@ -27,25 +30,54 @@ void Scene_Menu::init()
 
 void Scene_Menu::sRender()
 {
-    // GameEngine now handles window clearing - just draw menu elements
-    m_menuText.setString("Menu");
-    m_menuText.setCharacterSize(24);
+    // Get game view for proper positioning
+    sf::View gameView = m_game->getGameView();
+    sf::Vector2f viewSize = gameView.getSize();
+    sf::Vector2f viewCenter = gameView.getCenter();
+    
+    // Draw background
+    sf::RectangleShape background;
+    background.setSize(viewSize);
+    background.setPosition(viewCenter.x - viewSize.x / 2, viewCenter.y - viewSize.y / 2);
+    background.setFillColor(sf::Color(20, 20, 40));
+    m_game->window().draw(background);
+    
+    // Draw title
+    m_menuText.setString("GameEngine");
+    m_menuText.setCharacterSize(32);
     m_menuText.setFillColor(sf::Color::White);
-    m_menuText.setPosition(100, 100);
+    
+    sf::FloatRect titleBounds = m_menuText.getLocalBounds();
+    m_menuText.setPosition(
+        viewCenter.x - titleBounds.width / 2, 
+        viewCenter.y - viewSize.y * 0.3f
+    );
     m_game->window().draw(m_menuText);
+    
+    // Draw menu options
+    float startY = viewCenter.y - viewSize.y * 0.1f;
+    float spacing = viewSize.y * 0.06f;
+    
     for (size_t i = 0; i < m_menuStrings.size(); i++)
     {
         m_menuText.setString(m_menuStrings[i]);
-        m_menuText.setCharacterSize(16);
-        m_menuText.setPosition(100, 150 + i * 20);
+        m_menuText.setCharacterSize(20);
+        
         if (i == m_menuIndex)
         {
-            m_menuText.setFillColor(sf::Color::Red);
+            m_menuText.setFillColor(sf::Color::Yellow);
+            m_menuText.setString("> " + m_menuStrings[i] + " <");
         }
         else
         {
             m_menuText.setFillColor(sf::Color::White);
         }
+        
+        sf::FloatRect bounds = m_menuText.getLocalBounds();
+        m_menuText.setPosition(
+            viewCenter.x - bounds.width / 2, 
+            startY + i * spacing
+        );
         m_game->window().draw(m_menuText);
     }
 }
@@ -95,9 +127,9 @@ void Scene_Menu::sDoAction(const Action &action)
                 }
                 else if (m_menuStrings[m_menuIndex] == "Map Editor")
                 {
-                    // Use try-catch to handle potential memory allocation failures
+                    // Use loading screen for Map Editor transition
                     try {
-                        m_game->changeScene("MapEditor", std::make_shared<Scene_MapEditor>(m_game));
+                        Scene_Loading::loadMapEditorScene(m_game);
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit to prevent crash
                         m_game->quit();
@@ -113,11 +145,20 @@ void Scene_Menu::sDoAction(const Action &action)
                         m_game->quit();
                     }
                 }
+                else if (m_menuStrings[m_menuIndex] == "Screen Settings")
+                {
+                    try {
+                        m_game->changeScene("ScreenConfig", std::make_shared<Scene_ScreenConfig>(m_game));
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit to prevent crash
+                        m_game->quit();
+                    }
+                }
                 else
                 {
-                    // Use try-catch for Play scene creation
+                    // Use loading screen for Play scene transition
                     try {
-                        m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
+                        Scene_Loading::loadPlayScene(m_game, "metadata/levels/level1.txt");
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit
                         m_game->quit();

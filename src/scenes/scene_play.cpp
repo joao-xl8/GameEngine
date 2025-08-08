@@ -1,6 +1,7 @@
 #include "scene_play.hpp"
 #include "../components/common_components.hpp"
 #include "scene_menu.hpp"
+#include "scene_loading.hpp"
 #include "../game_engine.hpp"
 #include <fstream>
 #include <sstream>
@@ -119,14 +120,15 @@ void Scene_Play::sCamera()
             // Update camera to follow player position
             camera->followTarget(transform->pos, m_deltaTime);
             
-            // Update the game view to match camera position (account for coordinate conversion)
+            // Update the game view to match camera position
             sf::View& gameView = m_game->getGameView();
-            sf::Vector2f viewSize = gameView.getSize();
-            gameView.setCenter(camera->position.x, (viewSize.y - 128.0f) - camera->position.y);
             
-            // Enhanced debug output
+            // Simple camera centering - no coordinate conversion needed
+            gameView.setCenter(camera->position.x, camera->position.y);
+            
+            // Enhanced debug output (reduced frequency)
             static int debugCounter = 0;
-            if (debugCounter++ % 30 == 0) { // Print every 30 frames (roughly 0.5 seconds)
+            if (debugCounter++ % 60 == 0) { // Print every 60 frames (roughly 1 second)
                 Vec2 offset = transform->pos - camera->position;
                 std::printf("Player: (%.1f, %.1f) | Camera: (%.1f, %.1f) | Offset: (%.1f, %.1f) | Following: %s | CameraMoved: %s\n", 
                            transform->pos.x, transform->pos.y,
@@ -440,7 +442,7 @@ void Scene_Play::sDoAction(const Action &action)
         std::printf("Start action: %s\n", action.getName().c_str());
         if (action.getName() == "PAUSE")
         {
-            m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));
+            Scene_Loading::loadMenuScene(m_game);
         }
         else if (action.getName() == "TOGGLE_TEXTURE")
         {
@@ -589,11 +591,8 @@ void Scene_Play::spawnPlayer()
     // Initialize game view to center player in middle of screen
     sf::View& gameView = m_game->getGameView();
     
-    // Get the game view size to calculate proper center
-    sf::Vector2f viewSize = gameView.getSize();
-    
-    // Set camera center accounting for coordinate system conversion
-    gameView.setCenter(startPos.x, (viewSize.y - 128.0f) - startPos.y);
+    // Set camera center directly to player position (no coordinate conversion needed)
+    gameView.setCenter(startPos.x, startPos.y);
     
     std::printf("Camera initialized at position: %f, %f (player centered)\n", startPos.x, startPos.y);
     

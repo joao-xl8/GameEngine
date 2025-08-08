@@ -3,21 +3,23 @@
 #include <iostream>
 #include <exception>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 
 void GameEngine::init()
 {
     try {
-        // Create window with minimum size enforcement (480x640 minimum)
-        int windowWidth = std::max(800, 480);   // Ensure minimum width of 480
-        int windowHeight = std::max(600, 640);  // Ensure minimum height of 640
+        // Load screen configuration first
+        loadScreenConfig();
         
-        m_window.create(sf::VideoMode(windowWidth, windowHeight), "Game Engine", sf::Style::Default);
+        // Create window with size from loaded viewport config
+        m_window.create(sf::VideoMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight), "Game Engine", sf::Style::Default);
         if (!m_window.isOpen()) {
             std::cerr << "Failed to create SFML window" << std::endl;
             m_running = false;
             return;
         }
-        
+
         // Initialize ImGui with error checking
         if (ImGui::SFML::Init(m_window)) {
             m_running = true;
@@ -26,19 +28,14 @@ void GameEngine::init()
             m_running = false;
             return;
         }
-        
+
         m_currentScene = "Menu";
 
-        // Initialize viewport system with safety checks
+        // Initialize viewport system
+        calculateViewport();
+
+        // Initialize global sound manager
         try {
-            // Set up game view to be centered with zoom factor
-            float scaledWidth = static_cast<float>(m_gameWidth) * m_zoomFactor;
-            float scaledHeight = static_cast<float>(m_gameHeight) * m_zoomFactor;
-            
-            m_gameView.setSize(scaledWidth, scaledHeight);
-            m_gameView.setCenter(scaledWidth / 2.0f, scaledHeight / 2.0f);
-            
-            // Initialize global sound manager
             m_globalSoundManager = std::make_shared<CSound>();
             
             // Load background music
@@ -52,29 +49,10 @@ void GameEngine::init()
             m_globalSoundManager->playMusic("background", true, 25.0f); // Loop, 25% volume
             
             std::printf("Global sound system initialized with background music\n");
-            
-            // Initialize letterbox rectangles with default values first
-            m_letterboxTop.setSize(sf::Vector2f(0.0f, 0.0f));
-            m_letterboxTop.setPosition(0.0f, 0.0f);
-            m_letterboxTop.setFillColor(sf::Color::Black);
-            
-            m_letterboxBottom.setSize(sf::Vector2f(0.0f, 0.0f));
-            m_letterboxBottom.setPosition(0.0f, 0.0f);
-            m_letterboxBottom.setFillColor(sf::Color::Black);
-            
-            m_letterboxLeft.setSize(sf::Vector2f(0.0f, 0.0f));
-            m_letterboxLeft.setPosition(0.0f, 0.0f);
-            m_letterboxLeft.setFillColor(sf::Color::Black);
-            
-            m_letterboxRight.setSize(sf::Vector2f(0.0f, 0.0f));
-            m_letterboxRight.setPosition(0.0f, 0.0f);
-            m_letterboxRight.setFillColor(sf::Color::Black);
-            
-            // Now calculate viewport safely
-            calculateViewport();
         } catch (const std::exception& e) {
-            std::cerr << "Failed to initialize viewport system: " << e.what() << std::endl;
-            // Continue without viewport system
+            std::printf("Warning: Could not initialize global sound system: %s\n", e.what());
+            // Create a dummy sound manager to prevent crashes
+            m_globalSoundManager = std::make_shared<CSound>();
         }
 
         // Load assets with error checking
@@ -88,24 +66,14 @@ void GameEngine::init()
         // Create scenes with error checking
         try {
             m_scenes["Menu"] = std::make_shared<Scene_Menu>(this);
-            // m_scenes["Play"] = std::make_shared<Scene_Play>(this, "metadata/level1.txt");
-
-            if (m_scenes[m_currentScene]) {
-                m_scenes[m_currentScene]->init();
-            } else {
-                std::cerr << "Failed to create initial scene" << std::endl;
-                m_running = false;
-            }
+            currentScene()->init();
         } catch (const std::exception& e) {
-            std::cerr << "Failed to create scenes: " << e.what() << std::endl;
+            std::cerr << "Failed to initialize scenes: " << e.what() << std::endl;
             m_running = false;
         }
-        
+
     } catch (const std::exception& e) {
-        std::cerr << "Critical error in GameEngine::init(): " << e.what() << std::endl;
-        m_running = false;
-    } catch (...) {
-        std::cerr << "Unknown critical error in GameEngine::init()" << std::endl;
+        std::cerr << "Critical error during GameEngine initialization: " << e.what() << std::endl;
         m_running = false;
     }
 }
@@ -123,109 +91,109 @@ void GameEngine::calculateViewport()
     float windowHeight = static_cast<float>(windowSize.y);
     
     // Safety check: prevent division by zero
-    if (windowWidth <= 0.0f || windowHeight <= 0.0f || m_gameWidth <= 0 || m_gameHeight <= 0) {
+    if (windowWidth <= 0.0f || windowHeight <= 0.0f || m_viewportConfig.gameWidth <= 0 || m_viewportConfig.gameHeight <= 0) {
         return;
     }
     
-    // Calculate game aspect ratio and window aspect ratio
-    float gameAspect = static_cast<float>(m_gameWidth) / static_cast<float>(m_gameHeight);
-    float windowAspect = windowWidth / windowHeight;
+    // Update viewport config window size to match actual window
+    m_viewportConfig.windowWidth = static_cast<int>(windowWidth);
+    m_viewportConfig.windowHeight = static_cast<int>(windowHeight);
     
-    float viewportWidth, viewportHeight;
-    float viewportX = 0.0f, viewportY = 0.0f;
+    // Calculate scaled game view size
+    float scaledWidth = static_cast<float>(m_viewportConfig.gameWidth) * m_viewportConfig.zoomFactor;
+    float scaledHeight = static_cast<float>(m_viewportConfig.gameHeight) * m_viewportConfig.zoomFactor;
     
-    if (windowAspect > gameAspect) {
-        // Window is wider than game - add pillarboxes (left/right black bars)
-        // Game view height fills the window, width is calculated to maintain aspect ratio
-        viewportHeight = windowHeight;
-        viewportWidth = windowHeight * gameAspect;
-        
-        // Center horizontally
-        viewportX = (windowWidth - viewportWidth) / 2.0f;
-        viewportY = 0.0f;
-        
-        // Set up pillarbox rectangles (left and right black bars)
-        m_letterboxLeft.setSize(sf::Vector2f(viewportX, windowHeight));
-        m_letterboxLeft.setPosition(0.0f, 0.0f);
-        
-        m_letterboxRight.setSize(sf::Vector2f(viewportX, windowHeight));
-        m_letterboxRight.setPosition(viewportX + viewportWidth, 0.0f);
-        
-        // Clear letterboxes (top/bottom) - set them to zero size but position them properly
-        m_letterboxTop.setSize(sf::Vector2f(0.0f, 0.0f));
-        m_letterboxTop.setPosition(0.0f, 0.0f);
-        m_letterboxBottom.setSize(sf::Vector2f(0.0f, 0.0f));
-        m_letterboxBottom.setPosition(0.0f, 0.0f);
-        
-    } else {
-        // Window is taller than game - add letterboxes (top/bottom black bars)
-        // Game view width fills the window, height is calculated to maintain aspect ratio
-        viewportWidth = windowWidth;
-        viewportHeight = windowWidth / gameAspect;
-        
-        // Center vertically
-        viewportX = 0.0f;
-        viewportY = (windowHeight - viewportHeight) / 2.0f;
-        
-        // Set up letterbox rectangles (top and bottom black bars)
-        m_letterboxTop.setSize(sf::Vector2f(windowWidth, viewportY));
-        m_letterboxTop.setPosition(0.0f, 0.0f);
-        
-        m_letterboxBottom.setSize(sf::Vector2f(windowWidth, viewportY));
-        m_letterboxBottom.setPosition(0.0f, viewportY + viewportHeight);
-        
-        // Clear pillarboxes (left/right) - set them to zero size but position them properly
-        m_letterboxLeft.setSize(sf::Vector2f(0.0f, 0.0f));
-        m_letterboxLeft.setPosition(0.0f, 0.0f);
-        m_letterboxRight.setSize(sf::Vector2f(0.0f, 0.0f));
-        m_letterboxRight.setPosition(0.0f, 0.0f);
+    // Set up game view based on scaling mode
+    switch (m_viewportConfig.scalingMode) {
+        case ViewportConfig::STRETCH:
+            // Stretch to fill entire window (may distort aspect ratio)
+            m_gameView.setSize(scaledWidth, scaledHeight);
+            m_gameView.setCenter(scaledWidth / 2.0f, scaledHeight / 2.0f);
+            m_gameView.setViewport(sf::FloatRect(0.0f, 0.0f, 1.0f, 1.0f));
+            break;
+            
+        case ViewportConfig::MAINTAIN_ASPECT:
+            // Maintain aspect ratio with letterboxing (original behavior)
+            {
+                float gameAspect = static_cast<float>(m_viewportConfig.gameWidth) / static_cast<float>(m_viewportConfig.gameHeight);
+                float windowAspect = windowWidth / windowHeight;
+                
+                float viewportWidth, viewportHeight;
+                float viewportX = 0.0f, viewportY = 0.0f;
+                
+                if (windowAspect > gameAspect) {
+                    // Window is wider - add pillarboxes
+                    viewportHeight = windowHeight;
+                    viewportWidth = windowHeight * gameAspect;
+                    viewportX = (windowWidth - viewportWidth) / 2.0f;
+                } else {
+                    // Window is taller - add letterboxes
+                    viewportWidth = windowWidth;
+                    viewportHeight = windowWidth / gameAspect;
+                    viewportY = (windowHeight - viewportHeight) / 2.0f;
+                }
+                
+                sf::FloatRect viewport(
+                    viewportX / windowWidth,
+                    viewportY / windowHeight,
+                    viewportWidth / windowWidth,
+                    viewportHeight / windowHeight
+                );
+                
+                m_gameView.setSize(scaledWidth, scaledHeight);
+                m_gameView.setCenter(scaledWidth / 2.0f, scaledHeight / 2.0f);
+                m_gameView.setViewport(viewport);
+            }
+            break;
+            
+        case ViewportConfig::FILL_WINDOW:
+        default:
+            // Fill entire window (no letterboxing, may crop content)
+            // Scale the game view to match window aspect ratio
+            float windowAspect = windowWidth / windowHeight;
+            float gameAspect = static_cast<float>(m_viewportConfig.gameWidth) / static_cast<float>(m_viewportConfig.gameHeight);
+            
+            if (windowAspect > gameAspect) {
+                // Window is wider - expand game view width
+                float adjustedWidth = scaledHeight * windowAspect;
+                m_gameView.setSize(adjustedWidth, scaledHeight);
+            } else {
+                // Window is taller - expand game view height  
+                float adjustedHeight = scaledWidth / windowAspect;
+                m_gameView.setSize(scaledWidth, adjustedHeight);
+            }
+            
+            m_gameView.setCenter(scaledWidth / 2.0f, scaledHeight / 2.0f);
+            m_gameView.setViewport(sf::FloatRect(0.0f, 0.0f, 1.0f, 1.0f));
+            break;
     }
     
-    // Set the viewport for the game view (normalized coordinates 0.0 to 1.0)
-    // This ensures the game view is perfectly centered in the calculated area
-    sf::FloatRect viewport(
-        viewportX / windowWidth,        // Left edge (normalized)
-        viewportY / windowHeight,       // Top edge (normalized)
-        viewportWidth / windowWidth,    // Width (normalized)
-        viewportHeight / windowHeight   // Height (normalized)
-    );
-    
-    m_gameView.setViewport(viewport);
-    
-    // Debug output to help troubleshoot
+    // Debug output
+    sf::FloatRect viewport = m_gameView.getViewport();
+    sf::Vector2f viewSize = m_gameView.getSize();
     std::cout << "Window: " << windowWidth << "x" << windowHeight 
-              << " | Viewport: " << viewportX << "," << viewportY 
-              << " " << viewportWidth << "x" << viewportHeight
-              << " | Normalized: " << viewport.left << "," << viewport.top 
-              << " " << viewport.width << "x" << viewport.height << std::endl;
+              << " | Game View: " << viewSize.x << "x" << viewSize.y
+              << " | Viewport: " << viewport.left << "," << viewport.top 
+              << " " << viewport.width << "x" << viewport.height 
+              << " | Mode: " << m_viewportConfig.scalingMode << std::endl;
 }
 
 void GameEngine::update()
 {
-    sf::Clock delta_clock;
     while (m_window.isOpen() && m_running)
     {
         try {
-            ImGui::SFML::Update(m_window, delta_clock.restart());
+            // Update delta time
+            sf::Time deltaTimeObj = m_deltaClock.restart();
+            m_deltaTime = deltaTimeObj.asSeconds();
+            
+            ImGui::SFML::Update(m_window, deltaTimeObj);
             sUserInput();
             
-            // Clear the entire window with black first
-            m_window.clear(sf::Color::Black);
+            // Clear the entire window with background color
+            m_window.clear(m_viewportConfig.backgroundColor);
             
-            // Reset to default view for drawing letterboxes (this ensures they cover the entire window)
-            m_window.setView(m_window.getDefaultView());
-            
-            // Draw letterbox/pillarbox bars FIRST (in window coordinates)
-            try {
-                m_window.draw(m_letterboxTop);
-                m_window.draw(m_letterboxBottom);
-                m_window.draw(m_letterboxLeft);
-                m_window.draw(m_letterboxRight);
-            } catch (const std::exception& e) {
-                // If letterbox drawing fails, continue without them
-            }
-            
-            // Now set the game view for rendering game content
+            // Set the game view for rendering game content
             try {
                 m_window.setView(m_gameView);
             } catch (const std::exception& e) {
@@ -297,6 +265,12 @@ void GameEngine::sUserInput()
         
         if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)
         {
+            // Handle global fullscreen toggle (F11)
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F11) {
+                toggleFullscreen();
+                continue;
+            }
+            
             if (currentScene()->getActionMap().find(event.key.code) == currentScene()->getActionMap().end())
                 continue;
 
@@ -382,13 +356,191 @@ sf::RenderWindow &GameEngine::window()
 void GameEngine::setZoom(float zoomFactor)
 {
     // Clamp zoom factor to reasonable values
-    m_zoomFactor = std::max(0.1f, std::min(zoomFactor, 2.0f));
-    
-    float scaledWidth = static_cast<float>(m_gameWidth) * m_zoomFactor;
-    float scaledHeight = static_cast<float>(m_gameHeight) * m_zoomFactor;
-    
-    m_gameView.setSize(scaledWidth, scaledHeight);
-    
-    // Recalculate viewport to maintain centering
+    m_viewportConfig.zoomFactor = std::max(0.1f, std::min(zoomFactor, 2.0f));
     calculateViewport();
+}
+
+// Viewport configuration methods
+void GameEngine::setViewportConfig(const ViewportConfig& config)
+{
+    m_viewportConfig = config;
+    
+    // Save configuration to file
+    saveScreenConfig(config);
+    
+    // Recreate window if size changed
+    if (m_window.isOpen()) {
+        sf::Vector2u currentSize = m_window.getSize();
+        if (currentSize.x != static_cast<unsigned int>(config.windowWidth) || 
+            currentSize.y != static_cast<unsigned int>(config.windowHeight)) {
+            
+            m_window.create(sf::VideoMode(config.windowWidth, config.windowHeight), "Game Engine");
+            m_window.setFramerateLimit(60);
+        }
+    }
+    
+    calculateViewport();
+}
+
+void GameEngine::setResolution(int width, int height)
+{
+    m_viewportConfig.windowWidth = width;
+    m_viewportConfig.windowHeight = height;
+    
+    if (m_window.isOpen()) {
+        m_window.create(sf::VideoMode(width, height), "Game Engine");
+        m_window.setFramerateLimit(60);
+        calculateViewport();
+    }
+}
+
+void GameEngine::setGameViewSize(int width, int height)
+{
+    m_viewportConfig.gameWidth = width;
+    m_viewportConfig.gameHeight = height;
+    calculateViewport();
+}
+
+void GameEngine::setScalingMode(ViewportConfig::ScalingMode mode)
+{
+    m_viewportConfig.scalingMode = mode;
+    calculateViewport();
+}
+
+void GameEngine::updateViewport()
+{
+    calculateViewport();
+}
+
+void GameEngine::loadScreenConfig()
+{
+    std::ifstream configFile("metadata/screen_config.txt");
+    if (!configFile.is_open()) {
+        std::cout << "Screen config file not found, using defaults" << std::endl;
+        return;
+    }
+    
+    std::string line;
+    while (std::getline(configFile, line)) {
+        // Skip empty lines and comments
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        
+        std::istringstream iss(line);
+        std::string setting;
+        if (!(iss >> setting)) {
+            continue;
+        }
+        
+        if (setting == "WINDOW_WIDTH") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.windowWidth = value;
+            }
+        } else if (setting == "WINDOW_HEIGHT") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.windowHeight = value;
+            }
+        } else if (setting == "GAME_WIDTH") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.gameWidth = value;
+            }
+        } else if (setting == "GAME_HEIGHT") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.gameHeight = value;
+            }
+        } else if (setting == "ZOOM_FACTOR") {
+            float value;
+            if (iss >> value) {
+                m_viewportConfig.zoomFactor = value;
+            }
+        } else if (setting == "SCALING_MODE") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.scalingMode = static_cast<ViewportConfig::ScalingMode>(value);
+            }
+        } else if (setting == "BACKGROUND_COLOR_R") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.backgroundColor.r = static_cast<sf::Uint8>(value);
+            }
+        } else if (setting == "BACKGROUND_COLOR_G") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.backgroundColor.g = static_cast<sf::Uint8>(value);
+            }
+        } else if (setting == "BACKGROUND_COLOR_B") {
+            int value;
+            if (iss >> value) {
+                m_viewportConfig.backgroundColor.b = static_cast<sf::Uint8>(value);
+            }
+        }
+    }
+    
+    configFile.close();
+    std::cout << "Screen configuration loaded: " << m_viewportConfig.windowWidth << "x" << m_viewportConfig.windowHeight 
+              << ", mode: " << m_viewportConfig.scalingMode << ", zoom: " << m_viewportConfig.zoomFactor << std::endl;
+}
+
+void GameEngine::saveScreenConfig()
+{
+    saveScreenConfig(m_viewportConfig);
+}
+
+void GameEngine::saveScreenConfig(const ViewportConfig& config)
+{
+    std::ofstream configFile("metadata/screen_config.txt");
+    if (!configFile.is_open()) {
+        std::cerr << "Failed to save screen configuration file" << std::endl;
+        return;
+    }
+    
+    configFile << "# Screen Configuration File\n";
+    configFile << "# This file stores display and viewport settings for the game\n";
+    configFile << "# Format: SETTING_NAME VALUE\n\n";
+    
+    configFile << "# Window resolution\n";
+    configFile << "WINDOW_WIDTH " << config.windowWidth << "\n";
+    configFile << "WINDOW_HEIGHT " << config.windowHeight << "\n\n";
+    
+    configFile << "# Game view settings\n";
+    configFile << "GAME_WIDTH " << config.gameWidth << "\n";
+    configFile << "GAME_HEIGHT " << config.gameHeight << "\n";
+    configFile << "ZOOM_FACTOR " << config.zoomFactor << "\n\n";
+    
+    configFile << "# Scaling mode: 0=STRETCH, 1=MAINTAIN_ASPECT, 2=FILL_WINDOW\n";
+    configFile << "SCALING_MODE " << static_cast<int>(config.scalingMode) << "\n\n";
+    
+    configFile << "# Background color (RGB values 0-255)\n";
+    configFile << "BACKGROUND_COLOR_R " << static_cast<int>(config.backgroundColor.r) << "\n";
+    configFile << "BACKGROUND_COLOR_G " << static_cast<int>(config.backgroundColor.g) << "\n";
+    configFile << "BACKGROUND_COLOR_B " << static_cast<int>(config.backgroundColor.b) << "\n";
+    
+    configFile.close();
+    std::cout << "Screen configuration saved: " << config.windowWidth << "x" << config.windowHeight 
+              << ", mode: " << config.scalingMode << ", zoom: " << config.zoomFactor << std::endl;
+}
+
+void GameEngine::toggleFullscreen()
+{
+    m_fullscreen = !m_fullscreen;
+    
+    if (m_fullscreen) {
+        // Get desktop resolution for fullscreen
+        sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
+        m_window.create(desktopMode, "Game Engine", sf::Style::Fullscreen);
+    } else {
+        // Return to windowed mode with configured resolution
+        m_window.create(sf::VideoMode(m_viewportConfig.windowWidth, m_viewportConfig.windowHeight), 
+                       "Game Engine", sf::Style::Default);
+    }
+    
+    m_window.setFramerateLimit(60);
+    calculateViewport();
+    
+    std::cout << "Toggled to " << (m_fullscreen ? "fullscreen" : "windowed") << " mode" << std::endl;
 }

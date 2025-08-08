@@ -8,6 +8,9 @@ a.out
 .cache/
 .cache/*
 cache
+./cache
+./cache/
+
 # Build directories
 build/
 cmake_build/

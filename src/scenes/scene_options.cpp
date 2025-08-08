@@ -20,25 +20,54 @@ void Scene_Options::init()
 
 void Scene_Options::sRender()
 {
-    // GameEngine now handles window clearing - just draw options elements
+    // Get game view for proper positioning
+    sf::View gameView = m_game->getGameView();
+    sf::Vector2f viewSize = gameView.getSize();
+    sf::Vector2f viewCenter = gameView.getCenter();
+    
+    // Draw background
+    sf::RectangleShape background;
+    background.setSize(viewSize);
+    background.setPosition(viewCenter.x - viewSize.x / 2, viewCenter.y - viewSize.y / 2);
+    background.setFillColor(sf::Color(25, 25, 45));
+    m_game->window().draw(background);
+    
+    // Draw title
     m_menuText.setString("Options");
-    m_menuText.setCharacterSize(24);
+    m_menuText.setCharacterSize(32);
     m_menuText.setFillColor(sf::Color::White);
-    m_menuText.setPosition(100, 100);
+    
+    sf::FloatRect titleBounds = m_menuText.getLocalBounds();
+    m_menuText.setPosition(
+        viewCenter.x - titleBounds.width / 2, 
+        viewCenter.y - viewSize.y * 0.3f
+    );
     m_game->window().draw(m_menuText);
+    
+    // Draw menu options
+    float startY = viewCenter.y - viewSize.y * 0.1f;
+    float spacing = viewSize.y * 0.08f;
+    
     for (size_t i = 0; i < m_menuStrings.size(); i++)
     {
         m_menuText.setString(m_menuStrings[i]);
-        m_menuText.setCharacterSize(16);
-        m_menuText.setPosition(100, 150 + i * 20);
+        m_menuText.setCharacterSize(20);
+        
         if (i == m_menuIndex)
         {
-            m_menuText.setFillColor(sf::Color::Red);
+            m_menuText.setFillColor(sf::Color::Yellow);
+            m_menuText.setString("> " + m_menuStrings[i] + " <");
         }
         else
         {
             m_menuText.setFillColor(sf::Color::White);
         }
+        
+        sf::FloatRect bounds = m_menuText.getLocalBounds();
+        m_menuText.setPosition(
+            viewCenter.x - bounds.width / 2, 
+            startY + i * spacing
+        );
         m_game->window().draw(m_menuText);
     }
 }

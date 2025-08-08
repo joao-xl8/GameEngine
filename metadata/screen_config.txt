@@ -1,0 +1,20 @@
+# Screen Configuration File
+# This file stores display and viewport settings for the game
+# Format: SETTING_NAME VALUE
+
+# Window resolution
+WINDOW_WIDTH 800
+WINDOW_HEIGHT 640
+
+# Game view settings
+GAME_WIDTH 600
+GAME_HEIGHT 800
+ZOOM_FACTOR 0.9
+
+# Scaling mode: 0=STRETCH, 1=MAINTAIN_ASPECT, 2=FILL_WINDOW
+SCALING_MODE 2
+
+# Background color (RGB values 0-255)
+BACKGROUND_COLOR_R 0
+BACKGROUND_COLOR_G 0
+BACKGROUND_COLOR_B 0
