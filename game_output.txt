@@ -1,0 +1,33 @@
+Screen configuration loaded: 800x600, mode: 2, zoom: 1
+Window created: 800x600 (windowed)
+Window: 800x600 | Game View: 960x720 | Viewport: 0,0 1x1 | Mode: 2
+Sound configuration loaded: Master=100%, Music=80%, Effects=100%, Enabled=OFF
+Global sound system initialized with background music
+Adding texture: Ground
+Adding texture: Bush
+Adding texture: Wall
+Adding texture: Player
+Adding texture: Toriel_Normal1
+Adding texture: Toriel_Normal2
+Adding texture: Toriel_Shocked1
+Adding texture: Toriel_Shocked2
+Adding texture: Ace_Neutral
+Adding texture: Ace_Stern
+Adding texture: Ace_Surprise
+Adding texture: Ace_Smile
+Scene_Menu initialized (background music continues from global manager)
+Loaded dialogue config: 9 lines
+Failed to open sound file "assets/sounds/dialogue_text.wav" (couldn't open stream)
+Failed to open sound file "assets/sounds/dialogue_ambient.wav" (couldn't open stream)
+Failed to load sound: assets/sounds/dialogue_text.wav
+Failed to load sound: assets/sounds/dialogue_ambient.wav
+Error: Texture 'DialogueBackground' not found!
+Available textures: Ace_Neutral Ace_Smile Ace_Stern Ace_Surprise Bush Ground Player Toriel_Normal1 Toriel_Normal2 Toriel_Shocked1 Toriel_Shocked2 Wall 
+Warning: Could not load dialogue background: Texture not found: DialogueBackground
+Dialogue UI setup complete. View center: (480, 360), View size: (960, 720)
+Dialogue box position: (10, 468)
+displayCurrentLine called - Index: 0, Total lines: 9
+Loaded portrait: Toriel_Normal1 (left)
+Displaying line 1/9: Toriel - Hello there, young one. Welcome to the Underground!
+Dialogue scene initialized with 9 lines
+Dialogue update - Complete: 0, Current line: 0, Total lines: 9

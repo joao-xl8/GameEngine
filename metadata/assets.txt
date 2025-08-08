@@ -1,6 +1,26 @@
+# Environment Assets
 Texture Ground assets/imgs/ground.png
 Texture Bush assets/imgs/bush.png
 Texture Wall assets/imgs/wall.png
-Texture Player assets/imgs/Player.png
+
+# Character Assets - Player
+Texture Player assets/characters/player/sprites/Player.png
+
+# Character Assets - NPCs
+Texture Actor_idle assets/characters/npcs/actor_idle/sprites/Actor_idle.png
+
+# Dialogue Portrait Assets - Toriel
+Texture Toriel_Normal1 assets/imgs/dialogue_portraits/Toriel/Normal1.png
+Texture Toriel_Normal2 assets/imgs/dialogue_portraits/Toriel/Normal2.png
+Texture Toriel_Shocked1 assets/imgs/dialogue_portraits/Toriel/Shocked1.png
+Texture Toriel_Shocked2 assets/imgs/dialogue_portraits/Toriel/Shocked2.png
+
+# Dialogue Portrait Assets - Ace
+Texture Ace_Neutral assets/imgs/dialogue_portraits/Ace/Neutral.png
+Texture Ace_Stern assets/imgs/dialogue_portraits/Ace/Stern.png
+Texture Ace_Surprise assets/imgs/dialogue_portraits/Ace/Surprise.png
+Texture Ace_Smile assets/imgs/dialogue_portraits/Ace/Smile.png
+
+# Fonts
 Font ShareTech assets/fonts/ShareTech-Regular.ttf 
-Font Techno assets/fonts/Techno.ttf  
+Font Techno assets/fonts/Techno.ttf

@@ -2,6 +2,7 @@
 #include "../components/common_components.hpp"
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
+#include "scene_dialogue.hpp"
 #include "../game_engine.hpp"
 #include <fstream>
 #include <sstream>
@@ -14,6 +15,9 @@ void Scene_Play::init(const std::string &levelPath)
     registerAction(sf::Keyboard::C, "TOGGLE_COLLISION");
     registerAction(sf::Keyboard::G, "TOGGLE_GRID");
     
+    // Dialogue interaction
+    registerAction(sf::Keyboard::E, "INTERACT");
+    
     // Player movement controls
     registerAction(sf::Keyboard::W, "UP");
     registerAction(sf::Keyboard::A, "LEFT");
@@ -23,6 +27,12 @@ void Scene_Play::init(const std::string &levelPath)
     m_tileText.setCharacterSize(18);  // Increased from 16 to 18
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_tileText.setFillColor(sf::Color::White);
+    
+    // Initialize interaction prompt text
+    m_interactionPrompt.setCharacterSize(16);
+    m_interactionPrompt.setFont(m_game->getAssets().getFont("ShareTech"));
+    m_interactionPrompt.setFillColor(sf::Color::Yellow);
+    m_interactionPrompt.setString("Press E to talk");
 
     // Initialize local sound manager for scene-specific sounds
     m_soundManager = std::make_shared<CSound>();
@@ -72,6 +82,42 @@ void Scene_Play::init(const std::string &levelPath)
             e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
             e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
             // DONT HAVE COLLISION
+        }
+        else if (type == "NPC")
+        {
+            std::printf("Loading NPC: %s at position (%d, %d)\n", spriteName.c_str(), x, y);
+            auto e = m_entityManager.addEntity(type);
+            e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
+            e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
+            
+            // Add animations for NPCs
+            if (spriteName == "Actor_idle") {
+                // Add animation component for Actor_idle NPC
+                auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
+                
+                // Define idle animation for Actor_idle
+                // Assuming Actor_idle.png is a spritesheet with idle animation frames
+                // You may need to adjust these parameters based on your actual spritesheet:
+                // - frameCount: number of frames in the idle animation
+                // - frameDuration: how long each frame lasts (in seconds)
+                // - loop: whether the animation should loop
+                // - row: which row of the spritesheet to use (0-based)
+                animationComponent->addAnimation("idle", "Actor_idle", 4, 0.5f, true, 0); // 4 frames, 0.5s per frame, loop, row 0
+                animationComponent->play("idle"); // Start playing the idle animation
+                
+                e->addComponent<CAnimation>(animationComponent);
+                
+                std::printf("Added idle animation to Actor_idle NPC at (%d, %d)\n", x, y);
+            }
+            // Add more NPC animations here as needed
+            // else if (spriteName == "Merchant") {
+            //     auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
+            //     animationComponent->addAnimation("idle", "Merchant", 6, 0.3f, true, 0);
+            //     animationComponent->play("idle");
+            //     e->addComponent<CAnimation>(animationComponent);
+            // }
+            
+            // NPCs don't have collision by default (they're interactive but not solid)
         }
     }
     file.close();
@@ -324,7 +370,10 @@ void Scene_Play::sMovement()
         }
         
         // Update position based on grid movement
-        transform->pos = gridMovement->updateMovement(m_deltaTime, transform->pos);
+        Vec2 gridWorldPos = gridMovement->updateMovement(m_deltaTime, transform->pos);
+        
+        // Direct positioning - no centering needed since player and tile are same size (64px)
+        transform->pos = gridWorldPos;
         
         // Set idle animation if not moving
         if (!gridMovement->isMoving && !moved && animation)
@@ -437,6 +486,18 @@ void Scene_Play::sRender()
             }
         }
     }
+    
+    // Draw interaction prompt if near an NPC
+    if (m_showInteractionPrompt && m_nearbyNPC && m_nearbyNPC->hasComponent<CTransform>()) {
+        auto npcTransform = m_nearbyNPC->getComponent<CTransform>();
+        
+        // Position the prompt above the NPC
+        float promptX = npcTransform->pos.x;
+        float promptY = npcTransform->pos.y - 30.0f;  // 30 pixels above the NPC
+        
+        m_interactionPrompt.setPosition(promptX, promptY);
+        m_game->window().draw(m_interactionPrompt);
+    }
 }
 
 void Scene_Play::sDoAction(const Action &action)
@@ -459,6 +520,13 @@ void Scene_Play::sDoAction(const Action &action)
         else if (action.getName() == "TOGGLE_GRID")
         {
             m_drawGrid = !m_drawGrid;
+        }
+        else if (action.getName() == "INTERACT")
+        {
+            // Handle dialogue interaction
+            if (m_nearbyNPC != nullptr) {
+                startDialogue(m_nearbyNPC);
+            }
         }
         // Player movement input
         else if (m_player && m_player->hasComponent<CInput>())
@@ -530,6 +598,7 @@ void Scene_Play::update()
     m_entityManager.update();
     sMovement();
     sCollision();
+    sInteraction();  // Check for NPC interactions
     sEnemySpawner();
     sAnimation();
     sCamera();  // Update camera system
@@ -543,18 +612,20 @@ void Scene_Play::spawnPlayer()
     
     // Set player starting position in center of level (20x15 grid, so center is around 10x7)
     // Using tile coordinates: 10 tiles right, 7 tiles down from origin
-    Vec2 startPos = {10 * m_tileSize.x, 7 * m_tileSize.y}; // Center of the level
+    // Simple tile positioning - no centering needed since player and tile are same size
+    Vec2 startPos = {10 * m_tileSize.x, 7 * m_tileSize.y}; // Direct tile position
+    
     m_player->addComponent<CTransform>(std::make_shared<CTransform>(startPos));
     
     // Add sprite component with player texture
     auto& playerTexture = m_game->getAssets().getTexture("Player");
     m_player->addComponent<CSprite>(std::make_shared<CSprite>("Player", playerTexture));
     
-    // Set up sprite sheet frame (32x32 pixel frames based on the sprite sheet)
+    // Set up sprite sheet frame (64x64 pixel frames based on the sprite sheet)
     auto sprite = m_player->getComponent<CSprite>();
     sprite->sprite.setTextureRect(sf::IntRect(0, 0, m_playerScale, m_playerScale)); // First frame
     
-    // Add animation component with flexible animation definitions (using configurable scale)
+    // Add animation component with flexible animation definitions (using player scale)
     auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_playerScale), static_cast<float>(m_playerScale)});
 
     // Define animations - you can use the same texture with different rows
@@ -565,21 +636,25 @@ void Scene_Play::spawnPlayer()
     animationComponent->addAnimation("walk_right", "Player", 6, 0.15f, false, 1); // Row 1, 6 frames
     animationComponent->addAnimation("walk_left", "Player", 6, 0.15f, true, 1);   // Row 1, flipped
 
-    // Example of how you could add animations from separate files:
-    // animationComponent->addAnimation("attack", "PlayerAttack", 4, 0.1f, false, 0);  // Different texture
-    // animationComponent->addAnimation("jump", "PlayerJump", 8, 0.08f, false, 0);     // Different texture
-    // animationComponent->addAnimation("death", "PlayerDeath", 10, 0.12f, false, 0);  // Different texture
-
     animationComponent->play("idle"); // Start with idle animation
     m_player->addComponent<CAnimation>(animationComponent);
     
-    // Add grid movement component (using configurable scale)
-    auto gridMovement = std::make_shared<CGridMovement>(m_gameScale, 3.0f, true); // Scale-based grid, 3 moves/sec, smooth
-    gridMovement->snapToGrid(startPos); // Snap player to nearest grid position
+    // Add grid movement component (using tile scale for proper grid alignment)
+    auto gridMovement = std::make_shared<CGridMovement>(m_gameScale, 3.0f, true); // Use tile size (64) for grid, 3 moves/sec, smooth
+    
+    // Set initial grid position based on tile coordinates
+    Vec2 initialGridPos = {10, 7}; // Grid coordinates (10, 7)
+    gridMovement->gridPos = initialGridPos;
+    gridMovement->targetPos = startPos; // Target is the tile position
+    gridMovement->startPos = startPos;  // Start is also tile position
+    
+    std::printf("Player spawn - Position: (%.1f, %.1f), Grid pos: (%.1f, %.1f)\n", 
+                startPos.x, startPos.y, initialGridPos.x, initialGridPos.y);
+    
     m_player->addComponent<CGridMovement>(gridMovement);
     
-    // Add bounding box (using configurable scale)
-    m_player->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)}));
+    // Add bounding box (using player scale for accurate collision)
+    m_player->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(Vec2{static_cast<float>(m_playerScale), static_cast<float>(m_playerScale)}));
     
     // Add input component
     m_player->addComponent<CInput>(std::make_shared<CInput>());
@@ -588,7 +663,7 @@ void Scene_Play::spawnPlayer()
     Vec2 deadZoneSize = {static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)}; // 1 tile dead zone
     auto cameraComponent = std::make_shared<CCamera>(startPos, deadZoneSize, 3.0f); // Follow speed of 3.0
     
-    // Ensure camera starts exactly at player position (centered)
+    // Ensure camera starts exactly at player position
     cameraComponent->setPosition(startPos);  // This sets both position and targetPosition
     
     m_player->addComponent<CCamera>(cameraComponent);
@@ -599,7 +674,7 @@ void Scene_Play::spawnPlayer()
     // Set camera center directly to player position (no coordinate conversion needed)
     gameView.setCenter(startPos.x, startPos.y);
     
-    std::printf("Camera initialized at position: %f, %f (player centered)\n", startPos.x, startPos.y);
+    std::printf("Camera initialized at position: %f, %f (player position)\n", startPos.x, startPos.y);
     
     // Add sound component
     auto soundComponent = std::make_shared<CSound>();
@@ -658,4 +733,82 @@ bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
         }
     }
     return false; // No collision detected
+}
+
+// Dialogue interaction system implementation
+void Scene_Play::sInteraction()
+{
+    if (!m_player || !m_player->hasComponent<CTransform>()) {
+        return;
+    }
+    
+    auto playerTransform = m_player->getComponent<CTransform>();
+    Vec2 playerPos = playerTransform->pos;
+    
+    // Reset nearby NPC
+    m_nearbyNPC = nullptr;
+    m_showInteractionPrompt = false;
+    
+    // Check all NPC entities for interaction
+    for (auto& entity : m_entityManager.getEntities("NPC")) {
+        if (!entity->hasComponent<CTransform>() || !entity->hasComponent<CSprite>()) {
+            continue;
+        }
+        
+        auto entityTransform = entity->getComponent<CTransform>();
+        auto entitySprite = entity->getComponent<CSprite>();
+        
+        Vec2 npcPos = entityTransform->pos;
+        
+        // Calculate distance between player and NPC
+        float distance = sqrt(pow(playerPos.x - npcPos.x, 2) + pow(playerPos.y - npcPos.y, 2));
+        
+        if (distance <= m_interactionRange) {
+            m_nearbyNPC = entity;
+            m_showInteractionPrompt = true;
+            break;  // Found nearby NPC, no need to check others
+        }
+    }
+}
+
+void Scene_Play::startDialogue(std::shared_ptr<Entity> npc)
+{
+    if (!npc || !npc->hasComponent<CSprite>()) {
+        return;
+    }
+    
+    auto npcSprite = npc->getComponent<CSprite>();
+    std::string dialogueFile = getNPCDialogueFile(npcSprite->name);
+    
+    if (!dialogueFile.empty()) {
+        std::cout << "Starting dialogue with NPC: " << npcSprite->name << std::endl;
+        std::cout << "Using dialogue file: " << dialogueFile << std::endl;
+        
+        try {
+            // Create and switch to dialogue scene
+            m_game->changeScene("Dialogue", std::make_shared<Scene_Dialogue>(m_game, dialogueFile));
+        } catch (const std::exception& e) {
+            std::cout << "Error starting dialogue: " << e.what() << std::endl;
+        }
+    } else {
+        std::cout << "No dialogue file found for NPC: " << npcSprite->name << std::endl;
+    }
+}
+
+std::string Scene_Play::getNPCDialogueFile(const std::string& npcName)
+{
+    // Map NPC sprite names to their dialogue files
+    if (npcName == "Actor_idle") {
+        return "metadata/dialogues/npcs/actor_idle/greeting.txt";
+    }
+    
+    // Add more NPCs here as needed
+    // if (npcName == "Merchant") {
+    //     return "metadata/dialogues/npcs/merchant/shop_intro.txt";
+    // }
+    // if (npcName == "Guard") {
+    //     return "metadata/dialogues/npcs/guard/patrol_chat.txt";
+    // }
+    
+    return "";  // No dialogue file found
 }

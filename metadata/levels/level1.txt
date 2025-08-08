@@ -281,3 +281,6 @@ Dec Bush 1 8
 Dec Bush 18 8
 Dec Bush 1 10
 Dec Bush 18 10
+
+# Add NPC for dialogue interaction
+NPC Actor_idle 10 7

@@ -1,0 +1,3 @@
+For some reason or another, there were 28 identical frames to one of Goat Mom's sprites. I have no idea why they were there, but I removed all but one of them from this file. These are also way smaller resolution the rest of the game's sprites and don't have transparent backgrounds. Weird.
+
+Also, why did they redesign her at all only for her to show up for less than three minutes of game time? Honestly, I wouldn't use these if you don't have to, the original game has way more variety of sprites for her.

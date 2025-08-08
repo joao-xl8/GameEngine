@@ -1,0 +1,86 @@
+{
+  "player": {
+    "sprite_size": [32, 32],
+    "animations": {
+      "idle": {
+        "frames": 6,
+        "duration": 0.2,
+        "loop": true,
+        "row": 0
+      },
+      "walk_down": {
+        "frames": 6,
+        "duration": 0.15,
+        "loop": true,
+        "row": 3
+      },
+      "walk_up": {
+        "frames": 6,
+        "duration": 0.15,
+        "loop": true,
+        "row": 2
+      },
+      "walk_right": {
+        "frames": 6,
+        "duration": 0.15,
+        "loop": true,
+        "row": 1,
+        "flip": false
+      },
+      "walk_left": {
+        "frames": 6,
+        "duration": 0.15,
+        "loop": true,
+        "row": 1,
+        "flip": true
+      }
+    }
+  },
+  "npcs": {
+    "Actor_idle": {
+      "sprite_size": [64, 64],
+      "animations": {
+        "idle": {
+          "frames": 4,
+          "duration": 0.5,
+          "loop": true,
+          "row": 0
+        }
+      }
+    },
+    "Merchant": {
+      "sprite_size": [64, 64],
+      "animations": {
+        "idle": {
+          "frames": 6,
+          "duration": 0.3,
+          "loop": true,
+          "row": 0
+        },
+        "working": {
+          "frames": 4,
+          "duration": 0.4,
+          "loop": true,
+          "row": 1
+        }
+      }
+    },
+    "Guard": {
+      "sprite_size": [64, 64],
+      "animations": {
+        "idle": {
+          "frames": 2,
+          "duration": 1.0,
+          "loop": true,
+          "row": 0
+        },
+        "alert": {
+          "frames": 4,
+          "duration": 0.2,
+          "loop": true,
+          "row": 1
+        }
+      }
+    }
+  }
+}

@@ -3,7 +3,6 @@
 #include "scene_options.hpp"
 #include "scene_map_editor.hpp"
 #include "scene_loading.hpp"
-#include "scene_viewport_config.hpp"
 #include "../game_engine.hpp"
 #include <exception>
 
