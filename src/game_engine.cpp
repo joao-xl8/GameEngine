@@ -57,8 +57,14 @@ void GameEngine::init()
             m_globalSoundManager->addSound("menu_select", "assets/sounds/tap.wav");
             m_globalSoundManager->addSound("menu_confirm", "assets/sounds/jump.wav");
             
-            // Start background music immediately
-            m_globalSoundManager->playMusic("background", true, 25.0f); // Loop, 25% volume
+            // Load sound settings and apply them
+            loadSoundSettings();
+            
+            // Start background music with loaded settings
+            if (m_soundEnabled) {
+                float adjustedVolume = m_masterVolume * m_musicVolume * 25.0f; // Base volume was 25%
+                m_globalSoundManager->playMusic("background", true, adjustedVolume);
+            }
             
             std::printf("Global sound system initialized with background music\n");
         } catch (const std::exception& e) {
@@ -601,4 +607,37 @@ void GameEngine::toggleFullscreen()
     saveScreenConfig();
     
     std::cout << "Toggled to " << (m_fullscreen ? "fullscreen" : "windowed") << " mode" << std::endl;
+}
+
+void GameEngine::loadSoundSettings()
+{
+    std::ifstream file("metadata/sound_config.txt");
+    if (!file.is_open()) {
+        std::cout << "No sound configuration file found, using defaults" << std::endl;
+        return;
+    }
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        
+        std::istringstream iss(line);
+        std::string key, value;
+        if (std::getline(iss, key, '=') && std::getline(iss, value)) {
+            if (key == "master_volume") {
+                m_masterVolume = std::stof(value);
+            } else if (key == "music_volume") {
+                m_musicVolume = std::stof(value);
+            } else if (key == "effects_volume") {
+                m_effectsVolume = std::stof(value);
+            } else if (key == "sound_enabled") {
+                m_soundEnabled = (value == "1" || value == "true");
+            }
+        }
+    }
+    
+    std::cout << "Sound configuration loaded: Master=" << (m_masterVolume * 100) << "%, "
+              << "Music=" << (m_musicVolume * 100) << "%, "
+              << "Effects=" << (m_effectsVolume * 100) << "%, "
+              << "Enabled=" << (m_soundEnabled ? "ON" : "OFF") << std::endl;
 }

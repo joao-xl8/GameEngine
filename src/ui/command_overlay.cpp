@@ -18,7 +18,7 @@ void CommandOverlay::setupUI()
     // Setup text - check if font is available
     try {
         m_text.setFont(m_game->getAssets().getFont("ShareTech"));
-        m_text.setCharacterSize(12);
+        m_text.setCharacterSize(18);  // Increased from 14 to 18 (+4 more)
         m_text.setFillColor(sf::Color::White);
     } catch (const std::exception& e) {
         std::cout << "Warning: Could not set font for command overlay: " << e.what() << std::endl;
@@ -92,8 +92,14 @@ void CommandOverlay::render()
         return;
     }
     
-    // Get window size for positioning
-    sf::Vector2u windowSize = m_game->window().getSize();
+    // Get current view for proper positioning
+    sf::View currentView = m_game->window().getView();
+    sf::Vector2f viewSize = currentView.getSize();
+    sf::Vector2f viewCenter = currentView.getCenter();
+    
+    // Calculate view bounds (bottom-right corner)
+    float viewRight = viewCenter.x + viewSize.x / 2;
+    float viewBottom = viewCenter.y + viewSize.y / 2;
     
     // Build command string
     std::ostringstream oss;
@@ -106,13 +112,14 @@ void CommandOverlay::render()
     
     // Calculate size and position
     sf::FloatRect textBounds = m_text.getLocalBounds();
-    float padding = 8.0f;
+    float padding = 6.0f;
     float bgWidth = textBounds.width + padding * 2;
     float bgHeight = textBounds.height + padding * 2;
     
-    // Position in bottom-right corner
-    float posX = windowSize.x - bgWidth - 10;
-    float posY = windowSize.y - bgHeight - 10;
+    // Position in bottom-right corner of current view with small margin
+    float margin = 8.0f;
+    float posX = viewRight - bgWidth - margin;
+    float posY = viewBottom - bgHeight - margin;
     
     // Set background
     m_background.setSize(sf::Vector2f(bgWidth, bgHeight));

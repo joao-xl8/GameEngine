@@ -20,7 +20,7 @@ void Scene_Play::init(const std::string &levelPath)
     registerAction(sf::Keyboard::S, "DOWN");
     registerAction(sf::Keyboard::D, "RIGHT");
 
-    m_tileText.setCharacterSize(16);
+    m_tileText.setCharacterSize(18);  // Increased from 16 to 18
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_tileText.setFillColor(sf::Color::White);
 
@@ -285,7 +285,8 @@ void Scene_Play::sMovement()
         if (m_gridMoveTimer <= 0.0f && !gridMovement->isMoving) {
             if (input->upPressed) 
             {
-                if (gridMovement->startMoveWithCollisionCheck(Vec2{0, 1}, transform->pos, boundingBox->size, collisionCheck)) {
+                // W key = UP = Move towards top of screen = Decrease Y coordinate (SFML/Level system)
+                if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_up");
                     if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
                     moved = true;
@@ -294,7 +295,8 @@ void Scene_Play::sMovement()
             }
             else if (input->downPressed) 
             {
-                if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
+                // S key = DOWN = Move towards bottom of screen = Increase Y coordinate (SFML/Level system)
+                if (gridMovement->startMoveWithCollisionCheck(Vec2{0, 1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_down");
                     if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
                     moved = true;
@@ -379,9 +381,11 @@ void Scene_Play::sRender()
             {
                 auto sprite = entity->getComponent<CSprite>();
                 auto transform = entity->getComponent<CTransform>();
-                // Calculate the bottom-left coordinate of the sprite
+                
+                // Use consistent top-down coordinate system (no Y-axis flip)
                 float posX = transform->pos.x;
-                float posY = m_game->window().getSize().y - transform->pos.y - sprite->sprite.getGlobalBounds().height; // Adjust posY
+                float posY = transform->pos.y;
+                
                 sprite->sprite.setPosition(posX, posY);
                 m_game->window().draw(sprite->sprite);
             }
@@ -537,8 +541,9 @@ void Scene_Play::spawnPlayer()
 {
     m_player = m_entityManager.addEntity("Player");
     
-    // Set player starting position (adjust as needed)
-    Vec2 startPos = {100, 100};
+    // Set player starting position in center of level (20x15 grid, so center is around 10x7)
+    // Using tile coordinates: 10 tiles right, 7 tiles down from origin
+    Vec2 startPos = {10 * m_tileSize.x, 7 * m_tileSize.y}; // Center of the level
     m_player->addComponent<CTransform>(std::make_shared<CTransform>(startPos));
     
     // Add sprite component with player texture

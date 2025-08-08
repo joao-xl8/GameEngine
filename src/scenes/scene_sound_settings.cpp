@@ -48,20 +48,20 @@ void Scene_SoundSettings::setupUI()
 {
     // Title text
     m_titleText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_titleText.setCharacterSize(32);
+    m_titleText.setCharacterSize(34);  // Increased from 32 to 34
     m_titleText.setFillColor(sf::Color::White);
     m_titleText.setString("SOUND SETTINGS");
     
     // Menu text
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_menuText.setCharacterSize(18);
+    m_menuText.setCharacterSize(20);  // Increased from 18 to 20
     m_menuText.setFillColor(sf::Color::White);
     
     // Instructions text
     m_instructionsText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_instructionsText.setCharacterSize(16);
+    m_instructionsText.setCharacterSize(18);  // Increased from 16 to 18
     m_instructionsText.setFillColor(sf::Color(200, 200, 200));
-    m_instructionsText.setString("Use WASD/Arrows to navigate, Left/Right to change values, Space/Enter to confirm, Backspace/C/ESC to cancel");
+    m_instructionsText.setString("Adjust audio settings for the best gaming experience");
 }
 
 void Scene_SoundSettings::update()
@@ -149,7 +149,7 @@ void Scene_SoundSettings::sRender()
     for (size_t i = 0; i < m_menuOptions.size(); i++) {
         sf::Text optionText;
         optionText.setFont(m_game->getAssets().getFont("ShareTech"));
-        optionText.setCharacterSize(18);
+        optionText.setCharacterSize(20);  // Increased from 18 to 20
         optionText.setFillColor(sf::Color::White);
         
         std::string displayText = m_menuOptions[i];
@@ -195,48 +195,79 @@ void Scene_SoundSettings::sRender()
         viewCenter.y + viewSize.y * 0.35f
     );
     m_game->window().draw(m_instructionsText);
+    
+    // Draw command overlay (always on top)
+    renderCommandOverlay();
 }
 
 void Scene_SoundSettings::applySoundSettings()
 {
-    // Apply sound settings to the game engine
-    // Note: This would integrate with the actual sound system
-    std::cout << "Applied sound settings: Master=" << (m_masterVolume * 100) << "%, "
-              << "Music=" << (m_musicVolume * 100) << "%, "
-              << "Effects=" << (m_effectsVolume * 100) << "%, "
-              << "Enabled=" << (m_soundEnabled ? "ON" : "OFF") << std::endl;
+    // Apply sound settings to the game engine's global sound system
+    if (m_game && m_game->getGlobalSoundManager()) {
+        auto soundManager = m_game->getGlobalSoundManager();
+        
+        // Apply music volume to background music
+        if (soundManager->isMusicPlaying("background")) {
+            soundManager->stopMusic("background");
+            if (m_soundEnabled) {
+                float adjustedVolume = m_masterVolume * m_musicVolume * 25.0f; // Base volume was 25%
+                soundManager->playMusic("background", true, adjustedVolume);
+            }
+        }
+        
+        std::cout << "Applied sound settings: Master=" << (m_masterVolume * 100) << "%, "
+                  << "Music=" << (m_musicVolume * 100) << "%, "
+                  << "Effects=" << (m_effectsVolume * 100) << "%, "
+                  << "Enabled=" << (m_soundEnabled ? "ON" : "OFF") << std::endl;
+    } else {
+        std::cout << "Warning: Could not apply sound settings - sound manager not available" << std::endl;
+    }
     
     saveSoundSettings();
 }
 
 void Scene_SoundSettings::loadSoundSettings()
 {
-    std::ifstream file("metadata/sound_config.txt");
-    if (!file.is_open()) {
-        std::cout << "No sound configuration file found, using defaults" << std::endl;
-        return;
-    }
-    
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty() || line[0] == '#') continue;
+    // Load current settings from the game engine
+    if (m_game) {
+        m_masterVolume = m_game->getMasterVolume();
+        m_musicVolume = m_game->getMusicVolume();
+        m_effectsVolume = m_game->getEffectsVolume();
+        m_soundEnabled = m_game->isSoundEnabled();
         
-        std::istringstream iss(line);
-        std::string key, value;
-        if (std::getline(iss, key, '=') && std::getline(iss, value)) {
-            if (key == "master_volume") {
-                m_masterVolume = std::stof(value);
-            } else if (key == "music_volume") {
-                m_musicVolume = std::stof(value);
-            } else if (key == "effects_volume") {
-                m_effectsVolume = std::stof(value);
-            } else if (key == "sound_enabled") {
-                m_soundEnabled = (value == "1" || value == "true");
+        std::cout << "Sound settings loaded from game engine: Master=" << (m_masterVolume * 100) << "%, "
+                  << "Music=" << (m_musicVolume * 100) << "%, "
+                  << "Effects=" << (m_effectsVolume * 100) << "%, "
+                  << "Enabled=" << (m_soundEnabled ? "ON" : "OFF") << std::endl;
+    } else {
+        // Fallback to file loading if game engine not available
+        std::ifstream file("metadata/sound_config.txt");
+        if (!file.is_open()) {
+            std::cout << "No sound configuration file found, using defaults" << std::endl;
+            return;
+        }
+        
+        std::string line;
+        while (std::getline(file, line)) {
+            if (line.empty() || line[0] == '#') continue;
+            
+            std::istringstream iss(line);
+            std::string key, value;
+            if (std::getline(iss, key, '=') && std::getline(iss, value)) {
+                if (key == "master_volume") {
+                    m_masterVolume = std::stof(value);
+                } else if (key == "music_volume") {
+                    m_musicVolume = std::stof(value);
+                } else if (key == "effects_volume") {
+                    m_effectsVolume = std::stof(value);
+                } else if (key == "sound_enabled") {
+                    m_soundEnabled = (value == "1" || value == "true");
+                }
             }
         }
+        
+        std::cout << "Sound configuration loaded from file" << std::endl;
     }
-    
-    std::cout << "Sound configuration loaded" << std::endl;
 }
 
 void Scene_SoundSettings::saveSoundSettings()

@@ -49,8 +49,15 @@ protected:
     ViewportConfig m_viewportConfig;
     sf::View m_gameView;      // The game viewport
     
+    // Sound settings
+    float m_masterVolume = 1.0f;
+    float m_musicVolume = 0.8f;
+    float m_effectsVolume = 1.0f;
+    bool m_soundEnabled = true;
+    
     void calculateViewport(); // Calculate viewport based on configuration
     void applyViewportConfig(); // Apply current viewport configuration
+    void loadSoundSettings(); // Load sound settings from file
 
     void init();
     std::shared_ptr<Scene> currentScene();
@@ -63,6 +70,12 @@ public:
     std::shared_ptr<CSound> getGlobalSoundManager() { return m_globalSoundManager; }  // Access global sound manager
     void setZoom(float zoomFactor);  // Add method to control zoom level
     float getDeltaTime() const { return m_deltaTime; }  // Get delta time for animations and timing
+    
+    // Sound settings getters
+    float getMasterVolume() const { return m_masterVolume; }
+    float getMusicVolume() const { return m_musicVolume; }
+    float getEffectsVolume() const { return m_effectsVolume; }
+    bool isSoundEnabled() const { return m_soundEnabled; }
     
     // Viewport configuration methods
     ViewportConfig& getViewportConfig() { return m_viewportConfig; }

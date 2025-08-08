@@ -82,19 +82,19 @@ void Scene_ScreenConfig::setupUI()
 {
     // Title
     m_titleText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_titleText.setCharacterSize(32);
+    m_titleText.setCharacterSize(34);  // Increased from 32 to 34
     m_titleText.setFillColor(sf::Color::White);
     m_titleText.setString("Screen Settings");
     
     // Instructions
     m_instructionsText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_instructionsText.setCharacterSize(16);
+    m_instructionsText.setCharacterSize(18);  // Increased from 16 to 18
     m_instructionsText.setFillColor(sf::Color(200, 200, 200));
-    m_instructionsText.setString("Use WASD/Arrows to navigate, Left/Right to change values, Space/Enter to confirm, Backspace/C/ESC to cancel\nFullscreen mode uses the configured resolution above");
+    m_instructionsText.setString("Fullscreen mode uses the configured resolution above");
     
     // Current config text
     m_currentConfigText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_currentConfigText.setCharacterSize(14);
+    m_currentConfigText.setCharacterSize(16);  // Increased from 14 to 16
     m_currentConfigText.setFillColor(sf::Color(150, 150, 255));
     
     updateOptionTexts();
@@ -107,7 +107,7 @@ void Scene_ScreenConfig::updateOptionTexts()
     for (size_t i = 0; i < m_menuOptions.size(); i++) {
         sf::Text optionText;
         optionText.setFont(m_game->getAssets().getFont("ShareTech"));
-        optionText.setCharacterSize(20);
+        optionText.setCharacterSize(22);  // Increased from 20 to 22
         
         std::string displayText = m_menuOptions[i];
         
@@ -308,6 +308,9 @@ void Scene_ScreenConfig::sRender()
     }
     
     m_game->window().draw(m_currentConfigText);
+    
+    // Draw command overlay (always on top)
+    renderCommandOverlay();
 }
 
 void Scene_ScreenConfig::onEnd()

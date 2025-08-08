@@ -66,7 +66,7 @@ void Scene_MapEditor::init()
     
     // Set up UI text
     m_uiText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_uiText.setCharacterSize(14);
+    m_uiText.setCharacterSize(16);  // Increased from 14 to 16
     m_uiText.setFillColor(sf::Color::White);
     
     // Set up cursor
@@ -96,7 +96,7 @@ void Scene_MapEditor::init()
     m_levelSelectorBackground.setOutlineThickness(2.0f);
     
     m_levelSelectorText.setFont(m_game->getAssets().getFont("ShareTech"));
-    m_levelSelectorText.setCharacterSize(16);
+    m_levelSelectorText.setCharacterSize(18);  // Increased from 16 to 18
     m_levelSelectorText.setFillColor(sf::Color::White);
     
     // Clear infinite grid (it starts empty by default)
@@ -705,19 +705,10 @@ void Scene_MapEditor::drawUI()
     oss << "Current Asset: " << m_currentAsset << "\n";
     oss << "Cursor: (" << static_cast<int>(m_cursorPos.x) << ", " << static_cast<int>(m_cursorPos.y) << ")\n";
     oss << "Objects: " << m_infiniteGrid.size() << "\n";
-    oss << "Save to: metadata/levels/\n\n";
-    oss << "Controls:\n";
-    oss << "WASD/Arrows: Move cursor\n";
-    oss << "Space/Enter/LClick: Confirm/Place\n";
-    oss << "Backspace/C/RClick: Cancel/Remove\n";
-    oss << "Q/E: Change asset\n";
-    oss << "Z/V: Change type\n";
-    oss << "F: Save level\n";
-    oss << "L: Select level to load\n";
-    oss << "ESC: Back to menu";
+    oss << "Save to: metadata/levels/";
     
-    // Use smaller font size to fit all text
-    m_uiText.setCharacterSize(12);
+    // Use clean font size for display
+    m_uiText.setCharacterSize(16);  // Increased from 14 to 16
     m_uiText.setString(oss.str());
     m_uiText.setPosition(20, 20);
     m_game->window().draw(m_uiText);
@@ -762,7 +753,7 @@ void Scene_MapEditor::drawAssetPreview()
     // Draw asset name below preview
     sf::Text previewText;
     previewText.setFont(m_game->getAssets().getFont("ShareTech"));
-    previewText.setCharacterSize(12);
+    previewText.setCharacterSize(14);  // Increased from 12 to 14
     previewText.setFillColor(sf::Color::White);
     previewText.setString(m_currentType + "\n" + m_currentAsset);
     previewText.setPosition(previewX, previewY + TILE_SIZE + 5);
@@ -832,7 +823,7 @@ void Scene_MapEditor::drawSaveDialog()
     // Draw dialog text
     sf::Text dialogText;
     dialogText.setFont(m_game->getAssets().getFont("ShareTech"));
-    dialogText.setCharacterSize(16);
+    dialogText.setCharacterSize(18);  // Increased from 16 to 18
     dialogText.setFillColor(sf::Color::White);
     
     std::ostringstream oss;
@@ -871,7 +862,7 @@ void Scene_MapEditor::drawOverwriteDialog()
     // Draw dialog text
     sf::Text dialogText;
     dialogText.setFont(m_game->getAssets().getFont("ShareTech"));
-    dialogText.setCharacterSize(16);
+    dialogText.setCharacterSize(18);  // Increased from 16 to 18
     dialogText.setFillColor(sf::Color::White);
     
     std::ostringstream oss;

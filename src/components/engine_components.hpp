@@ -286,14 +286,14 @@ public:
       needsUpdate = true;
     }
 
-    // Check vertical movement - Using same coordinate system as player movement
-    // Player UP = +Y, Player DOWN = -Y, Camera follows in same coordinate space
+    // Check vertical movement - Using SFML/Level coordinate system
+    // Player UP (W key) = -Y (towards top of screen), Player DOWN (S key) = +Y (towards bottom of screen)
     if (offset.y > deadZone.y / 2.0f) {
-      // Player is too far up (positive Y), move camera up
+      // Player is too far down (positive Y), move camera down
       newTargetPos.y = targetPos.y - deadZone.y / 2.0f;
       needsUpdate = true;
     } else if (offset.y < -deadZone.y / 2.0f) {
-      // Player is too far down (negative Y), move camera down
+      // Player is too far up (negative Y), move camera up
       newTargetPos.y = targetPos.y + deadZone.y / 2.0f;
       needsUpdate = true;
     }

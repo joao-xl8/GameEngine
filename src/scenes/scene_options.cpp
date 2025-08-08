@@ -37,7 +37,7 @@ void Scene_Options::sRender()
     
     // Draw title
     m_menuText.setString("Options");
-    m_menuText.setCharacterSize(32);
+    m_menuText.setCharacterSize(34);  // Increased from 32 to 34
     m_menuText.setFillColor(sf::Color::White);
     
     sf::FloatRect titleBounds = m_menuText.getLocalBounds();
@@ -54,7 +54,7 @@ void Scene_Options::sRender()
     for (size_t i = 0; i < m_menuStrings.size(); i++)
     {
         m_menuText.setString(m_menuStrings[i]);
-        m_menuText.setCharacterSize(20);
+        m_menuText.setCharacterSize(22);  // Increased from 20 to 22
         
         if (i == m_menuIndex)
         {
