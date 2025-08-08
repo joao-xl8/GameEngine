@@ -7,10 +7,26 @@
 #include <sstream>
 
 Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile)
-    : Scene(game)
+    : Scene(game), m_showingLog(false), m_logScrollOffset(0)
 {
     std::cout << "DEBUG: Scene_Dialogue constructor called" << std::endl;
+    
     loadDialogueConfig(dialogueFile);
+    
+    // Calculate maximum possible log entries and reserve space to avoid mallocs
+    size_t maxLogEntries = 0;
+    for (const auto& line : m_dialogueConfig.lines) {
+        if (line.type == "LINE") {
+            maxLogEntries++; // Each dialogue line creates one log entry
+        } else if (line.type == "CHOICES") {
+            maxLogEntries++; // Each choice selection creates one log entry
+        }
+    }
+    
+    // Reserve space for the entire conversation to avoid any runtime allocations
+    m_dialogueLog.reserve(maxLogEntries);
+    std::cout << "Reserved space for " << maxLogEntries << " dialogue log entries" << std::endl;
+    
     std::cout << "DEBUG: Scene_Dialogue constructor completed" << std::endl;
 }
 
@@ -26,6 +42,9 @@ void Scene_Dialogue::init()
     registerAction(sf::Keyboard::Down, "CHOICE_DOWN");
     registerAction(sf::Keyboard::W, "CHOICE_UP");
     registerAction(sf::Keyboard::S, "CHOICE_DOWN");
+    
+    // Register dialogue log key
+    registerAction(sf::Keyboard::B, "SHOW_LOG");
     
     // Initialize sound manager
     m_soundManager = std::make_shared<CSound>();
@@ -47,9 +66,22 @@ void Scene_Dialogue::init()
 
 void Scene_Dialogue::loadDialogueConfig(const std::string& dialogueFile)
 {
+    // Check if file exists before trying to open it
+    std::ifstream testFile(dialogueFile);
+    if (!testFile.good()) {
+        std::cerr << "ERROR: Dialogue file does not exist or cannot be accessed: " << dialogueFile << std::endl;
+        // Initialize with empty config to prevent crashes
+        m_dialogueConfig = DialogueConfig{};
+        m_dialogueComplete = true;
+        return;
+    }
+    testFile.close();
+    
     std::ifstream file(dialogueFile);
     if (!file.is_open()) {
         std::cerr << "Failed to open dialogue file: " << dialogueFile << std::endl;
+        m_dialogueConfig = DialogueConfig{};
+        m_dialogueComplete = true;
         return;
     }
     
@@ -88,11 +120,7 @@ void Scene_Dialogue::loadDialogueConfig(const std::string& dialogueFile)
             bool isLeft = (side == "LEFT");
             m_dialogueConfig.portraitAssignments[actor] = std::make_pair(isLeft, slot);
         } else if (command == "LABEL") {
-            std::string labelName;
-            iss >> labelName;
-            m_dialogueConfig.labels[labelName] = m_dialogueConfig.lines.size();
-        } else if (command == "LINE") {
-            // If we have pending choices, add them first
+            // If we have pending choices, add them first before processing the label
             if (!pendingChoices.empty()) {
                 DialogueLine choicesLine;
                 choicesLine.type = "CHOICES";
@@ -105,6 +133,10 @@ void Scene_Dialogue::loadDialogueConfig(const std::string& dialogueFile)
                 pendingChoices.clear();
             }
             
+            std::string labelName;
+            iss >> labelName;
+            m_dialogueConfig.labels[labelName] = m_dialogueConfig.lines.size();
+        } else if (command == "LINE") {
             DialogueLine dialogueLine;
             dialogueLine.type = "LINE";
             iss >> dialogueLine.actor >> dialogueLine.portrait;
@@ -278,6 +310,8 @@ void Scene_Dialogue::setupUI()
         }
     }
     
+    setupLogUI();
+    
     std::cout << "Dialogue UI setup complete. Window size: (" << windowWidth << ", " << windowHeight << ")" << std::endl;
     std::cout << "Choice box positioned at: (" << m_choiceBox.getPosition().x << ", " << m_choiceBox.getPosition().y << ")" << std::endl;
 }
@@ -296,6 +330,9 @@ void Scene_Dialogue::displayCurrentLine()
         processCurrentLine();
         return;
     }
+    
+    // Add to dialogue log
+    addToLog(currentLine.actor, currentLine.text);
     
     // Set actor name
     m_actorNameText.setString(currentLine.actor + ":");
@@ -447,9 +484,18 @@ void Scene_Dialogue::sDoAction(const Action& action)
     }
               
     if (action.getType() == "START") {
-        std::cout << "Action: " << action.getName() << " | Showing choices: " << (m_showingChoices ? "YES" : "NO") << std::endl;
+        std::cout << "Action: " << action.getName() << " | Showing choices: " << (m_showingChoices ? "YES" : "NO") << " | Showing log: " << (m_showingLog ? "YES" : "NO") << std::endl;
         
-        if (m_showingChoices) {
+        if (m_showingLog) {
+            // Handle log navigation
+            if (action.getName() == "CHOICE_UP") {
+                scrollLog(-1);
+            } else if (action.getName() == "CHOICE_DOWN") {
+                scrollLog(1);
+            } else if (action.getName() == "SHOW_LOG" || action.getName() == "BACK") {
+                hideDialogueLog();
+            }
+        } else if (m_showingChoices) {
             // Handle choice navigation
             if (action.getName() == "CHOICE_UP") {
                 std::cout << "Choice UP - Current: " << m_selectedChoice;
@@ -476,6 +522,8 @@ void Scene_Dialogue::sDoAction(const Action& action)
             } else if (action.getName() == "CONFIRM") {
                 std::cout << "Selecting choice: " << m_selectedChoice << std::endl;
                 selectChoice(m_selectedChoice);
+            } else if (action.getName() == "SHOW_LOG") {
+                showDialogueLog();
             } else if (action.getName() == "BACK") {
                 // Return to play scene when user presses ESC
                 m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
@@ -484,6 +532,8 @@ void Scene_Dialogue::sDoAction(const Action& action)
             // Handle normal dialogue navigation
             if (action.getName() == "CONFIRM") {
                 nextLine();
+            } else if (action.getName() == "SHOW_LOG") {
+                showDialogueLog();
             } else if (action.getName() == "BACK") {
                 // Return to play scene when user presses ESC
                 m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
@@ -544,6 +594,11 @@ void Scene_Dialogue::sRender()
     m_game->window().draw(m_actorNameText);
     m_game->window().draw(m_dialogueText);
     
+    // Draw dialogue log if showing
+    if (m_showingLog) {
+        renderDialogueLog();
+    }
+    
     // Draw command overlay (from base class)
     renderCommandOverlay();
 }
@@ -596,12 +651,18 @@ void Scene_Dialogue::processCurrentLine()
 
 void Scene_Dialogue::jumpToLabel(const std::string& label)
 {
+    std::cout << "jumpToLabel called with: '" << label << "'" << std::endl;
     auto it = m_dialogueConfig.labels.find(label);
     if (it != m_dialogueConfig.labels.end()) {
+        std::cout << "Found label '" << label << "' at line index: " << it->second << std::endl;
         m_currentLineIndex = it->second;
         processCurrentLine();
     } else {
         std::cout << "Warning: Label '" << label << "' not found!" << std::endl;
+        std::cout << "Available labels:" << std::endl;
+        for (const auto& labelPair : m_dialogueConfig.labels) {
+            std::cout << "  '" << labelPair.first << "' -> " << labelPair.second << std::endl;
+        }
         m_dialogueComplete = true;
     }
 }
@@ -626,9 +687,18 @@ void Scene_Dialogue::showChoices(const std::vector<DialogueChoice>& choices)
 
 void Scene_Dialogue::selectChoice(int choiceIndex)
 {
+    std::cout << "selectChoice called with index: " << choiceIndex << " | Current choices size: " << m_currentChoices.size() << std::endl;
+    
     if (choiceIndex >= 0 && choiceIndex < static_cast<int>(m_currentChoices.size())) {
+        std::cout << "Selecting choice: '" << m_currentChoices[choiceIndex].text << "' -> '" << m_currentChoices[choiceIndex].jumpTarget << "'" << std::endl;
+        
+        // Add choice selection to log
+        addChoiceToLog(m_currentChoices, choiceIndex);
+        
         m_showingChoices = false;
         jumpToLabel(m_currentChoices[choiceIndex].jumpTarget);
+    } else {
+        std::cout << "Invalid choice index: " << choiceIndex << std::endl;
     }
 }
 
@@ -696,4 +766,185 @@ void Scene_Dialogue::onEnd()
     }
     
     std::cout << "Dialogue scene ended" << std::endl;
+}
+
+// Dialogue Log System Implementation
+
+void Scene_Dialogue::addToLog(const std::string& actor, const std::string& text)
+{
+    if (actor.empty() || text.empty()) {
+        std::cout << "Warning: Empty actor or text for dialogue log" << std::endl;
+        return;
+    }
+    
+    try {
+        m_dialogueLog.emplace_back(actor, text);
+        std::cout << "Added to log: " << actor << " - " << text << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Error adding to log: " << e.what() << std::endl;
+    }
+}
+
+void Scene_Dialogue::addChoiceToLog(const std::vector<DialogueChoice>& choices, int selectedIndex)
+{
+    if (choices.empty() || selectedIndex < 0 || selectedIndex >= static_cast<int>(choices.size())) {
+        std::cout << "Warning: Invalid choice selection for log" << std::endl;
+        return;
+    }
+    
+    std::vector<std::string> choiceTexts;
+    choiceTexts.reserve(choices.size()); // Reserve space to avoid reallocations
+    
+    for (const auto& choice : choices) {
+        choiceTexts.push_back(choice.text);
+    }
+    
+    try {
+        m_dialogueLog.emplace_back(choiceTexts, selectedIndex);
+        std::cout << "Added choice to log: selected " << selectedIndex << " of " << choices.size() << " options" << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Error adding choice to log: " << e.what() << std::endl;
+    }
+}
+
+void Scene_Dialogue::showDialogueLog()
+{
+    m_showingLog = true;
+    m_logScrollOffset = 0;
+    std::cout << "Showing dialogue log with " << m_dialogueLog.size() << " entries" << std::endl;
+}
+
+void Scene_Dialogue::hideDialogueLog()
+{
+    m_showingLog = false;
+    std::cout << "Hiding dialogue log" << std::endl;
+}
+
+void Scene_Dialogue::scrollLog(int direction)
+{
+    int maxOffset = static_cast<int>(m_dialogueLog.size()) - MAX_LOG_LINES_VISIBLE;
+    if (maxOffset < 0) maxOffset = 0;
+    
+    m_logScrollOffset += direction;
+    if (m_logScrollOffset < 0) m_logScrollOffset = 0;
+    if (m_logScrollOffset > maxOffset) m_logScrollOffset = maxOffset;
+    
+    std::cout << "Scrolled log: offset = " << m_logScrollOffset << " (max: " << maxOffset << ")" << std::endl;
+}
+
+void Scene_Dialogue::setupLogUI()
+{
+    sf::Vector2u windowSize = m_game->window().getSize();
+    float windowWidth = static_cast<float>(windowSize.x);
+    float windowHeight = static_cast<float>(windowSize.y);
+    
+    // Setup log background (avoid command overlay area like dialogue box does)
+    float logMargin = 20.0f;
+    float commandOverlayHeight = 40.0f; // Same as dialogue box margin
+    float logHeight = windowHeight - (2 * logMargin) - commandOverlayHeight;
+    
+    m_logBackground.setSize(sf::Vector2f(windowWidth - (2 * logMargin), logHeight));
+    m_logBackground.setPosition(logMargin, logMargin);
+    m_logBackground.setFillColor(sf::Color(0, 0, 0, 240)); // Very dark background
+    m_logBackground.setOutlineColor(sf::Color::White);
+    m_logBackground.setOutlineThickness(2.0f);
+    
+    // Setup log title
+    try {
+        m_logTitle.setFont(m_game->getAssets().getFont("ShareTech"));
+        m_logTitle.setCharacterSize(24);
+        m_logTitle.setFillColor(sf::Color::Yellow);
+        m_logTitle.setStyle(sf::Text::Bold);
+        m_logTitle.setString("Dialogue History");
+        m_logTitle.setPosition(logMargin + 20.0f, logMargin + 20.0f);
+    } catch (const std::exception& e) {
+        std::cout << "Warning: Could not set font for log title: " << e.what() << std::endl;
+    }
+    
+    // Initialize log text objects
+    m_logTexts.clear();
+    m_logTexts.reserve(MAX_LOG_LINES_VISIBLE); // Reserve space to avoid allocations
+    
+    for (int i = 0; i < MAX_LOG_LINES_VISIBLE; i++) {
+        sf::Text logText;
+        try {
+            logText.setFont(m_game->getAssets().getFont("ShareTech"));
+            logText.setCharacterSize(14);
+            logText.setFillColor(sf::Color::White);
+            logText.setPosition(logMargin + 20.0f, logMargin + 60.0f + i * 20.0f);
+        } catch (const std::exception& e) {
+            std::cout << "Warning: Could not set font for log text: " << e.what() << std::endl;
+        }
+        m_logTexts.push_back(logText);
+    }
+}
+
+void Scene_Dialogue::renderDialogueLog()
+{
+    // Draw log background
+    m_game->window().draw(m_logBackground);
+    
+    // Draw log title
+    m_game->window().draw(m_logTitle);
+    
+    // Draw log entries
+    int displayIndex = 0;
+    for (size_t i = m_logScrollOffset; i < m_dialogueLog.size() && displayIndex < MAX_LOG_LINES_VISIBLE; i++, displayIndex++) {
+        const DialogueLogEntry& entry = m_dialogueLog[i];
+        
+        if (entry.type == DialogueLogEntry::LINE) {
+            // Regular dialogue line
+            std::string displayText = entry.actor + ": " + entry.text;
+            m_logTexts[displayIndex].setString(displayText);
+            m_logTexts[displayIndex].setFillColor(sf::Color::White);
+            m_game->window().draw(m_logTexts[displayIndex]);
+        } else if (entry.type == DialogueLogEntry::CHOICE_SELECTION) {
+            // Choice selection entry header
+            std::string displayText = "Player Choice:";
+            m_logTexts[displayIndex].setString(displayText);
+            m_logTexts[displayIndex].setFillColor(sf::Color::Yellow);
+            m_game->window().draw(m_logTexts[displayIndex]);
+            displayIndex++;
+            
+            // Show available choices
+            for (size_t j = 0; j < entry.availableChoices.size() && displayIndex < MAX_LOG_LINES_VISIBLE; j++, displayIndex++) {
+                bool wasSelected = (static_cast<int>(j) == entry.selectedChoiceIndex);
+                std::string choiceText = "  " + entry.availableChoices[j];
+                m_logTexts[displayIndex].setString(choiceText);
+                
+                // Style like choice menu: selected = yellow, unselected = white
+                m_logTexts[displayIndex].setFillColor(wasSelected ? sf::Color::Yellow : sf::Color::White);
+                m_game->window().draw(m_logTexts[displayIndex]);
+            }
+            displayIndex--; // Adjust for the increment in the for loop
+        }
+    }
+    
+    // Draw simple scroll indicators (no instructions - command overlay shows controls)
+    if (m_logScrollOffset > 0) {
+        sf::Text scrollUp;
+        try {
+            scrollUp.setFont(m_game->getAssets().getFont("ShareTech"));
+            scrollUp.setCharacterSize(16);
+            scrollUp.setFillColor(sf::Color::Cyan);
+            scrollUp.setString("▲ More above");
+            scrollUp.setPosition(m_logBackground.getPosition().x + m_logBackground.getSize().x - 150.0f, 
+                                m_logBackground.getPosition().y + 10.0f);
+            m_game->window().draw(scrollUp);
+        } catch (const std::exception& e) {}
+    }
+    
+    int maxOffset = static_cast<int>(m_dialogueLog.size()) - MAX_LOG_LINES_VISIBLE;
+    if (maxOffset > 0 && m_logScrollOffset < maxOffset) {
+        sf::Text scrollDown;
+        try {
+            scrollDown.setFont(m_game->getAssets().getFont("ShareTech"));
+            scrollDown.setCharacterSize(16);
+            scrollDown.setFillColor(sf::Color::Cyan);
+            scrollDown.setString("▼ More below");
+            scrollDown.setPosition(m_logBackground.getPosition().x + m_logBackground.getSize().x - 150.0f, 
+                                  m_logBackground.getPosition().y + m_logBackground.getSize().y - 30.0f);
+            m_game->window().draw(scrollDown);
+        } catch (const std::exception& e) {}
+    }
 }

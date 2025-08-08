@@ -145,6 +145,14 @@ std::string CommandOverlay::getKeyName(int keyCode)
         case sf::Keyboard::Enter: return "ENTER";
         case sf::Keyboard::Escape: return "ESC";
         case sf::Keyboard::Backspace: return "BKSP";
+        case sf::Keyboard::Up: return "UP";
+        case sf::Keyboard::Down: return "DOWN";
+        case sf::Keyboard::Left: return "LEFT";
+        case sf::Keyboard::Right: return "RIGHT";
+        case sf::Keyboard::W: return "W";
+        case sf::Keyboard::A: return "A";
+        case sf::Keyboard::S: return "S";
+        case sf::Keyboard::D: return "D";
         case sf::Keyboard::F: return "F";
         case sf::Keyboard::L: return "L";
         case sf::Keyboard::Q: return "Q";
@@ -180,6 +188,11 @@ bool CommandOverlay::shouldShowAction(const std::string& action)
         return false;
     }
     
+    // Skip choice navigation keys (contextual, not always relevant)
+    if (action == "CHOICE_UP" || action == "CHOICE_DOWN") {
+        return false;
+    }
+    
     // Skip actions we handle specially
     if (action == "CONFIRM" || action == "PLACE" || action == "SELECT" ||
         action == "CANCEL" || action == "REMOVE" || action == "BACK") {
@@ -205,6 +218,7 @@ std::string CommandOverlay::getActionDescription(const std::string& action)
     if (action == "NEXT_TYPE") return "Next Type";
     if (action == "PAUSE") return "Pause";
     if (action == "QUIT") return "Quit";
+    if (action == "SHOW_LOG") return "Show Log";
     
     // Default: capitalize first letter and replace underscores
     std::string result = action;

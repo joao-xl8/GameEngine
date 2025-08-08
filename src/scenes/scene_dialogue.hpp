@@ -14,6 +14,33 @@ struct DialogueLine {
     std::string jumpTarget = ""; // For CHOICE and JUMP
 };
 
+struct DialogueLogEntry {
+    enum Type { LINE, CHOICE_SELECTION };
+    Type type;
+    std::string actor;
+    std::string text;
+    std::vector<std::string> availableChoices; // For choice entries
+    int selectedChoiceIndex; // For choice entries
+    
+    // Default constructor
+    DialogueLogEntry() : type(LINE), selectedChoiceIndex(-1) {}
+    
+    // Constructor for dialogue lines
+    DialogueLogEntry(const std::string& a, const std::string& t) 
+        : type(LINE), actor(a), text(t), selectedChoiceIndex(-1) {}
+    
+    // Constructor for choice selections
+    DialogueLogEntry(const std::vector<std::string>& choices, int selected)
+        : type(CHOICE_SELECTION), actor("Player"), selectedChoiceIndex(selected) {
+        availableChoices = choices;
+        if (selected >= 0 && selected < static_cast<int>(choices.size())) {
+            text = "Selected: " + choices[selected];
+        } else {
+            text = "Invalid selection";
+        }
+    }
+};
+
 struct DialogueChoice {
     std::string text;
     std::string jumpTarget;
@@ -61,6 +88,15 @@ protected:
     std::vector<sf::Text> m_choiceTexts;
     sf::RectangleShape m_choiceBox;
     
+    // Dialogue log system
+    std::vector<DialogueLogEntry> m_dialogueLog;
+    bool m_showingLog = false;
+    int m_logScrollOffset = 0;
+    sf::RectangleShape m_logBackground;
+    sf::Text m_logTitle;
+    std::vector<sf::Text> m_logTexts;
+    static const int MAX_LOG_LINES_VISIBLE = 20;
+    
     // Layout constants
     static constexpr float DIALOGUE_BOX_HEIGHT = 150.0f;
     static constexpr float PORTRAIT_SIZE = 80.0f; // Smaller to fit 3 portraits
@@ -94,6 +130,15 @@ protected:
     void showChoices(const std::vector<DialogueChoice>& choices);
     void selectChoice(int choiceIndex);
     void processCurrentLine();
+    
+    // Dialogue log system
+    void addToLog(const std::string& actor, const std::string& text);
+    void addChoiceToLog(const std::vector<DialogueChoice>& choices, int selectedIndex);
+    void showDialogueLog();
+    void hideDialogueLog();
+    void scrollLog(int direction);
+    void setupLogUI();
+    void renderDialogueLog();
     
     // Portrait management
     void clearAllPortraits();
