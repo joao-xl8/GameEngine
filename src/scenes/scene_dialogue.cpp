@@ -85,7 +85,11 @@ void Scene_Dialogue::init()
     }
     if (!m_dialogueConfig.backgroundSound.empty()) {
         m_soundManager->addSound("background", "assets/sounds/" + m_dialogueConfig.backgroundSound);
-        m_soundManager->playSound("background", 30.0f); // Low volume background
+        // Play background sound only if sound is enabled
+        if (m_game->isSoundEnabled()) {
+            float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 30.0f;
+            m_soundManager->playSound("background", volume);
+        }
     }
     
     setupUI();
@@ -464,8 +468,10 @@ void Scene_Dialogue::updateTypewriter()
 
 void Scene_Dialogue::playTextSound()
 {
-    if (m_soundManager) {
-        m_soundManager->playSound("text", 20.0f); // Low volume text sound
+    // Play text sound only if sound is enabled
+    if (m_soundManager && m_game->isSoundEnabled()) {
+        float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 20.0f;
+        m_soundManager->playSound("text", volume);
     }
 }
 

@@ -366,7 +366,11 @@ void Scene_Play::sMovement()
                 // W key = UP = Move towards top of screen = Decrease Y coordinate (SFML/Level system)
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_up");
-                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
+                    // Play walking sound only if sound is enabled
+                    if (sound && m_game->isSoundEnabled()) {
+                        float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 70.0f;
+                        sound->playSound("footstep", volume);
+                    }
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                     std::cout << "UP movement successful - New grid pos: " << gridMovement->gridPos.x << ", " << gridMovement->gridPos.y << std::endl;
@@ -377,7 +381,11 @@ void Scene_Play::sMovement()
                 // S key = DOWN = Move towards bottom of screen = Increase Y coordinate (SFML/Level system)
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{0, 1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_down");
-                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
+                    // Play walking sound only if sound is enabled
+                    if (sound && m_game->isSoundEnabled()) {
+                        float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 70.0f;
+                        sound->playSound("footstep", volume);
+                    }
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                 }
@@ -386,7 +394,11 @@ void Scene_Play::sMovement()
             {
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{-1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_left");
-                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
+                    // Play walking sound only if sound is enabled
+                    if (sound && m_game->isSoundEnabled()) {
+                        float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 70.0f;
+                        sound->playSound("footstep", volume);
+                    }
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                 }
@@ -395,7 +407,11 @@ void Scene_Play::sMovement()
             {
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{1, 0}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_right");
-                    if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
+                    // Play walking sound only if sound is enabled
+                    if (sound && m_game->isSoundEnabled()) {
+                        float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 70.0f;
+                        sound->playSound("footstep", volume);
+                    }
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
                 }

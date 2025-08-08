@@ -666,8 +666,8 @@ void Scene_MapEditor::drawPlacedObjects()
 
 void Scene_MapEditor::drawUI()
 {
-    // Draw UI background - increased height to accommodate all text
-    sf::RectangleShape uiBackground(sf::Vector2f(320, 300));
+    // Draw UI background - increased height to accommodate cursor info
+    sf::RectangleShape uiBackground(sf::Vector2f(320, 380));
     uiBackground.setPosition(10, 10);
     uiBackground.setFillColor(sf::Color(0, 0, 0, 180));
     uiBackground.setOutlineColor(sf::Color::White);
@@ -695,7 +695,27 @@ void Scene_MapEditor::drawUI()
     oss << "Current Asset: " << m_currentAsset << "\n";
     oss << "Cursor: (" << static_cast<int>(m_cursorPos.x) << ", " << static_cast<int>(m_cursorPos.y) << ")\n";
     oss << "Objects: " << m_infiniteGrid.size() << "\n";
-    oss << "Save to: metadata/levels/";
+    oss << "Save to: metadata/levels/\n";
+    
+    // Add division line
+    oss << "-----------------------\n";
+    
+    // Add cursor tile information
+    int cursorX = static_cast<int>(m_cursorPos.x);
+    int cursorY = static_cast<int>(m_cursorPos.y);
+    GridCell* cursorCell = getGridCell(cursorX, cursorY);
+    
+    oss << "CURSOR TILE INFO:\n";
+    if (cursorCell && cursorCell->occupied) {
+        oss << "Type: " << cursorCell->type << "\n";
+        oss << "Asset: " << cursorCell->asset << "\n";
+        oss << "Position: (" << cursorX << ", " << cursorY << ")\n";
+        oss << "Status: OCCUPIED";
+    } else {
+        oss << "Position: (" << cursorX << ", " << cursorY << ")\n";
+        oss << "Status: EMPTY\n";
+        oss << "Ready to place: " << m_currentType << " " << m_currentAsset;
+    }
     
     // Use clean font size for display
     m_uiText.setCharacterSize(16);  // Increased from 14 to 16
@@ -740,13 +760,39 @@ void Scene_MapEditor::drawAssetPreview()
         m_game->window().draw(rect);
     }
     
-    // Draw asset name below preview
+    // Draw asset name below preview with background for readability
     sf::Text previewText;
     previewText.setFont(m_game->getAssets().getFont("ShareTech"));
     previewText.setCharacterSize(14);  // Increased from 12 to 14
     previewText.setFillColor(sf::Color::White);
     previewText.setString(m_currentType + "\n" + m_currentAsset);
-    previewText.setPosition(previewX, previewY + TILE_SIZE + 5);
+    
+    // Add margin between preview box and text
+    float textMargin = 10.0f;
+    float textY = previewY + TILE_SIZE + textMargin;
+    previewText.setPosition(previewX, textY);
+    
+    // Calculate text bounds for centering
+    sf::FloatRect textBounds = previewText.getLocalBounds();
+    
+    // Make text background same width as preview box (TILE_SIZE + 10)
+    float backgroundWidth = TILE_SIZE + 10;
+    float backgroundHeight = textBounds.height + 8; // 4px padding top/bottom
+    
+    // Center the text within the background
+    float centeredTextX = (previewX - 5) + (backgroundWidth - textBounds.width) / 2;
+    previewText.setPosition(centeredTextX, textY);
+    
+    // Draw black background behind text matching preview box width
+    sf::RectangleShape textBackground;
+    textBackground.setSize(sf::Vector2f(backgroundWidth, backgroundHeight));
+    textBackground.setPosition(previewX - 5, textY - 4); // -5 to align with preview box, -4 for padding
+    textBackground.setFillColor(sf::Color(0, 0, 0, 180)); // Semi-transparent black
+    textBackground.setOutlineColor(sf::Color::White);
+    textBackground.setOutlineThickness(1.0f);
+    m_game->window().draw(textBackground);
+    
+    // Draw the text on top of the background
     m_game->window().draw(previewText);
 }
 
