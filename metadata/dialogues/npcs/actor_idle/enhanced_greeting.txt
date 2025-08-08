@@ -1,0 +1,67 @@
+# Enhanced Dialogue Configuration with Multiple Portraits and Branching
+# Format: SETTING VALUE or DIALOGUE_LINE ACTOR PORTRAIT TEXT
+
+# Asset Declarations - All assets needed for this dialogue
+ASSETS_START
+PORTRAIT_LEFT Toriel Toriel_Normal1
+PORTRAIT_LEFT Toriel Toriel_Normal2
+PORTRAIT_LEFT Toriel Toriel_Shocked1
+PORTRAIT_RIGHT Ace Ace_Neutral
+PORTRAIT_RIGHT Ace Ace_Stern
+PORTRAIT_RIGHT Ace Ace_Smile
+PORTRAIT_RIGHT Ace Ace_Surprise
+BACKGROUND_IMAGE dialogue_bg.png
+BACKGROUND_SOUND dialogue_ambient.wav
+TEXT_SOUND dialogue_text.wav
+ASSETS_END
+
+# Portrait Assignments - Define which actors go on which side and slot
+PORTRAIT_ASSIGNMENT Toriel LEFT 0
+PORTRAIT_ASSIGNMENT Ace RIGHT 0
+PORTRAIT_ASSIGNMENT Player LEFT 1
+PORTRAIT_ASSIGNMENT Narrator LEFT 2
+PORTRAIT_ASSIGNMENT Enemy RIGHT 1
+PORTRAIT_ASSIGNMENT Guide RIGHT 2
+
+# Dialogue Settings
+BACKGROUND_IMAGE dialogue_bg.png
+BACKGROUND_SOUND dialogue_ambient.wav
+TEXT_SOUND dialogue_text.wav
+
+# Dialogue Flow with Labels and Branching
+# Format: LABEL label_name or LINE ACTOR PORTRAIT TEXT or CHOICE "Option Text" label_to_jump
+
+LABEL start
+LINE Toriel Normal1 Hello there, young one. Welcome to the Underground!
+LINE Ace Neutral Greetings. I am Ace, guardian of this realm.
+LINE Toriel Shocked1 Oh my! Another visitor? How wonderful!
+LINE Ace Stern We must be cautious. Not all who enter here have good intentions.
+LINE Toriel Normal2 Now, now, Ace. Let's give them a chance to prove themselves.
+
+# Present choices to the player
+CHOICE "I come in peace" peaceful_path
+CHOICE "I'm here to explore" explorer_path
+CHOICE "That's none of your business" hostile_path
+
+LABEL peaceful_path
+LINE Ace Smile Ah, a peaceful soul. That's refreshing to hear.
+LINE Toriel Normal1 See? I told you they seemed kind!
+LINE Ace Neutral Very well. You may pass, but be careful in the depths below.
+JUMP ending
+
+LABEL explorer_path
+LINE Toriel Normal2 An explorer! How exciting! There's so much to see here.
+LINE Ace Neutral Just remember, some areas are dangerous. Stay on the marked paths.
+LINE Toriel Normal1 And if you need help, don't hesitate to ask!
+JUMP ending
+
+LABEL hostile_path
+LINE Ace Stern I see... Well, your honesty is noted, if not appreciated.
+LINE Toriel Shocked1 Oh dear! Please, there's no need for hostility here.
+LINE Ace Surprise Perhaps you'll change your tune once you see what lies ahead.
+LINE Toriel Normal2 Everyone deserves a second chance. Please, be safe.
+JUMP ending
+
+LABEL ending
+LINE Toriel Normal1 Well then, shall we show you around?
+LINE Ace Neutral Welcome to the Underground, traveler. May your journey be... enlightening.

@@ -1,0 +1,18 @@
+# Simple Enhanced Dialogue - Compatible with current system
+# Format: SETTING VALUE or DIALOGUE_LINE ACTOR PORTRAIT TEXT
+
+# Dialogue Settings
+BACKGROUND_IMAGE dialogue_bg.png
+BACKGROUND_SOUND dialogue_ambient.wav
+TEXT_SOUND dialogue_text.wav
+
+# Simple dialogue with multiple characters
+LINE Toriel Normal1 Hello there, young one. Welcome to the Underground!
+LINE Ace Neutral Greetings. I am Ace, guardian of this realm.
+LINE Toriel Shocked1 Oh my! Another visitor? How wonderful!
+LINE Ace Stern We must be cautious. Not all who enter here have good intentions.
+LINE Toriel Normal2 Now, now, Ace. Let's give them a chance to prove themselves.
+LINE Ace Smile Very well. But I'll be watching closely.
+LINE Toriel Normal1 Don't mind him, he's actually quite kind.
+LINE Ace Neutral I heard that...
+LINE Toriel Normal2 Well then, shall we show you around?

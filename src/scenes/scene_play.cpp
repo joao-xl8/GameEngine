@@ -799,7 +799,7 @@ std::string Scene_Play::getNPCDialogueFile(const std::string& npcName)
 {
     // Map NPC sprite names to their dialogue files
     if (npcName == "Actor_idle") {
-        return "metadata/dialogues/npcs/actor_idle/greeting.txt";
+        return "metadata/dialogues/npcs/actor_idle/enhanced_greeting.txt";
     }
     
     // Add more NPCs here as needed

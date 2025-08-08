@@ -1,13 +1,22 @@
 #pragma once
 #include "scene.hpp"
 #include "../components/engine_components.hpp"
+#include "../ui/command_overlay.hpp"
 #include <vector>
 #include <string>
+#include <map>
 
 struct DialogueLine {
     std::string actor;
     std::string portrait;
     std::string text;
+    std::string type = "LINE"; // LINE, CHOICE, LABEL, JUMP
+    std::string jumpTarget = ""; // For CHOICE and JUMP
+};
+
+struct DialogueChoice {
+    std::string text;
+    std::string jumpTarget;
 };
 
 struct DialogueConfig {
@@ -15,6 +24,9 @@ struct DialogueConfig {
     std::string backgroundSound;
     std::string textSound;
     std::vector<DialogueLine> lines;
+    std::map<std::string, size_t> labels; // label_name -> line_index
+    std::vector<std::string> requiredAssets; // All assets needed for this dialogue
+    std::map<std::string, std::pair<bool, int>> portraitAssignments; // actor -> (isLeft, slotIndex)
 };
 
 class Scene_Dialogue : public Scene
@@ -24,22 +36,38 @@ protected:
     size_t m_currentLineIndex = 0;
     bool m_dialogueComplete = false;
     
-    // UI Elements
+    // Choice system
+    std::vector<DialogueChoice> m_currentChoices;
+    int m_selectedChoice = 0;
+    bool m_showingChoices = false;
+    
+    // UI Elements - Multiple portraits support
     sf::RectangleShape m_dialogueBox;
-    sf::RectangleShape m_leftPortraitFrame;
-    sf::RectangleShape m_rightPortraitFrame;
-    sf::Sprite m_leftPortrait;
-    sf::Sprite m_rightPortrait;
+    
+    // Left side portraits (up to 3)
+    std::vector<sf::RectangleShape> m_leftPortraitFrames;
+    std::vector<sf::Sprite> m_leftPortraits;
+    
+    // Right side portraits (up to 3)  
+    std::vector<sf::RectangleShape> m_rightPortraitFrames;
+    std::vector<sf::Sprite> m_rightPortraits;
+    
     sf::Sprite m_backgroundSprite;
     sf::Text m_dialogueText;
     sf::Text m_actorNameText;
     sf::Text m_instructionText;
     
+    // Choice UI
+    std::vector<sf::Text> m_choiceTexts;
+    sf::RectangleShape m_choiceBox;
+    
     // Layout constants
     static constexpr float DIALOGUE_BOX_HEIGHT = 150.0f;
-    static constexpr float PORTRAIT_SIZE = 120.0f;
+    static constexpr float PORTRAIT_SIZE = 80.0f; // Smaller to fit 3 portraits
+    static constexpr float PORTRAIT_SPACING = 10.0f;
     static constexpr float BOX_MARGIN = 10.0f;
     static constexpr float TEXT_PADDING = 15.0f;
+    static constexpr int MAX_PORTRAITS_PER_SIDE = 3;
     
     // Typewriter effect
     std::string m_fullText;
@@ -55,21 +83,29 @@ protected:
     // Sound management
     std::shared_ptr<CSound> m_soundManager;
 
+    void loadDialogueConfig(const std::string& dialogueFile);
+    void setupUI();
+    void displayCurrentLine();
+    void loadPortrait(const std::string& actor, const std::string& portrait, bool useLeftSide, int slotIndex = 0);
+    void updateTypewriter();
+    void playTextSound();
+    void nextLine();
+    void jumpToLabel(const std::string& label);
+    void showChoices(const std::vector<DialogueChoice>& choices);
+    void selectChoice(int choiceIndex);
+    void processCurrentLine();
+    
+    // Portrait management
+    void clearAllPortraits();
+    void highlightActivePortrait(const std::string& actor);
+    int findPortraitSlot(const std::string& actor, bool leftSide);
+
+    void sRender();
+    void sDoAction(const Action& action);
+
 public:
     Scene_Dialogue(GameEngine* game, const std::string& dialogueFile);
     void init();
     void update();
-    void sDoAction(const Action& action);
-    void sRender();
     void onEnd();
-    
-private:
-    void loadDialogueConfig(const std::string& dialogueFile);
-    void setupUI();
-    void displayCurrentLine();
-    void nextLine();
-    void updateTypewriter();
-    void loadPortrait(const std::string& actor, const std::string& portrait, bool isLeft);
-    std::string getPortraitPath(const std::string& actor, const std::string& portrait);
-    void playTextSound();
 };
