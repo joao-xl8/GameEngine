@@ -79,6 +79,9 @@ void Scene_Menu::sRender()
         );
         m_game->window().draw(m_menuText);
     }
+    
+    // Draw command overlay (always on top)
+    renderCommandOverlay();
 }
 
 void Scene_Menu::sDoAction(const Action &action)

@@ -5,6 +5,46 @@ void Scene::registerAction(int inputKey, std::string actionName)
 {
     // std::printf("Registering action %s for key %d\n", actionName.c_str(), inputKey);
     m_actionMap[inputKey] = actionName;
+    
+    // Track registered actions for command overlay
+    m_registeredActions[actionName].push_back(inputKey);
+    
+    // Initialize command overlay if not already done and game is available
+    if (!m_commandOverlay && m_game) {
+        try {
+            m_commandOverlay = std::make_unique<CommandOverlay>(m_game);
+            // Update command overlay
+            updateCommandOverlay();
+        } catch (const std::exception& e) {
+            // If command overlay fails to initialize, continue without it
+            std::cout << "Warning: Command overlay initialization failed: " << e.what() << std::endl;
+        }
+    } else if (m_commandOverlay) {
+        // Update command overlay
+        updateCommandOverlay();
+    }
+}
+
+void Scene::updateCommandOverlay()
+{
+    if (m_commandOverlay) {
+        try {
+            m_commandOverlay->update(m_registeredActions);
+        } catch (const std::exception& e) {
+            std::cout << "Warning: Command overlay update failed: " << e.what() << std::endl;
+        }
+    }
+}
+
+void Scene::renderCommandOverlay()
+{
+    if (m_commandOverlay) {
+        try {
+            m_commandOverlay->render();
+        } catch (const std::exception& e) {
+            std::cout << "Warning: Command overlay render failed: " << e.what() << std::endl;
+        }
+    }
 }
 
 size_t Scene::width() const

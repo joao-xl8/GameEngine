@@ -610,6 +610,9 @@ void Scene_MapEditor::sRender()
     drawLevelSelector();
     drawSaveDialog();
     drawOverwriteDialog();
+    
+    // Draw command overlay (always on top)
+    renderCommandOverlay();
 }
 
 void Scene_MapEditor::drawInfiniteGrid()
