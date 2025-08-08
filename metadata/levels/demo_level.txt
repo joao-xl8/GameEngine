@@ -1,0 +1,35 @@
+# Demo Level for Map Editor Testing
+# Format: Type SpriteName X Y
+
+# Create a simple room with walls
+Tile Wall 0 0
+Tile Wall 1 0
+Tile Wall 2 0
+Tile Wall 3 0
+Tile Wall 4 0
+Tile Wall 0 1
+Tile Wall 4 1
+Tile Wall 0 2
+Tile Wall 4 2
+Tile Wall 0 3
+Tile Wall 4 3
+Tile Wall 0 4
+Tile Wall 1 4
+Tile Wall 2 4
+Tile Wall 3 4
+Tile Wall 4 4
+
+# Add some ground tiles inside
+Tile Ground 1 1
+Tile Ground 2 1
+Tile Ground 3 1
+Tile Ground 1 2
+Tile Ground 2 2
+Tile Ground 3 2
+Tile Ground 1 3
+Tile Ground 2 3
+Tile Ground 3 3
+
+# Add some decorations
+Dec Bush 2 2
+Dec Player 1 1

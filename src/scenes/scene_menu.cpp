@@ -1,6 +1,7 @@
 #include "scene_menu.hpp"
 #include "scene_play.hpp"
 #include "scene_options.hpp"
+#include "scene_map_editor.hpp"
 #include "../game_engine.hpp"
 #include <exception>
 
@@ -16,6 +17,7 @@ void Scene_Menu::init()
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_menuText.setFillColor(sf::Color::White);
     m_menuStrings.push_back("Start Game");
+    m_menuStrings.push_back("Map Editor");
     m_menuStrings.push_back("Options");
     m_menuStrings.push_back("Exit");
     
@@ -91,6 +93,16 @@ void Scene_Menu::sDoAction(const Action &action)
                 {
                     m_game->quit();
                 }
+                else if (m_menuStrings[m_menuIndex] == "Map Editor")
+                {
+                    // Use try-catch to handle potential memory allocation failures
+                    try {
+                        m_game->changeScene("MapEditor", std::make_shared<Scene_MapEditor>(m_game));
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit to prevent crash
+                        m_game->quit();
+                    }
+                }
                 else if (m_menuStrings[m_menuIndex] == "Options")
                 {
                     // Use try-catch to handle potential memory allocation failures
@@ -105,7 +117,7 @@ void Scene_Menu::sDoAction(const Action &action)
                 {
                     // Use try-catch for Play scene creation
                     try {
-                        m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/level1.txt"));
+                        m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit
                         m_game->quit();

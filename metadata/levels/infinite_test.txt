@@ -1,0 +1,31 @@
+# Infinite Grid Test Level
+# Demonstrates negative coordinates and large distances
+# Format: Type SpriteName X Y
+
+# Origin marker
+Tile Ground 0 0
+Dec Player 0 0
+
+# Negative coordinate area
+Tile Wall -10 -10
+Tile Wall -9 -10
+Tile Wall -8 -10
+Tile Ground -9 -9
+Dec Bush -9 -9
+
+# Positive coordinate area
+Tile Wall 50 50
+Tile Wall 51 50
+Tile Wall 52 50
+Tile Ground 51 51
+Dec Bush 51 51
+
+# Far coordinates to test infinite grid
+Tile Wall 100 -100
+Tile Ground -200 200
+Dec Bush 500 -500
+
+# Scattered objects across large area
+Tile Ground 25 -30
+Tile Wall -75 80
+Dec Player 150 -250
