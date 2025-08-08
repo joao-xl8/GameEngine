@@ -55,25 +55,16 @@ Scene_ScreenConfig::Scene_ScreenConfig(GameEngine* game) : Scene(game)
 
 void Scene_ScreenConfig::init()
 {
-    // Register standardized input actions
-    // Movement controls (WASD + Arrow keys)
+    // Standard navigation controls
     registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::Up, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::Down, "DOWN");
     registerAction(sf::Keyboard::A, "LEFT");
-    registerAction(sf::Keyboard::Left, "LEFT");
     registerAction(sf::Keyboard::D, "RIGHT");
-    registerAction(sf::Keyboard::Right, "RIGHT");
     
-    // Confirm actions (Space/Enter)
+    // Standard confirm/cancel controls
     registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::Enter, "CONFIRM");
-    
-    // Cancel actions (Backspace/C/Escape)
-    registerAction(sf::Keyboard::Backspace, "CANCEL");
     registerAction(sf::Keyboard::C, "CANCEL");
-    registerAction(sf::Keyboard::Escape, "BACK");
+    registerAction(sf::Keyboard::C, "BACK");
     
     setupUI();
 }
@@ -212,14 +203,38 @@ void Scene_ScreenConfig::sDoAction(const Action& action)
 {
     if (action.getType() == "START") {
         if (action.getName() == "UP") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             if (m_selectedOption > 0) {
                 m_selectedOption--;
             } else {
                 m_selectedOption = m_menuOptions.size() - 1;
             }
         } else if (action.getName() == "DOWN") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             m_selectedOption = (m_selectedOption + 1) % m_menuOptions.size();
         } else if (action.getName() == "LEFT") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             // Adjust current option value
             if (m_selectedOption == 0) { // Resolution
                 if (m_selectedResolution > 0) {
@@ -233,6 +248,14 @@ void Scene_ScreenConfig::sDoAction(const Action& action)
                 m_zoomFactor = std::max(0.1f, m_zoomFactor - 0.1f);
             }
         } else if (action.getName() == "RIGHT") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             // Adjust current option value
             if (m_selectedOption == 0) { // Resolution
                 if (m_selectedResolution < m_resolutions.size() - 1) {
@@ -246,6 +269,14 @@ void Scene_ScreenConfig::sDoAction(const Action& action)
                 m_zoomFactor = std::min(2.0f, m_zoomFactor + 0.1f);
             }
         } else if (action.getName() == "CONFIRM") {
+            // Play menu confirm sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 80.0f;
+                    globalSound->playSound("menu_confirm", volume);
+                }
+            }
+            
             if (m_selectedOption == 3) { // Fullscreen Toggle
                 try {
                     m_game->toggleFullscreen(m_game->window());
@@ -266,6 +297,14 @@ void Scene_ScreenConfig::sDoAction(const Action& action)
                 m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
             }
         } else if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+            // Play menu back sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 50.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
         }
     }

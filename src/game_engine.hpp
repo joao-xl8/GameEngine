@@ -77,6 +77,9 @@ public:
     float getEffectsVolume() const { return m_effectsVolume; }
     bool isSoundEnabled() const { return m_soundEnabled; }
     
+    // Sound settings setter
+    void updateSoundSettings(float master, float music, float effects, bool enabled);
+    
     // Viewport configuration methods
     ViewportConfig& getViewportConfig() { return m_viewportConfig; }
     void setViewportConfig(const ViewportConfig& config);

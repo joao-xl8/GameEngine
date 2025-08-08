@@ -332,20 +332,44 @@ void Scene_Battle::sDoAction(const Action& action) {
 }
 
 void Scene_Battle::handleMenuNavigation(const Action& action) {
-    if (action.getType() == "UP") {
-        m_selectedActionIndex = std::max(0, m_selectedActionIndex - 1);
-    } else if (action.getType() == "DOWN") {
-        m_selectedActionIndex = std::min(4, m_selectedActionIndex + 1); // 5 actions: Attack, Defend, Item, Skill, Flee
-    } else if (action.getType() == "SELECT" || action.getType() == "CONFIRM") {
-        BattleAction selectedAction = static_cast<BattleAction>(m_selectedActionIndex);
-        
-        if (selectedAction == BattleAction::ATTACK || selectedAction == BattleAction::SKILL) {
-            // Need to select target
-            m_selectingTarget = true;
-            m_selectedTargetIndex = 0;
-        } else {
-            // Execute action immediately
-            queuePlayerAction(selectedAction);
+    if (action.getType() == "START") {
+        if (action.getName() == "UP") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            m_selectedActionIndex = std::max(0, m_selectedActionIndex - 1);
+        } else if (action.getName() == "DOWN") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            m_selectedActionIndex = std::min(4, m_selectedActionIndex + 1); // 5 actions: Attack, Defend, Item, Skill, Flee
+        } else if (action.getName() == "SELECT" || action.getName() == "CONFIRM") {
+            // Play menu confirm sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 80.0f;
+                    globalSound->playSound("menu_confirm", volume);
+                }
+            }
+            
+            BattleAction selectedAction = static_cast<BattleAction>(m_selectedActionIndex);
+            
+            if (selectedAction == BattleAction::ATTACK || selectedAction == BattleAction::SKILL) {
+                // Need to select target
+                m_selectingTarget = true;
+                m_selectedTargetIndex = 0;
+            } else {
+                // Execute action immediately
+                queuePlayerAction(selectedAction);
+            }
         }
     }
 }
@@ -353,26 +377,58 @@ void Scene_Battle::handleMenuNavigation(const Action& action) {
 void Scene_Battle::handleTargetSelection(const Action& action) {
     auto aliveEnemies = getAliveCharacters(false);
     
-    if (action.getType() == "UP") {
-        m_selectedTargetIndex = std::max(0, m_selectedTargetIndex - 1);
-    } else if (action.getType() == "DOWN") {
-        m_selectedTargetIndex = std::min(static_cast<int>(aliveEnemies.size() - 1), m_selectedTargetIndex + 1);
-    } else if (action.getType() == "SELECT" || action.getType() == "CONFIRM") {
-        if (m_selectedTargetIndex < static_cast<int>(aliveEnemies.size())) {
-            BattleAction selectedAction = static_cast<BattleAction>(m_selectedActionIndex);
+    if (action.getType() == "START") {
+        if (action.getName() == "UP") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            m_selectedTargetIndex = std::max(0, m_selectedTargetIndex - 1);
+        } else if (action.getName() == "DOWN") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            m_selectedTargetIndex = std::min(static_cast<int>(aliveEnemies.size() - 1), m_selectedTargetIndex + 1);
+        } else if (action.getName() == "SELECT" || action.getName() == "CONFIRM") {
+            // Play menu confirm sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 80.0f;
+                    globalSound->playSound("menu_confirm", volume);
+                }
+            }
             
-            // Create action command
-            BattleCharacter* actor = &m_playerParty[m_selectedPlayerIndex];
-            BattleCharacter* target = aliveEnemies[m_selectedTargetIndex];
-            
-            ActionCommand command(actor, target, selectedAction);
-            m_actionQueue.push_back(command);
-            
-            m_selectingTarget = false;
-            m_battleState = BattleState::ENEMY_TURN;
-            m_actionTimer = 0.0f;
+            if (m_selectedTargetIndex < static_cast<int>(aliveEnemies.size())) {
+                BattleAction selectedAction = static_cast<BattleAction>(m_selectedActionIndex);
+                
+                // Create action command
+                BattleCharacter* actor = &m_playerParty[m_selectedPlayerIndex];
+                BattleCharacter* target = aliveEnemies[m_selectedTargetIndex];
+                
+                ActionCommand command(actor, target, selectedAction);
+                m_actionQueue.push_back(command);
+                
+                m_selectingTarget = false;
+                m_battleState = BattleState::ENEMY_TURN;
+                m_actionTimer = 0.0f;
+            }
         }
-    } else if (action.getType() == "BACK") {
+    } else if (action.getName() == "BACK") {
+        // Play menu back sound (only if sound is enabled)
+        if (m_game->isSoundEnabled()) {
+            if (auto globalSound = m_game->getGlobalSoundManager()) {
+                float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 50.0f;
+                globalSound->playSound("menu_select", volume);
+            }
+        }
+        
         m_selectingTarget = false;
     }
 }

@@ -641,3 +641,16 @@ void GameEngine::loadSoundSettings()
               << "Effects=" << (m_effectsVolume * 100) << "%, "
               << "Enabled=" << (m_soundEnabled ? "ON" : "OFF") << std::endl;
 }
+
+void GameEngine::updateSoundSettings(float master, float music, float effects, bool enabled)
+{
+    m_masterVolume = master;
+    m_musicVolume = music;
+    m_effectsVolume = effects;
+    m_soundEnabled = enabled;
+    
+    std::cout << "Game engine sound settings updated: Master=" << (m_masterVolume * 100) << "%, "
+              << "Music=" << (m_musicVolume * 100) << "%, "
+              << "Effects=" << (m_effectsVolume * 100) << "%, "
+              << "Enabled=" << (m_soundEnabled ? "ON" : "OFF") << std::endl;
+}

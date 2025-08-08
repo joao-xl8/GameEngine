@@ -118,6 +118,13 @@ protected:
     
     // Sound management
     std::shared_ptr<CSound> m_soundManager;
+    
+    // Preserved game state for returning to play scene
+    std::string m_originalLevel;
+    Vec2 m_originalPlayerPosition;
+    int m_originalPlayerHealth;
+    int m_originalPlayTime;
+    bool m_hasPreservedState = false;
 
     void loadDialogueConfig(const std::string& dialogueFile);
     void setupUI();
@@ -150,6 +157,9 @@ protected:
 
 public:
     Scene_Dialogue(GameEngine* game, const std::string& dialogueFile);
+    Scene_Dialogue(GameEngine* game, const std::string& dialogueFile, 
+                   const std::string& originalLevel, const Vec2& playerPos, 
+                   int playerHealth, int playTime);
     void init();
     void update();
     void onEnd();

@@ -2,6 +2,7 @@
 
 #include "../vec2.hpp"
 #include "base_component.hpp"
+#include "CSave.hpp"
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 #include <cstdio>

@@ -3,21 +3,23 @@
 #include "scene_options.hpp"
 #include "scene_map_editor.hpp"
 #include "scene_loading.hpp"
+#include "scene_save_load.hpp"
 #include "../game_engine.hpp"
 #include <exception>
 
 void Scene_Menu::init()
 {
+    // Standard navigation controls
     registerAction(sf::Keyboard::W, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::Up, "UP");
-    registerAction(sf::Keyboard::Down, "DOWN");
-    registerAction(sf::Keyboard::Return, "SELECT");
-    registerAction(sf::Keyboard::Escape, "QUIT");
+    
+    // Standard confirm/quit controls
+    registerAction(sf::Keyboard::Space, "SELECT");
 
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_menuText.setFillColor(sf::Color::White);
-    m_menuStrings.push_back("Start Game");
+    m_menuStrings.push_back("New Game");
+    m_menuStrings.push_back("Load Game");
     m_menuStrings.push_back("Map Editor");
     m_menuStrings.push_back("Options");
     m_menuStrings.push_back("Exit");
@@ -89,9 +91,12 @@ void Scene_Menu::sDoAction(const Action &action)
     {
         if (action.getName() == "UP")
         {
-            // Play menu navigation sound
-            if (auto globalSound = m_game->getGlobalSoundManager()) {
-                globalSound->playSound("menu_select", 60.0f);
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
             }
             
             if (m_menuIndex > 0)
@@ -105,18 +110,24 @@ void Scene_Menu::sDoAction(const Action &action)
         }
         else if (action.getName() == "DOWN")
         {
-            // Play menu navigation sound
-            if (auto globalSound = m_game->getGlobalSoundManager()) {
-                globalSound->playSound("menu_select", 60.0f);
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
             }
             
             m_menuIndex = (m_menuIndex + 1) % m_menuStrings.size();
         }
         else if (action.getName() == "SELECT")
         {
-            // Play menu confirm sound
-            if (auto globalSound = m_game->getGlobalSoundManager()) {
-                globalSound->playSound("menu_confirm", 80.0f);
+            // Play menu confirm sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 80.0f;
+                    globalSound->playSound("menu_confirm", volume);
+                }
             }
             
             // Add bounds checking to prevent crashes
@@ -125,6 +136,27 @@ void Scene_Menu::sDoAction(const Action &action)
                 if (m_menuStrings[m_menuIndex] == "Exit")
                 {
                     m_game->quit();
+                }
+                else if (m_menuStrings[m_menuIndex] == "New Game")
+                {
+                    // Start a new game
+                    try {
+                        Scene_Loading::loadPlayScene(m_game, "metadata/levels/level1.txt");
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit
+                        m_game->quit();
+                    }
+                }
+                else if (m_menuStrings[m_menuIndex] == "Load Game")
+                {
+                    // Open load game screen
+                    try {
+                        auto loadScene = std::make_shared<Scene_SaveLoad>(m_game, Scene_SaveLoad::LOAD_MODE);
+                        m_game->changeScene("LoadGame", loadScene);
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit
+                        m_game->quit();
+                    }
                 }
                 else if (m_menuStrings[m_menuIndex] == "Map Editor")
                 {

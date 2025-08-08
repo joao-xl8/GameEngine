@@ -18,35 +18,23 @@ Scene_MapEditor::Scene_MapEditor(GameEngine* game)
 
 void Scene_MapEditor::init()
 {
-    // Register standardized input actions
+    // Standard back control
     registerAction(sf::Keyboard::Escape, "BACK");
     
-    // Movement controls (WASD + Arrow keys)
     registerAction(sf::Keyboard::W, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
     registerAction(sf::Keyboard::A, "LEFT");
     registerAction(sf::Keyboard::D, "RIGHT");
-    registerAction(sf::Keyboard::Up, "UP");
-    registerAction(sf::Keyboard::Down, "DOWN");
-    registerAction(sf::Keyboard::Left, "LEFT");
-    registerAction(sf::Keyboard::Right, "RIGHT");
-    
-    // Confirm actions (Space/Enter/Left Click)
+
+    // Standard confirm/cancel controls
     registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::Enter, "CONFIRM");
-    // Note: Mouse clicks will be handled separately in mouse event handling
-    
-    // Cancel/Remove actions (Backspace/C/Right Click)
-    registerAction(sf::Keyboard::Backspace, "CANCEL");
-    registerAction(sf::Keyboard::C, "CANCEL");
-    // Note: Right click will be handled separately
+    registerAction(sf::Keyboard::C, "CANCEL"); // X for remove in map editor
     
     // Asset/Type selection
     registerAction(sf::Keyboard::Q, "PREV_ASSET");
     registerAction(sf::Keyboard::E, "NEXT_ASSET");
     registerAction(sf::Keyboard::Z, "PREV_TYPE");
-    // Note: C is now used for CANCEL, so we'll use V for next type
-    registerAction(sf::Keyboard::V, "NEXT_TYPE");
+    registerAction(sf::Keyboard::X, "NEXT_TYPE");
     
     // File operations
     registerAction(sf::Keyboard::F, "SAVE");
@@ -103,13 +91,11 @@ void Scene_MapEditor::init()
     m_infiniteGrid.clear();
     
     std::cout << "Map Editor initialized. Controls:\n";
-    std::cout << "WASD/Arrow Keys: Move cursor\n";
+    std::cout << "WASD Keys: Move cursor\n";
     std::cout << "Space: Place object\n";
-    std::cout << "X: Remove object\n";
-    std::cout << "Left Click: Place object at mouse\n";
-    std::cout << "Right Click: Remove object at mouse\n";
+    std::cout << "C: Remove object\n";
     std::cout << "Q/E: Change asset\n";
-    std::cout << "Z/C: Change type\n";
+    std::cout << "Z/X: Change type\n";
     std::cout << "F: Save level (to metadata/levels/)\n";
     std::cout << "L: Open level selector GUI\n";
     std::cout << "Escape: Back to menu\n";
@@ -132,6 +118,8 @@ void Scene_MapEditor::loadAvailableAssets()
     m_availableAssets.push_back("Ground");
     m_availableAssets.push_back("Wall");
     m_availableAssets.push_back("Bush");
+    m_availableAssets.push_back("SavePoint");
+    m_availableAssets.push_back("PlayerSpawn");
     m_availableAssets.push_back("Player");
     
     // Set defaults

@@ -20,25 +20,16 @@ Scene_SoundSettings::Scene_SoundSettings(GameEngine* game) : Scene(game)
 
 void Scene_SoundSettings::init()
 {
-    // Register standardized input actions
-    // Movement controls (WASD + Arrow keys)
+    // Standard navigation controls
     registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::Up, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::Down, "DOWN");
     registerAction(sf::Keyboard::A, "LEFT");
-    registerAction(sf::Keyboard::Left, "LEFT");
     registerAction(sf::Keyboard::D, "RIGHT");
-    registerAction(sf::Keyboard::Right, "RIGHT");
     
-    // Confirm actions (Space/Enter)
+    // Standard confirm/cancel controls
     registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::Enter, "CONFIRM");
-    
-    // Cancel actions (Backspace/C/Escape)
-    registerAction(sf::Keyboard::Backspace, "CANCEL");
     registerAction(sf::Keyboard::C, "CANCEL");
-    registerAction(sf::Keyboard::Escape, "BACK");
+    registerAction(sf::Keyboard::C, "BACK");
     
     setupUI();
     loadSoundSettings();
@@ -73,14 +64,38 @@ void Scene_SoundSettings::sDoAction(const Action& action)
 {
     if (action.getType() == "START") {
         if (action.getName() == "UP") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             if (m_selectedOption > 0) {
                 m_selectedOption--;
             } else {
                 m_selectedOption = m_menuOptions.size() - 1;
             }
         } else if (action.getName() == "DOWN") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             m_selectedOption = (m_selectedOption + 1) % m_menuOptions.size();
         } else if (action.getName() == "LEFT") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             // Adjust current option value
             if (m_selectedOption == 0) { // Master Volume
                 m_masterVolume = std::max(0.0f, m_masterVolume - 0.1f);
@@ -92,6 +107,14 @@ void Scene_SoundSettings::sDoAction(const Action& action)
                 m_soundEnabled = !m_soundEnabled;
             }
         } else if (action.getName() == "RIGHT") {
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             // Adjust current option value
             if (m_selectedOption == 0) { // Master Volume
                 m_masterVolume = std::min(1.0f, m_masterVolume + 0.1f);
@@ -103,6 +126,14 @@ void Scene_SoundSettings::sDoAction(const Action& action)
                 m_soundEnabled = !m_soundEnabled;
             }
         } else if (action.getName() == "CONFIRM") {
+            // Play menu confirm sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 80.0f;
+                    globalSound->playSound("menu_confirm", volume);
+                }
+            }
+            
             if (m_selectedOption == 4) { // Apply Changes
                 applySoundSettings();
             } else if (m_selectedOption == 5) { // Reset to Default
@@ -115,6 +146,14 @@ void Scene_SoundSettings::sDoAction(const Action& action)
                 m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
             }
         } else if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+            // Play menu back sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 50.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
         }
     }
@@ -206,14 +245,19 @@ void Scene_SoundSettings::applySoundSettings()
     if (m_game && m_game->getGlobalSoundManager()) {
         auto soundManager = m_game->getGlobalSoundManager();
         
-        // Apply music volume to background music
+        // Always stop current background music first
         if (soundManager->isMusicPlaying("background")) {
             soundManager->stopMusic("background");
-            if (m_soundEnabled) {
-                float adjustedVolume = m_masterVolume * m_musicVolume * 25.0f; // Base volume was 25%
-                soundManager->playMusic("background", true, adjustedVolume);
-            }
         }
+        
+        // Start background music if sound is enabled
+        if (m_soundEnabled) {
+            float adjustedVolume = m_masterVolume * m_musicVolume * 25.0f; // Base volume was 25%
+            soundManager->playMusic("background", true, adjustedVolume);
+        }
+        
+        // Update the game engine's sound settings
+        m_game->updateSoundSettings(m_masterVolume, m_musicVolume, m_effectsVolume, m_soundEnabled);
         
         std::cout << "Applied sound settings: Master=" << (m_masterVolume * 100) << "%, "
                   << "Music=" << (m_musicVolume * 100) << "%, "

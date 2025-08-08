@@ -2,6 +2,8 @@
 Texture Ground assets/imgs/ground.png
 Texture Bush assets/imgs/bush.png
 Texture Wall assets/imgs/wall.png
+Texture SavePoint assets/imgs/save_point.png
+Texture PlayerSpawn assets/imgs/player_spawn.png
 
 # Character Assets - Player
 Texture Player assets/characters/player/sprites/Player.png

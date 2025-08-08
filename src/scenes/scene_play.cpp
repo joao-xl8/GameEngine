@@ -3,19 +3,22 @@
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
 #include "scene_dialogue.hpp"
+#include "scene_save_load.hpp"
 #include "../game_engine.hpp"
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 void Scene_Play::init(const std::string &levelPath)
 {
-    registerAction(sf::Keyboard::P, "PAUSE");
+    // Game controls
     registerAction(sf::Keyboard::Escape, "PAUSE");
+    registerAction(sf::Keyboard::C, "RESUME");
     registerAction(sf::Keyboard::T, "TOGGLE_TEXTURE");
-    registerAction(sf::Keyboard::C, "TOGGLE_COLLISION");
+    registerAction(sf::Keyboard::K, "TOGGLE_COLLISION");
     registerAction(sf::Keyboard::G, "TOGGLE_GRID");
     
-    // Dialogue interaction
+    // Interaction controls
     registerAction(sf::Keyboard::E, "INTERACT");
     
     // Player movement controls
@@ -23,6 +26,9 @@ void Scene_Play::init(const std::string &levelPath)
     registerAction(sf::Keyboard::A, "LEFT");
     registerAction(sf::Keyboard::S, "DOWN");
     registerAction(sf::Keyboard::D, "RIGHT");
+    
+    // Standard confirm control
+    registerAction(sf::Keyboard::Space, "SELECT");
 
     m_tileText.setCharacterSize(18);  // Increased from 16 to 18
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
@@ -81,6 +87,32 @@ void Scene_Play::init(const std::string &levelPath)
             auto e = m_entityManager.addEntity(type);
             e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
             e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
+            
+            // Handle PlayerSpawn tiles
+            if (spriteName == "PlayerSpawn") {
+                m_levelSpawnPosition = Vec2{x * m_tileSize.x, y * m_tileSize.y};
+                m_hasLevelSpawn = true;
+                std::printf("Found PlayerSpawn at position (%d, %d) -> world pos (%.1f, %.1f)\n", 
+                           x, y, m_levelSpawnPosition.x, m_levelSpawnPosition.y);
+                
+                // Add visual indicator for spawn point (optional - can be removed for final game)
+                auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
+                animationComponent->addAnimation("spawn", "PlayerSpawn", 1, 1.0f, true, 0);
+                animationComponent->play("spawn");
+                e->addComponent<CAnimation>(animationComponent);
+            }
+            // Add save component if this is a save point
+            else if (spriteName == "SavePoint") {
+                e->addComponent<CSave>(std::make_shared<CSave>("SavePoint_" + std::to_string(x) + "_" + std::to_string(y), "Save Game"));
+                
+                // Add animation to save point for visual appeal
+                auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
+                animationComponent->addAnimation("pulse", "SavePoint", 1, 0.8f, true, 0); // 1 frame, 0.8s duration, loop
+                animationComponent->play("pulse");
+                e->addComponent<CAnimation>(animationComponent);
+                
+                std::printf("Created save point at position (%d, %d)\n", x, y);
+            }
             // DONT HAVE COLLISION
         }
         else if (type == "NPC")
@@ -96,13 +128,8 @@ void Scene_Play::init(const std::string &levelPath)
                 auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
                 
                 // Define idle animation for Actor_idle
-                // Assuming Actor_idle.png is a spritesheet with idle animation frames
-                // You may need to adjust these parameters based on your actual spritesheet:
-                // - frameCount: number of frames in the idle animation
-                // - frameDuration: how long each frame lasts (in seconds)
-                // - loop: whether the animation should loop
-                // - row: which row of the spritesheet to use (0-based)
-                animationComponent->addAnimation("idle", "Actor_idle", 4, 0.5f, true, 0); // 4 frames, 0.5s per frame, loop, row 0
+                // Since we have a single-frame texture, create a simple animation
+                animationComponent->addAnimation("idle", "Actor_idle", 1, 1.0f, true, 0); // 1 frame, 1s duration, loop, row 0
                 animationComponent->play("idle"); // Start playing the idle animation
                 
                 e->addComponent<CAnimation>(animationComponent);
@@ -331,12 +358,14 @@ void Scene_Play::sMovement()
         if (m_gridMoveTimer <= 0.0f && !gridMovement->isMoving) {
             if (input->upPressed) 
             {
+                std::cout << "UP pressed - Current grid pos: " << gridMovement->gridPos.x << ", " << gridMovement->gridPos.y << std::endl;
                 // W key = UP = Move towards top of screen = Decrease Y coordinate (SFML/Level system)
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_up");
                     if (sound) sound->playSound("footstep", 70.0f);  // Play walking sound
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
+                    std::cout << "UP movement successful - New grid pos: " << gridMovement->gridPos.x << ", " << gridMovement->gridPos.y << std::endl;
                 }
             }
             else if (input->downPressed) 
@@ -442,15 +471,13 @@ void Scene_Play::sRender()
     }
     if (m_drawGrid)
     {
-        // Calculate the bottom-left corner of the grid
-        float gridBottom = m_game->window().getSize().y;
-
+        // Use consistent coordinate system (same as sprites)
         for (size_t i = 0; i < 30; i++)
         {
             for (size_t j = 0; j < 30; j++)
             {
                 float posX = j * m_tileSize.x;
-                float posY = gridBottom - (i + 1) * m_tileSize.y; // Adjust the Y position
+                float posY = i * m_tileSize.y; // Use normal Y-axis (same as sprites)
 
                 m_tileText.setPosition(posX, posY);
                 m_tileText.setString("(" + std::to_string(j) + ", " + std::to_string(i) + ")");
@@ -475,7 +502,7 @@ void Scene_Play::sRender()
                 auto boundingBox = entity->getComponent<CBoundingBox>();
                 auto transform = entity->getComponent<CTransform>();
                 float posX = transform->pos.x;
-                float posY = m_game->window().getSize().y - transform->pos.y - boundingBox->size.y; // Adjust posY
+                float posY = transform->pos.y; // Use normal Y-axis (same as sprites)
                 sf::RectangleShape rect;
                 rect.setSize({boundingBox->size.x, boundingBox->size.y});
                 rect.setPosition(posX, posY);
@@ -498,6 +525,17 @@ void Scene_Play::sRender()
         m_interactionPrompt.setPosition(promptX, promptY);
         m_game->window().draw(m_interactionPrompt);
     }
+    
+    // Draw save prompt if near a save point
+    if (m_showSavePrompt && m_nearbySavePoint) {
+        m_game->window().draw(m_savePrompt);
+    }
+    
+    // Draw command overlay
+    renderCommandOverlay();
+    
+    // Draw pause menu on top of everything
+    renderPauseMenu();
 }
 
 void Scene_Play::sDoAction(const Action &action)
@@ -505,9 +543,18 @@ void Scene_Play::sDoAction(const Action &action)
     if (action.getType() == "START")
     {
         std::printf("Start action: %s\n", action.getName().c_str());
+        
+        // Handle pause menu input first
+        if (m_showPauseMenu) {
+            std::cout << "Pause menu is active, handling input: " << action.getName() << std::endl;
+            handlePauseMenuInput(action);
+            return;
+        }
+        
         if (action.getName() == "PAUSE")
         {
-            Scene_Loading::loadMenuScene(m_game);
+            std::cout << "PAUSE action triggered, showing pause menu" << std::endl;
+            showPauseMenu();
         }
         else if (action.getName() == "TOGGLE_TEXTURE")
         {
@@ -523,9 +570,13 @@ void Scene_Play::sDoAction(const Action &action)
         }
         else if (action.getName() == "INTERACT")
         {
-            // Handle dialogue interaction
+            // Handle dialogue interaction with NPCs
             if (m_nearbyNPC != nullptr) {
                 startDialogue(m_nearbyNPC);
+            }
+            // Handle save interaction with save points
+            else if (m_nearbySavePoint != nullptr) {
+                openSaveMenu();
             }
         }
         // Player movement input
@@ -588,34 +639,74 @@ Vec2 Scene_Play::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity
 
 Scene_Play::Scene_Play(GameEngine *game, const std::string &levelPath)
     : Scene(game), m_levelPath(levelPath)
-{}
+{
+    // Initialize game start time for play time tracking
+    m_gameStartTime = std::chrono::steady_clock::now();
+}
 
 void Scene_Play::update()
 {
     // Calculate delta time
     m_deltaTime = m_deltaClock.restart().asSeconds();
     
-    m_entityManager.update();
-    sMovement();
-    sCollision();
-    sInteraction();  // Check for NPC interactions
-    sEnemySpawner();
-    sAnimation();
-    sCamera();  // Update camera system
+    // Don't update game systems when paused, but still render
+    if (!m_paused) {
+        m_entityManager.update();
+        sMovement();
+        sCollision();
+        sInteraction();  // Check for NPC interactions
+        sSaveSystem();   // Check for save point interactions
+        sEnemySpawner();
+        sAnimation();
+        sCamera();  // Update camera system
+    }
+    
+    // Always render (so we can see the pause menu)
     sRender();
     sDebug();
+}
+
+void Scene_Play::setCustomSpawnPosition(const Vec2& position)
+{
+    m_useDefaultSpawn = false;
+    m_customSpawnPosition = position;
+    std::cout << "Set custom spawn position: " << position.x << ", " << position.y << std::endl;
 }
 
 void Scene_Play::spawnPlayer()
 {
     m_player = m_entityManager.addEntity("Player");
     
-    // Set player starting position in center of level (20x15 grid, so center is around 10x7)
-    // Using tile coordinates: 10 tiles right, 7 tiles down from origin
-    // Simple tile positioning - no centering needed since player and tile are same size
-    Vec2 startPos = {10 * m_tileSize.x, 7 * m_tileSize.y}; // Direct tile position
+    // Determine spawn position priority:
+    // 1. Custom spawn position (from save data) - highest priority
+    // 2. Level spawn position (from PlayerSpawn tile) - medium priority  
+    // 3. Default hardcoded position - lowest priority (fallback)
+    Vec2 startPos;
+    if (!m_useDefaultSpawn) {
+        // Use custom spawn position from save data
+        startPos = m_customSpawnPosition;
+        std::cout << "Using custom spawn position from save: " << startPos.x << ", " << startPos.y << std::endl;
+    } else if (m_hasLevelSpawn) {
+        // Use spawn position from level file (PlayerSpawn tile)
+        startPos = m_levelSpawnPosition;
+        std::cout << "Using level spawn position from PlayerSpawn tile: " << startPos.x << ", " << startPos.y << std::endl;
+    } else {
+        // Fallback to default hardcoded position
+        startPos = {10 * m_tileSize.x, 7 * m_tileSize.y};
+        std::cout << "Using fallback default spawn position: " << startPos.x << ", " << startPos.y << std::endl;
+        std::cout << "Warning: No PlayerSpawn tile found in level, using hardcoded position" << std::endl;
+    }
     
     m_player->addComponent<CTransform>(std::make_shared<CTransform>(startPos));
+    
+    // Add grid movement component and initialize it properly
+    auto gridMovement = std::make_shared<CGridMovement>(m_tileSize.x, 4.0f, true);
+    
+    // CRITICAL FIX: Initialize grid position based on actual spawn position
+    gridMovement->snapToGrid(startPos);
+    std::cout << "Initialized grid position to: " << gridMovement->gridPos.x << ", " << gridMovement->gridPos.y << std::endl;
+    
+    m_player->addComponent<CGridMovement>(gridMovement);
     
     // Add sprite component with player texture
     auto& playerTexture = m_game->getAssets().getTexture("Player");
@@ -628,30 +719,17 @@ void Scene_Play::spawnPlayer()
     // Add animation component with flexible animation definitions (using player scale)
     auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_playerScale), static_cast<float>(m_playerScale)});
 
-    // Define animations - you can use the same texture with different rows
-    // or different textures for each animation
-    animationComponent->addAnimation("idle", "Player", 6, 0.2f, false, 0);        // Row 0, 6 frames, slow
-    animationComponent->addAnimation("walk_down", "Player", 6, 0.15f, false, 3);  // Row 3, 6 frames
-    animationComponent->addAnimation("walk_up", "Player", 6, 0.15f, false, 2);    // Row 2, 6 frames
-    animationComponent->addAnimation("walk_right", "Player", 6, 0.15f, false, 1); // Row 1, 6 frames
-    animationComponent->addAnimation("walk_left", "Player", 6, 0.15f, true, 1);   // Row 1, flipped
+    // Define animations for single-frame texture - all use the same frame
+    animationComponent->addAnimation("idle", "Player", 1, 1.0f, true, 0);        // 1 frame, 1s duration, loop
+    animationComponent->addAnimation("walk_down", "Player", 1, 0.5f, true, 0);   // 1 frame, 0.5s duration, loop
+    animationComponent->addAnimation("walk_up", "Player", 1, 0.5f, true, 0);     // 1 frame, 0.5s duration, loop
+    animationComponent->addAnimation("walk_right", "Player", 1, 0.5f, true, 0);  // 1 frame, 0.5s duration, loop
+    animationComponent->addAnimation("walk_left", "Player", 1, 0.5f, true, 0);   // 1 frame, 0.5s duration, loop
 
     animationComponent->play("idle"); // Start with idle animation
     m_player->addComponent<CAnimation>(animationComponent);
     
-    // Add grid movement component (using tile scale for proper grid alignment)
-    auto gridMovement = std::make_shared<CGridMovement>(m_gameScale, 3.0f, true); // Use tile size (64) for grid, 3 moves/sec, smooth
-    
-    // Set initial grid position based on tile coordinates
-    Vec2 initialGridPos = {10, 7}; // Grid coordinates (10, 7)
-    gridMovement->gridPos = initialGridPos;
-    gridMovement->targetPos = startPos; // Target is the tile position
-    gridMovement->startPos = startPos;  // Start is also tile position
-    
-    std::printf("Player spawn - Position: (%.1f, %.1f), Grid pos: (%.1f, %.1f)\n", 
-                startPos.x, startPos.y, initialGridPos.x, initialGridPos.y);
-    
-    m_player->addComponent<CGridMovement>(gridMovement);
+    // Grid movement component is already added above with proper initialization
     
     // Add bounding box (using player scale for accurate collision)
     m_player->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(Vec2{static_cast<float>(m_playerScale), static_cast<float>(m_playerScale)}));
@@ -784,9 +862,24 @@ void Scene_Play::startDialogue(std::shared_ptr<Entity> npc)
         std::cout << "Starting dialogue with NPC: " << npcSprite->name << std::endl;
         std::cout << "Using dialogue file: " << dialogueFile << std::endl;
         
+        // Preserve current game state
+        Vec2 currentPlayerPos = m_player->getComponent<CTransform>()->pos;
+        int currentHealth = 100; // TODO: Get from player health component when implemented
+        int currentPlayTime = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - m_gameStartTime).count());
+        
+        std::cout << "Preserving game state:" << std::endl;
+        std::cout << "  Level: " << m_levelPath << std::endl;
+        std::cout << "  Player Position: (" << currentPlayerPos.x << ", " << currentPlayerPos.y << ")" << std::endl;
+        std::cout << "  Health: " << currentHealth << std::endl;
+        std::cout << "  Play Time: " << currentPlayTime << " seconds" << std::endl;
+        
         try {
-            // Create and switch to dialogue scene
-            m_game->changeScene("Dialogue", std::make_shared<Scene_Dialogue>(m_game, dialogueFile));
+            // Create dialogue scene with preserved game state
+            auto dialogueScene = std::make_shared<Scene_Dialogue>(
+                m_game, dialogueFile, m_levelPath, currentPlayerPos, currentHealth, currentPlayTime
+            );
+            m_game->changeScene("Dialogue", dialogueScene);
         } catch (const std::exception& e) {
             std::cout << "Error starting dialogue: " << e.what() << std::endl;
         }
@@ -811,4 +904,237 @@ std::string Scene_Play::getNPCDialogueFile(const std::string& npcName)
     // }
     
     return "";  // No dialogue file found
+}
+
+// Save System Implementation
+
+void Scene_Play::sSaveSystem()
+{
+    if (!m_player) return;
+    
+    Vec2 playerPos = m_player->getComponent<CTransform>()->pos;
+    m_nearbySavePoint = nullptr;
+    m_showSavePrompt = false;
+    
+    // Check for nearby save points
+    for (auto& entity : m_entityManager.getEntities()) {
+        if (entity->hasComponent<CSave>()) {
+            Vec2 savePos = entity->getComponent<CTransform>()->pos;
+            float distance = sqrt(pow(playerPos.x - savePos.x, 2) + pow(playerPos.y - savePos.y, 2));
+            
+            if (distance <= m_interactionRange) {
+                m_nearbySavePoint = entity;
+                m_showSavePrompt = true;
+                
+                // Setup save prompt text
+                try {
+                    m_savePrompt.setFont(m_game->getAssets().getFont("ShareTech"));
+                    m_savePrompt.setCharacterSize(16);
+                    m_savePrompt.setFillColor(sf::Color::Yellow);
+                    m_savePrompt.setString("Press E to Save Game");
+                    
+                    // Position above the save point
+                    m_savePrompt.setPosition(savePos.x - 60, savePos.y - 40);
+                } catch (const std::exception& e) {
+                    std::cout << "Warning: Could not set save prompt font: " << e.what() << std::endl;
+                }
+                break;
+            }
+        }
+    }
+}
+
+void Scene_Play::openSaveMenu()
+{
+    // Store current player position before opening save menu
+    if (m_player) {
+        m_playerPositionBeforeSave = m_player->getComponent<CTransform>()->pos;
+        std::cout << "Stored player position before save: " << m_playerPositionBeforeSave.x << ", " << m_playerPositionBeforeSave.y << std::endl;
+    }
+    
+    SaveData currentData = getCurrentGameData();
+    auto saveScene = std::make_shared<Scene_SaveLoad>(m_game, Scene_SaveLoad::SAVE_MODE, currentData);
+    m_game->changeScene("SaveLoad", saveScene);
+}
+
+SaveData Scene_Play::getCurrentGameData()
+{
+    SaveData data;
+    
+    // Basic game state
+    data.currentLevel = m_levelPath;
+    data.levelName = "Level 1"; // TODO: Get actual level name
+    
+    if (m_player) {
+        Vec2 playerPos = m_player->getComponent<CTransform>()->pos;
+        data.playerX = playerPos.x;
+        data.playerY = playerPos.y;
+        data.playerHealth = 100; // TODO: Get actual player health
+    }
+    
+    // Calculate play time
+    auto now = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - m_gameStartTime);
+    data.playTimeSeconds = static_cast<int>(duration.count());
+    
+    // TODO: Add game flags, variables, inventory
+    
+    return data;
+}
+
+void Scene_Play::applyLoadedGameData(const SaveData& data)
+{
+    std::cout << "Applying loaded game data..." << std::endl;
+    std::cout << "Setting player spawn position to: " << data.playerX << ", " << data.playerY << std::endl;
+    
+    // Set custom spawn position BEFORE the level is loaded
+    setCustomSpawnPosition(Vec2(data.playerX, data.playerY));
+    
+    // If player already exists, update position immediately
+    if (m_player) {
+        m_player->getComponent<CTransform>()->pos = Vec2(data.playerX, data.playerY);
+        std::cout << "Updated existing player position" << std::endl;
+    }
+    
+    // TODO: Apply other game state
+    // - Set player health
+    // - Apply game flags and variables
+    // - Load inventory
+    
+    std::cout << "Applied loaded game data" << std::endl;
+}
+
+void Scene_Play::autoSaveGame()
+{
+    SaveData data = getCurrentGameData();
+    m_saveSystem.autoSave(data);
+}
+
+// Pause Menu Implementation
+
+void Scene_Play::showPauseMenu()
+{
+    m_showPauseMenu = true;
+    m_pauseMenuSelection = 0; // Default to Resume
+    setPaused(true); // Pause the game
+    setupPauseMenu();
+    std::cout << "Game paused - pause menu shown" << std::endl;
+}
+
+void Scene_Play::hidePauseMenu()
+{
+    m_showPauseMenu = false;
+    setPaused(false); // Unpause the game
+    std::cout << "Game resumed - pause menu hidden" << std::endl;
+}
+
+void Scene_Play::handlePauseMenuInput(const Action& action)
+{
+    std::cout << "Pause menu input: " << action.getName() << std::endl;
+    
+    if (action.getName() == "UP" || action.getName() == "DOWN" || 
+        action.getName() == "LEFT" || action.getName() == "RIGHT") {
+        // Toggle between Resume (0) and Main Menu (1)
+        m_pauseMenuSelection = (m_pauseMenuSelection == 0) ? 1 : 0;
+        std::cout << "Selected option: " << (m_pauseMenuSelection == 0 ? "Resume" : "Main Menu") << std::endl;
+        setupPauseMenu(); // Update display
+    } else if (action.getName() == "SELECT") {
+        std::cout << "Confirming selection: " << (m_pauseMenuSelection == 0 ? "Resume" : "Main Menu") << std::endl;
+        if (m_pauseMenuSelection == 0) {
+            // Resume game
+            std::cout << "Resuming game..." << std::endl;
+            hidePauseMenu();
+        } else {
+            // Go to main menu
+            std::cout << "Going to main menu..." << std::endl;
+            hidePauseMenu();
+            Scene_Loading::loadMenuScene(m_game);
+        }
+    } else if (action.getName() == "PAUSE") {
+        // ESC to resume
+        std::cout << "ESC pressed - resuming game" << std::endl;
+        hidePauseMenu();
+    } else if (action.getName() == "RESUME") {
+        // C to resume (same as ESC)
+        std::cout << "C pressed - resuming game" << std::endl;
+        hidePauseMenu();
+    } else {
+        std::cout << "Unhandled pause menu input: " << action.getName() << std::endl;
+    }
+}
+
+void Scene_Play::setupPauseMenu()
+{
+    // Use window dimensions for UI positioning (not game view)
+    sf::Vector2u windowSize = m_game->window().getSize();
+    float windowWidth = static_cast<float>(windowSize.x);
+    float windowHeight = static_cast<float>(windowSize.y);
+    
+    std::cout << "Setting up pause menu for window size: " << windowWidth << "x" << windowHeight << std::endl;
+    
+    // Dialog dimensions
+    float dialogWidth = 400.0f;
+    float dialogHeight = 250.0f;
+    float dialogX = (windowWidth - dialogWidth) / 2;
+    float dialogY = (windowHeight - dialogHeight) / 2;
+    
+    std::cout << "Pause menu position: " << dialogX << ", " << dialogY << std::endl;
+    
+    try {
+        // Background
+        m_pauseBackground.setSize(sf::Vector2f(dialogWidth, dialogHeight));
+        m_pauseBackground.setPosition(dialogX, dialogY);
+        m_pauseBackground.setFillColor(sf::Color(20, 20, 30, 240));
+        
+        // Border
+        m_pauseBorder.setSize(sf::Vector2f(dialogWidth, dialogHeight));
+        m_pauseBorder.setPosition(dialogX, dialogY);
+        m_pauseBorder.setFillColor(sf::Color::Transparent);
+        m_pauseBorder.setOutlineColor(sf::Color::Yellow);
+        m_pauseBorder.setOutlineThickness(2.0f);
+        
+        // Title
+        m_pauseTitle.setFont(m_game->getAssets().getFont("ShareTech"));
+        m_pauseTitle.setCharacterSize(28);
+        m_pauseTitle.setFillColor(sf::Color::Yellow);
+        m_pauseTitle.setString("Game Paused");
+        sf::FloatRect titleBounds = m_pauseTitle.getLocalBounds();
+        m_pauseTitle.setPosition(dialogX + (dialogWidth - titleBounds.width) / 2, dialogY + 30);
+        
+        // Options
+        m_pauseOptions.setFont(m_game->getAssets().getFont("ShareTech"));
+        m_pauseOptions.setCharacterSize(20);
+        m_pauseOptions.setFillColor(sf::Color::White);
+        
+        std::string optionsText;
+        if (m_pauseMenuSelection == 0) {
+            optionsText = "> Resume <\n\n  Main Menu";
+        } else {
+            optionsText = "  Resume\n\n> Main Menu <";
+        }
+        m_pauseOptions.setString(optionsText);
+        sf::FloatRect optionsBounds = m_pauseOptions.getLocalBounds();
+        m_pauseOptions.setPosition(dialogX + (dialogWidth - optionsBounds.width) / 2, dialogY + 100);
+        
+    } catch (const std::exception& e) {
+        std::cout << "Warning: Could not setup pause menu: " << e.what() << std::endl;
+    }
+}
+
+void Scene_Play::renderPauseMenu()
+{
+    if (!m_showPauseMenu) return;
+    
+    // Switch to default view for UI rendering
+    sf::View originalView = m_game->window().getView();
+    m_game->window().setView(m_game->window().getDefaultView());
+    
+    // Draw pause menu elements
+    m_game->window().draw(m_pauseBackground);
+    m_game->window().draw(m_pauseBorder);
+    m_game->window().draw(m_pauseTitle);
+    m_game->window().draw(m_pauseOptions);
+    
+    // Restore original view
+    m_game->window().setView(originalView);
 }

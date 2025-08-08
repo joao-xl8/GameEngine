@@ -27,6 +27,7 @@ RELEASE_FLAGS = -DNDEBUG -O3
 SOURCES = main.cpp \
           $(wildcard $(SRC_DIR)/*.cpp) \
           $(wildcard $(SRC_DIR)/scenes/*.cpp) \
+          $(wildcard $(SRC_DIR)/systems/*.cpp) \
           $(wildcard $(SRC_DIR)/ui/*.cpp) \
           $(wildcard $(IMGUI_DIR)/imgui*.cpp)
 
@@ -125,6 +126,7 @@ $(BUILD_DIR):
 	@echo "Creating build directory..."
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR) 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)scenes 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/scenes
+	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)systems 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/systems
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)ui 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/ui
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(IMGUI_DIR) 2>/dev/null || mkdir -p $(BUILD_DIR)/$(IMGUI_DIR)
 

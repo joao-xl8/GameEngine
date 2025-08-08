@@ -7,12 +7,13 @@
 
 void Scene_Options::init()
 {
+    // Standard navigation controls
     registerAction(sf::Keyboard::W, "UP");
     registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::Up, "UP");
-    registerAction(sf::Keyboard::Down, "DOWN");
-    registerAction(sf::Keyboard::Return, "SELECT");
-    registerAction(sf::Keyboard::Escape, "QUIT");
+    
+    // Standard confirm/cancel controls
+    registerAction(sf::Keyboard::Space, "SELECT");
+    registerAction(sf::Keyboard::C, "QUIT");
 
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_menuText.setFillColor(sf::Color::White);
@@ -84,9 +85,12 @@ void Scene_Options::sDoAction(const Action &action)
     {
         if (action.getName() == "UP")
         {
-            // Play menu navigation sound
-            if (auto globalSound = m_game->getGlobalSoundManager()) {
-                globalSound->playSound("menu_select", 60.0f);
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
             }
             
             if (m_menuIndex > 0)
@@ -100,18 +104,24 @@ void Scene_Options::sDoAction(const Action &action)
         }
         else if (action.getName() == "DOWN")
         {
-            // Play menu navigation sound
-            if (auto globalSound = m_game->getGlobalSoundManager()) {
-                globalSound->playSound("menu_select", 60.0f);
+            // Play menu navigation sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 60.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
             }
             
             m_menuIndex = (m_menuIndex + 1) % m_menuStrings.size();
         }
         else if (action.getName() == "SELECT")
         {
-            // Play menu confirm sound
-            if (auto globalSound = m_game->getGlobalSoundManager()) {
-                globalSound->playSound("menu_confirm", 80.0f);
+            // Play menu confirm sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 80.0f;
+                    globalSound->playSound("menu_confirm", volume);
+                }
             }
             
             // Add bounds checking to prevent crashes
@@ -149,6 +159,14 @@ void Scene_Options::sDoAction(const Action &action)
         }
         else if (action.getName() == "QUIT")
         {
+            // Play menu back sound (only if sound is enabled)
+            if (m_game->isSoundEnabled()) {
+                if (auto globalSound = m_game->getGlobalSoundManager()) {
+                    float volume = m_game->getMasterVolume() * m_game->getEffectsVolume() * 50.0f;
+                    globalSound->playSound("menu_select", volume);
+                }
+            }
+            
             // Use try-catch for scene change
             try {
                 m_game->changeScene("Menu", std::make_shared<Scene_Menu>(m_game));

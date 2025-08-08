@@ -30,12 +30,42 @@ Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile
     std::cout << "DEBUG: Scene_Dialogue constructor completed" << std::endl;
 }
 
+Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile, 
+                               const std::string& originalLevel, const Vec2& playerPos, 
+                               int playerHealth, int playTime)
+    : Scene(game), m_showingLog(false), m_logScrollOffset(0),
+      m_originalLevel(originalLevel), m_originalPlayerPosition(playerPos),
+      m_originalPlayerHealth(playerHealth), m_originalPlayTime(playTime),
+      m_hasPreservedState(true)
+{
+    std::cout << "DEBUG: Scene_Dialogue constructor with preserved state called" << std::endl;
+    std::cout << "Preserved state - Level: " << originalLevel << ", Position: (" 
+              << playerPos.x << ", " << playerPos.y << "), Health: " << playerHealth << std::endl;
+    
+    loadDialogueConfig(dialogueFile);
+    
+    // Calculate maximum possible log entries and reserve space to avoid mallocs
+    size_t maxLogEntries = 0;
+    for (const auto& line : m_dialogueConfig.lines) {
+        if (line.type == "LINE") {
+            maxLogEntries++; // Each dialogue line creates one log entry
+        } else if (line.type == "CHOICES") {
+            maxLogEntries++; // Each choice selection creates one log entry
+        }
+    }
+    
+    // Reserve space for the entire conversation to avoid any runtime allocations
+    m_dialogueLog.reserve(maxLogEntries);
+    std::cout << "Reserved space for " << maxLogEntries << " dialogue log entries" << std::endl;
+    
+    std::cout << "DEBUG: Scene_Dialogue constructor with preserved state completed" << std::endl;
+}
+
 void Scene_Dialogue::init()
 {
     // Register ALL input actions for dialogue once
     registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::Enter, "CONFIRM");
-    registerAction(sf::Keyboard::Escape, "BACK");
+    registerAction(sf::Keyboard::C, "BACK");
     
     // Register choice navigation keys (always available)
     registerAction(sf::Keyboard::Up, "CHOICE_UP");
@@ -469,7 +499,24 @@ void Scene_Dialogue::update()
     
     if (m_dialogueComplete) {
         // Return to play scene when dialogue is complete
-        m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
+        if (m_hasPreservedState) {
+            // Create play scene with preserved state
+            std::cout << "Returning to play scene with preserved state:" << std::endl;
+            std::cout << "  Level: " << m_originalLevel << std::endl;
+            std::cout << "  Position: (" << m_originalPlayerPosition.x << ", " << m_originalPlayerPosition.y << ")" << std::endl;
+            std::cout << "  Health: " << m_originalPlayerHealth << std::endl;
+            
+            auto playScene = std::make_shared<Scene_Play>(m_game, m_originalLevel);
+            
+            // Set the custom spawn position to preserve player location
+            playScene->setCustomSpawnPosition(m_originalPlayerPosition);
+            
+            m_game->changeScene("Play", playScene);
+        } else {
+            // Fallback to default behavior (shouldn't happen with new system)
+            std::cout << "Warning: No preserved state, using default level" << std::endl;
+            m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
+        }
     }
     
     // Render the dialogue scene
@@ -525,8 +572,8 @@ void Scene_Dialogue::sDoAction(const Action& action)
             } else if (action.getName() == "SHOW_LOG") {
                 showDialogueLog();
             } else if (action.getName() == "BACK") {
-                // Return to play scene when user presses ESC
-                m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
+                // Set dialogue as complete to use normal completion flow with preserved state
+                m_dialogueComplete = true;
             }
         } else {
             // Handle normal dialogue navigation
@@ -535,8 +582,8 @@ void Scene_Dialogue::sDoAction(const Action& action)
             } else if (action.getName() == "SHOW_LOG") {
                 showDialogueLog();
             } else if (action.getName() == "BACK") {
-                // Return to play scene when user presses ESC
-                m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level1.txt"));
+                // Set dialogue as complete to use normal completion flow with preserved state
+                m_dialogueComplete = true;
             }
         }
     }

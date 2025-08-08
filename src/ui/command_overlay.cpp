@@ -30,39 +30,34 @@ void CommandOverlay::update(const std::map<std::string, std::vector<int>>& regis
 {
     m_commands.clear();
     
-    // Always show basic commands first
-    bool hasConfirm = false, hasCancel = false, hasBack = false;
+    // Always show navigation first
+    m_commands.push_back({"WASD", "Navigate"});
     
-    // Check what actions are available
+    // Check what standardized actions are available and add them
+    bool hasConfirm = false, hasCancel = false;
+    
     for (const auto& pair : registeredActions) {
         const std::string& action = pair.first;
         
-        if (action == "CONFIRM" || action == "PLACE" || action == "SELECT") {
-            hasConfirm = true;
-        } else if (action == "CANCEL" || action == "REMOVE") {
-            hasCancel = true;
-        } else if (action == "BACK") {
-            hasBack = true;
-        }
-    }
-    
-    // Add standardized commands
-    if (hasConfirm) {
-        m_commands.push_back({"SPACE", "Confirm"});
-    }
-    if (hasCancel) {
-        m_commands.push_back({"C", "Cancel"});
-    }
-    if (hasBack) {
-        m_commands.push_back({"ESC", "Back"});
-    }
-    
-    // Add specific scene commands (filtered)
-    for (const auto& pair : registeredActions) {
-        const std::string& action = pair.first;
-        
-        if (shouldShowAction(action)) {
-            std::string keyName = getKeyName(pair.second[0]); // Use first key
+        if (action == "CONFIRM" || action == "SELECT") {
+            if (!hasConfirm) {
+                m_commands.push_back({"SPACE", "Confirm/Select"});
+                hasConfirm = true;
+            }
+        } else if (action == "CANCEL" || action == "BACK") {
+            if (!hasCancel) {
+                m_commands.push_back({"C", "Cancel/Back"});
+                hasCancel = true;
+            }
+        } else if (action == "QUIT") {
+            m_commands.push_back({"ESC", "Exit Game"});
+        } else if (action == "PAUSE") {
+            m_commands.push_back({"ESC", "Pause Menu"});
+        } else if (action == "INTERACT") {
+            m_commands.push_back({"E", "Interact"});
+        } else if (shouldShowAction(action)) {
+            // Show other specific actions
+            std::string keyName = getKeyName(pair.second[0]);
             std::string description = getActionDescription(action);
             
             // Avoid duplicates
@@ -216,9 +211,12 @@ std::string CommandOverlay::getActionDescription(const std::string& action)
     if (action == "NEXT_ASSET") return "Next Asset";
     if (action == "PREV_TYPE") return "Prev Type";
     if (action == "NEXT_TYPE") return "Next Type";
-    if (action == "PAUSE") return "Pause";
-    if (action == "QUIT") return "Quit";
+    if (action == "PAUSE") return "Pause Menu";
+    if (action == "QUIT") return "Exit";
     if (action == "SHOW_LOG") return "Show Log";
+    if (action == "TOGGLE_TEXTURE") return "Toggle Textures";
+    if (action == "TOGGLE_COLLISION") return "Toggle Collision";
+    if (action == "TOGGLE_GRID") return "Toggle Grid";
     
     // Default: capitalize first letter and replace underscores
     std::string result = action;

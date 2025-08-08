@@ -4,4 +4,4 @@
 master_volume=1
 music_volume=0.8
 effects_volume=1
-sound_enabled=0
+sound_enabled=1

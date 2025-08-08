@@ -284,3 +284,11 @@ Dec Bush 18 10
 
 # Add NPC for dialogue interaction
 NPC Actor_idle 10 7
+
+# Add save points for testing
+Dec SavePoint 12 7
+Dec SavePoint 5 5
+Dec SavePoint 15 10
+
+# Player spawn point - where new games start
+Dec PlayerSpawn 3 7

@@ -1,0 +1,10 @@
+{
+  "saveName": "Test Save for Overwrite",
+  "saveTime": 1754669275,
+  "currentLevel": "metadata/levels/level1.txt",
+  "levelName": "Test Level",
+  "playerPosX": 640.0,
+  "playerPosY": 448.0,
+  "playerHealth": 100,
+  "playTimeSeconds": 3600
+}

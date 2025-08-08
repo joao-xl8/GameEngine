@@ -14,16 +14,34 @@ private:
     sf::Text m_text;
     std::vector<std::pair<std::string, std::string>> m_commands; // key, description
     
-    // Filter settings
+    // Filter settings - hide individual movement keys, show simplified versions
     std::vector<std::string> m_hiddenActions = {
-        "UP", "DOWN", "LEFT", "RIGHT",  // Movement keys
-        "CONFIRM", "CANCEL"  // We'll show simplified versions
+        "UP", "DOWN", "LEFT", "RIGHT",  // Movement keys (shown as WASD/Arrows)
+        "INTERACT", "SELECT"  // Will be shown as standardized versions
     };
     
     std::map<std::string, std::string> m_actionMappings = {
+        // Standard controls across all scenes
+        {"SELECT", "SPACE: Confirm/Select"},
         {"CONFIRM", "SPACE: Confirm"},
+        {"BACK", "C: Back/Cancel"},
         {"CANCEL", "C: Cancel"},
-        {"BACK", "ESC: Back"}
+        {"QUIT", "C: Exit"},
+        {"PAUSE", "ESC: Pause Menu"},
+        {"INTERACT", "E: Interact"},
+        
+        // Special scene controls
+        {"SAVE", "F: Save"},
+        {"LOAD", "L: Load"},
+        {"PREV_ASSET", "Q: Previous Asset"},
+        {"NEXT_ASSET", "E: Next Asset"},
+        {"PREV_TYPE", "Z: Previous Type"},
+        {"NEXT_TYPE", "V: Next Type"},
+        
+        // Debug controls
+        {"TOGGLE_TEXTURE", "T: Toggle Textures"},
+        {"TOGGLE_COLLISION", "C: Toggle Collision"},
+        {"TOGGLE_GRID", "G: Toggle Grid"}
     };
 
 public:
