@@ -21,13 +21,18 @@ protected:
     size_t m_assetIndex = 0;
     size_t m_typeIndex = 0;
     
-    // Infinite grid data - using map for sparse storage
+    // Infinite grid data - using map for sparse storage with layer support
     struct GridCell {
         std::string type;
         std::string asset;
         bool occupied = false;
     };
-    std::map<std::pair<int, int>, GridCell> m_infiniteGrid;
+    
+    // Multi-layer grid: position -> layer -> cell
+    std::map<std::pair<int, int>, std::map<int, GridCell>> m_infiniteGrid;
+    
+    // Current layer being edited (0-4)
+    int m_currentLayer = 0;
     
     // Camera/view
     sf::View m_gameView;

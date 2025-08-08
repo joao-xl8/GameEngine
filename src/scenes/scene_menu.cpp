@@ -4,6 +4,7 @@
 #include "scene_map_editor.hpp"
 #include "scene_loading.hpp"
 #include "scene_save_load.hpp"
+#include "scene_level_selector.hpp"
 #include "../game_engine.hpp"
 #include <exception>
 
@@ -20,6 +21,7 @@ void Scene_Menu::init()
     m_menuText.setFillColor(sf::Color::White);
     m_menuStrings.push_back("New Game");
     m_menuStrings.push_back("Load Game");
+    m_menuStrings.push_back("Load Level");  // Add Load Level option
     m_menuStrings.push_back("Map Editor");
     m_menuStrings.push_back("Options");
     m_menuStrings.push_back("Exit");
@@ -153,6 +155,17 @@ void Scene_Menu::sDoAction(const Action &action)
                     try {
                         auto loadScene = std::make_shared<Scene_SaveLoad>(m_game, Scene_SaveLoad::LOAD_MODE);
                         m_game->changeScene("LoadGame", loadScene);
+                    } catch (const std::exception& e) {
+                        // If scene creation fails, just quit
+                        m_game->quit();
+                    }
+                }
+                else if (m_menuStrings[m_menuIndex] == "Load Level")
+                {
+                    // Open level selector screen
+                    try {
+                        auto levelSelectorScene = std::make_shared<Scene_LevelSelector>(m_game);
+                        m_game->changeScene("LevelSelector", levelSelectorScene);
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit
                         m_game->quit();

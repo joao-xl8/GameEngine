@@ -74,82 +74,107 @@ void Scene_Play::init(const std::string &levelPath)
     std::string line;
     while (std::getline(file, line))
     {
+        // Skip empty lines and comments
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        
         std::stringstream ss(line);
-        std::string type;
+        std::string layerStr;
         std::string spriteName;
         int x, y;
-        ss >> type >> spriteName >> x >> y;
-        if (type == "Tile")
-        {
-            auto e = m_entityManager.addEntity(type);
-            e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
-            e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
+        std::string scriptName = ""; // Optional script name for Script Tiles
+        
+        ss >> layerStr >> spriteName >> x >> y;
+        
+        // Parse optional script name for Script Tiles
+        if (ss >> scriptName) {
+            // Script name was provided
+        }
+        
+        // Parse layer number
+        int layerNum = -1;
+        try {
+            layerNum = std::stoi(layerStr);
+        } catch (const std::exception& e) {
+            std::printf("Invalid layer number '%s' in level file, skipping line\n", layerStr.c_str());
+            continue;
+        }
+        
+        // Validate layer number
+        if (layerNum < 0 || layerNum > 4) {
+            std::printf("Layer number %d out of range (0-4), skipping line\n", layerNum);
+            continue;
+        }
+        
+        // Create entity based on layer
+        CLayer::LayerType layer = static_cast<CLayer::LayerType>(layerNum);
+        auto e = m_entityManager.addEntity("LayeredTile");
+        
+        // Add basic components
+        e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
+        e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
+        e->addComponent<CLayer>(std::make_shared<CLayer>(layer));
+        
+        // Add collision for decoration layers (1-3)
+        if (layer >= CLayer::DECORATION_1 && layer <= CLayer::DECORATION_3) {
             e->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(m_tileSize));
         }
-        else if (type == "Dec")
-        {
-            auto e = m_entityManager.addEntity(type);
-            e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
-            e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
-            
-            // Handle PlayerSpawn tiles
+        
+        // Handle special entity layer objects (layer 4)
+        if (layer == CLayer::ENTITY) {
+            // Handle PlayerSpawn
             if (spriteName == "PlayerSpawn") {
                 m_levelSpawnPosition = Vec2{x * m_tileSize.x, y * m_tileSize.y};
                 m_hasLevelSpawn = true;
                 std::printf("Found PlayerSpawn at position (%d, %d) -> world pos (%.1f, %.1f)\n", 
                            x, y, m_levelSpawnPosition.x, m_levelSpawnPosition.y);
                 
-                // Add visual indicator for spawn point (optional - can be removed for final game)
+                // Add visual indicator for spawn point
                 auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
                 animationComponent->addAnimation("spawn", "PlayerSpawn", 1, 1.0f, true, 0);
                 animationComponent->play("spawn");
                 e->addComponent<CAnimation>(animationComponent);
             }
-            // Add save component if this is a save point
+            // Handle SavePoint
             else if (spriteName == "SavePoint") {
                 e->addComponent<CSave>(std::make_shared<CSave>("SavePoint_" + std::to_string(x) + "_" + std::to_string(y), "Save Game"));
                 
-                // Add animation to save point for visual appeal
+                // Add animation to save point
                 auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
-                animationComponent->addAnimation("pulse", "SavePoint", 1, 0.8f, true, 0); // 1 frame, 0.8s duration, loop
+                animationComponent->addAnimation("pulse", "SavePoint", 1, 0.8f, true, 0);
                 animationComponent->play("pulse");
                 e->addComponent<CAnimation>(animationComponent);
                 
                 std::printf("Created save point at position (%d, %d)\n", x, y);
             }
-            // DONT HAVE COLLISION
-        }
-        else if (type == "NPC")
-        {
-            std::printf("Loading NPC: %s at position (%d, %d)\n", spriteName.c_str(), x, y);
-            auto e = m_entityManager.addEntity(type);
-            e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
-            e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
-            
-            // Add animations for NPCs
-            if (spriteName == "Dummy") {
-                // Add animation component for Dummy NPC
+            // Handle NPCs
+            else if (spriteName == "Dummy") {
+                // Change entity tag to NPC for easier identification
+                e = m_entityManager.addEntity("NPC");
+                e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
+                e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
+                e->addComponent<CLayer>(std::make_shared<CLayer>(layer));
+                
+                // Add animation for NPCs
                 auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
-                
-                // Define idle animation for Dummy
-                // Since we have a single-frame texture, create a simple animation
-                animationComponent->addAnimation("idle", "Dummy", 1, 1.0f, true, 0); // 1 frame, 1s duration, loop, row 0
-                animationComponent->play("idle"); // Start playing the idle animation
-                
+                animationComponent->addAnimation("idle", "Dummy", 1, 1.0f, true, 0);
+                animationComponent->play("idle");
                 e->addComponent<CAnimation>(animationComponent);
                 
-                std::printf("Added idle animation to Dummy NPC at (%d, %d)\n", x, y);
+                std::printf("Loading NPC: %s at position (%d, %d)\n", spriteName.c_str(), x, y);
             }
-            // Add more NPC animations here as needed
-            // else if (spriteName == "Merchant") {
-            //     auto animationComponent = std::make_shared<CAnimation>(Vec2{static_cast<float>(m_gameScale), static_cast<float>(m_gameScale)});
-            //     animationComponent->addAnimation("idle", "Merchant", 6, 0.3f, true, 0);
-            //     animationComponent->play("idle");
-            //     e->addComponent<CAnimation>(animationComponent);
-            // }
-            
-            // NPCs don't have collision by default (they're interactive but not solid)
+            // Handle Script Tiles
+            else if (!scriptName.empty()) {
+                // This is a Script Tile with a script to execute
+                e->addComponent<CScriptTile>(std::make_shared<CScriptTile>(scriptName, CScriptTile::ON_ENTER, true));
+                std::printf("Created Script Tile '%s' with script '%s' at position (%d, %d)\n", 
+                           spriteName.c_str(), scriptName.c_str(), x, y);
+            }
         }
+        
+        std::printf("Loaded %s '%s' on layer %d at position (%d, %d)\n", 
+                   CLayer::getLayerName(layer), spriteName.c_str(), layerNum, x, y);
     }
     file.close();
     std::printf("Level loaded\n");
@@ -473,56 +498,46 @@ void Scene_Play::sRender()
     m_game->window().draw(background);
     
     if(m_drawTextures){
-        // Collect entities by type for layered rendering
-        std::vector<std::shared_ptr<Entity>> groundEntities;
-        std::vector<std::shared_ptr<Entity>> tileEntities;
-        std::vector<std::shared_ptr<Entity>> decorationEntities;
-        std::vector<std::shared_ptr<Entity>> npcEntities;
+        // Collect all renderable entities with layer information
+        std::vector<std::shared_ptr<Entity>> renderableEntities;
         
         for (auto &entity : m_entityManager.getEntities())
         {
             if (entity->hasComponent<CSprite>() && entity->hasComponent<CTransform>())
             {
-                std::string tag = entity->tag();
-                auto sprite = entity->getComponent<CSprite>();
-                std::string spriteName = sprite->name;
-                
-                // Categorize entities for proper layering
-                if (spriteName == "Ground") {
-                    groundEntities.push_back(entity);
-                } else if (tag == "Tile") {
-                    tileEntities.push_back(entity);
-                } else if (tag == "Dec") {
-                    decorationEntities.push_back(entity);
-                } else if (tag == "NPC") {
-                    npcEntities.push_back(entity);
-                } else {
-                    // Default entities (like Player) go in decoration layer
-                    decorationEntities.push_back(entity);
-                }
+                renderableEntities.push_back(entity);
             }
         }
         
-        // Render in proper layer order: Ground -> Tiles -> Decorations -> NPCs
-        auto renderEntities = [&](const std::vector<std::shared_ptr<Entity>>& entities) {
-            for (auto &entity : entities) {
-                auto sprite = entity->getComponent<CSprite>();
-                auto transform = entity->getComponent<CTransform>();
+        // Sort entities by layer order (0 -> 1 -> 2 -> 3 -> 4)
+        std::sort(renderableEntities.begin(), renderableEntities.end(), 
+            [](const std::shared_ptr<Entity>& a, const std::shared_ptr<Entity>& b) {
+                // Get layer components (default to layer 0 if not present)
+                int orderA = 0;
+                int orderB = 0;
                 
-                // Use consistent top-down coordinate system (no Y-axis flip)
-                float posX = transform->pos.x;
-                float posY = transform->pos.y;
+                if (a->hasComponent<CLayer>()) {
+                    orderA = a->getComponent<CLayer>()->getRenderOrder();
+                }
+                if (b->hasComponent<CLayer>()) {
+                    orderB = b->getComponent<CLayer>()->getRenderOrder();
+                }
                 
-                sprite->sprite.setPosition(posX, posY);
-                m_game->window().draw(sprite->sprite);
-            }
-        };
+                return orderA < orderB;
+            });
         
-        // Render layers in order
-        renderEntities(groundEntities);  // Layer 0: Ground tiles
-        renderEntities(tileEntities);    // Layer 1: Walls and solid tiles
-        renderEntities(decorationEntities); // Layer 2: Decorations, save points, player
-        renderEntities(npcEntities);     // Layer 3: NPCs (on top)
+        // Render entities in layer order
+        for (auto &entity : renderableEntities) {
+            auto sprite = entity->getComponent<CSprite>();
+            auto transform = entity->getComponent<CTransform>();
+            
+            // Use consistent top-down coordinate system (no Y-axis flip)
+            float posX = transform->pos.x;
+            float posY = transform->pos.y;
+            
+            sprite->sprite.setPosition(posX, posY);
+            m_game->window().draw(sprite->sprite);
+        }
     }
     if (m_drawGrid)
     {
@@ -849,21 +864,42 @@ bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
         return true; // Would be outside window bounds
     }
     
-    // Check collision with all tile entities at the given position
-    auto& tileEntities = m_entityManager.getEntities("Tile");
-    for (auto &entity : tileEntities)
+    // Check collision with entities that have collision (decoration layers 1-3)
+    for (auto &entity : m_entityManager.getEntities())
     {
         // Safety check: ensure entity is valid and active
         if (!entity || !entity->isActive()) {
             continue;
         }
         
-        if (entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
+        // Only check collision with entities that have layer component and collision
+        if (entity->hasComponent<CLayer>() && entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
         {
+            auto layer = entity->getComponent<CLayer>();
             auto tileTransform = entity->getComponent<CTransform>();
             auto tileBBox = entity->getComponent<CBoundingBox>();
             
             // Additional safety checks
+            if (!layer || !tileTransform || !tileBBox) {
+                continue;
+            }
+            
+            // Only check collision with decoration layers (1-3) that have collision
+            if (layer->hasCollision())
+            {
+                if (isColliding(position, size, tileTransform->pos, tileBBox->size))
+                {
+                    return true; // Would collide with this tile
+                }
+            }
+        }
+        
+        // Also check collision with old-style Tile entities for backward compatibility
+        else if (entity->tag() == "Tile" && entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
+        {
+            auto tileTransform = entity->getComponent<CTransform>();
+            auto tileBBox = entity->getComponent<CBoundingBox>();
+            
             if (!tileTransform || !tileBBox) {
                 continue;
             }
@@ -874,6 +910,7 @@ bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
             }
         }
     }
+    
     return false; // No collision detected
 }
 

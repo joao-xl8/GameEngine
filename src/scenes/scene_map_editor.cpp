@@ -40,10 +40,21 @@ void Scene_MapEditor::init()
     registerAction(sf::Keyboard::F, "SAVE");
     registerAction(sf::Keyboard::L, "LOAD");
     
-    // Register only number keys for filename input (development use)
-    for (int i = sf::Keyboard::Num0; i <= sf::Keyboard::Num9; i++) {
+    // Layer switching keys (1-5)
+    registerAction(sf::Keyboard::Num1, "LAYER_0");
+    registerAction(sf::Keyboard::Num2, "LAYER_1");
+    registerAction(sf::Keyboard::Num3, "LAYER_2");
+    registerAction(sf::Keyboard::Num4, "LAYER_3");
+    registerAction(sf::Keyboard::Num5, "LAYER_4");
+    
+    // Register remaining number keys for filename input
+    for (int i = sf::Keyboard::Num6; i <= sf::Keyboard::Num9; i++) {
         registerAction(static_cast<sf::Keyboard::Key>(i), "NUMBER_" + std::to_string(i - sf::Keyboard::Num0));
     }
+    registerAction(sf::Keyboard::Num0, "NUMBER_0");
+    
+    // Register backspace for filename editing
+    registerAction(sf::Keyboard::Backspace, "BACKSPACE");
     
     
     // Mouse support - use different approach to avoid key conflicts
@@ -110,10 +121,12 @@ void Scene_MapEditor::loadAvailableAssets()
     m_availableAssets.clear();
     m_availableTypes.clear();
     
-    // Add available asset types
-    m_availableTypes.push_back("Tile");
-    m_availableTypes.push_back("Dec");
-    m_availableTypes.push_back("NPC");  // Add NPC support
+    // Add available layer types (0-4)
+    m_availableTypes.push_back("0"); // Ground layer (no collision)
+    m_availableTypes.push_back("1"); // Decoration layer 1 (collision)
+    m_availableTypes.push_back("2"); // Decoration layer 2 (collision)
+    m_availableTypes.push_back("3"); // Decoration layer 3 (collision)
+    m_availableTypes.push_back("4"); // Entity layer (NPCs, Script Tiles)
     
     // Add available assets (these should match what's in assets.txt)
     m_availableAssets.push_back("Ground");
@@ -239,6 +252,37 @@ void Scene_MapEditor::sDoAction(const Action& action)
             m_typeIndex = (m_typeIndex + 1) % m_availableTypes.size();
             m_currentType = m_availableTypes[m_typeIndex];
         }
+        // Layer switching - only if save dialog is not open
+        else if (action.getName() == "LAYER_0") {
+            if (!m_showSaveDialog) {
+                m_currentLayer = 0;
+                std::cout << "Switched to Layer 0 (Ground - No Collision)" << std::endl;
+            }
+        }
+        else if (action.getName() == "LAYER_1") {
+            if (!m_showSaveDialog) {
+                m_currentLayer = 1;
+                std::cout << "Switched to Layer 1 (Decoration 1 - Collision)" << std::endl;
+            }
+        }
+        else if (action.getName() == "LAYER_2") {
+            if (!m_showSaveDialog) {
+                m_currentLayer = 2;
+                std::cout << "Switched to Layer 2 (Decoration 2 - Collision)" << std::endl;
+            }
+        }
+        else if (action.getName() == "LAYER_3") {
+            if (!m_showSaveDialog) {
+                m_currentLayer = 3;
+                std::cout << "Switched to Layer 3 (Decoration 3 - Collision)" << std::endl;
+            }
+        }
+        else if (action.getName() == "LAYER_4") {
+            if (!m_showSaveDialog) {
+                m_currentLayer = 4;
+                std::cout << "Switched to Layer 4 (Entity - Interactive)" << std::endl;
+            }
+        }
         else if (action.getName() == "SAVE") {
             if (!m_showSaveDialog && !m_showOverwriteDialog && !m_showLevelSelector) {
                 m_showSaveDialog = true;
@@ -274,22 +318,32 @@ void Scene_MapEditor::updateCamera()
 
 Scene_MapEditor::GridCell* Scene_MapEditor::getGridCell(int x, int y)
 {
-    auto key = std::make_pair(x, y);
-    auto it = m_infiniteGrid.find(key);
-    if (it != m_infiniteGrid.end()) {
-        return &it->second;
+    auto posKey = std::make_pair(x, y);
+    auto posIt = m_infiniteGrid.find(posKey);
+    if (posIt != m_infiniteGrid.end()) {
+        auto layerIt = posIt->second.find(m_currentLayer);
+        if (layerIt != posIt->second.end()) {
+            return &layerIt->second;
+        }
     }
     return nullptr;
 }
 
 void Scene_MapEditor::setGridCell(int x, int y, const GridCell& cell)
 {
-    auto key = std::make_pair(x, y);
+    auto posKey = std::make_pair(x, y);
     if (cell.occupied) {
-        m_infiniteGrid[key] = cell;
+        m_infiniteGrid[posKey][m_currentLayer] = cell;
     } else {
-        // Remove empty cells to save memory
-        m_infiniteGrid.erase(key);
+        // Remove the cell from the current layer
+        auto posIt = m_infiniteGrid.find(posKey);
+        if (posIt != m_infiniteGrid.end()) {
+            posIt->second.erase(m_currentLayer);
+            // If no layers remain at this position, remove the position entirely
+            if (posIt->second.empty()) {
+                m_infiniteGrid.erase(posIt);
+            }
+        }
     }
 }
 
@@ -315,13 +369,13 @@ void Scene_MapEditor::placeObject()
     int y = static_cast<int>(m_cursorPos.y);
     
     GridCell cell;
-    cell.type = m_currentType;
+    cell.type = std::to_string(m_currentLayer);  // Use current layer as type
     cell.asset = m_currentAsset;
     cell.occupied = true;
     
     setGridCell(x, y, cell);
     
-    std::cout << "Placed " << m_currentType << " " << m_currentAsset 
+    std::cout << "Placed Layer " << m_currentLayer << " " << m_currentAsset 
               << " at (" << x << ", " << y << ")\n";
 }
 
@@ -423,11 +477,37 @@ void Scene_MapEditor::handleSaveDialogInput(const Action& action)
             m_inputFileName.pop_back();
         }
     }
+    // Handle layer keys 1-5 as numbers for filename input when save dialog is open
+    else if (action.getName() == "LAYER_0") {
+        if (m_inputFileName.length() < 10) {
+            m_inputFileName += "1";
+        }
+    }
+    else if (action.getName() == "LAYER_1") {
+        if (m_inputFileName.length() < 10) {
+            m_inputFileName += "2";
+        }
+    }
+    else if (action.getName() == "LAYER_2") {
+        if (m_inputFileName.length() < 10) {
+            m_inputFileName += "3";
+        }
+    }
+    else if (action.getName() == "LAYER_3") {
+        if (m_inputFileName.length() < 10) {
+            m_inputFileName += "4";
+        }
+    }
+    else if (action.getName() == "LAYER_4") {
+        if (m_inputFileName.length() < 10) {
+            m_inputFileName += "5";
+        }
+    }
     else if (action.getName().substr(0, 7) == "NUMBER_") {
-        // Add number to filename
+        // Add number to filename (keys 6-9 and 0)
         int numberIndex = std::stoi(action.getName().substr(7));
         char number = '0' + numberIndex;
-        if (m_inputFileName.length() < 10) { // Limit to 10 digits
+        if (m_inputFileName.length() < 10) {
             m_inputFileName += number;
         }
     }
@@ -486,15 +566,20 @@ void Scene_MapEditor::saveLevel()
     file << "# Level created with Map Editor\n";
     file << "# Format: Type SpriteName X Y\n\n";
     
-    // Save all placed objects from infinite grid
-    for (const auto& pair : m_infiniteGrid) {
-        int x = pair.first.first;
-        int y = pair.first.second;
-        const GridCell& cell = pair.second;
+    // Save all placed objects from infinite grid (multi-layer)
+    for (const auto& posPair : m_infiniteGrid) {
+        int x = posPair.first.first;
+        int y = posPair.first.second;
+        const auto& layerMap = posPair.second;
         
-        if (cell.occupied) {
-            file << cell.type << " " << cell.asset 
-                 << " " << x << " " << y << "\n";
+        // Save all layers at this position
+        for (const auto& layerPair : layerMap) {
+            const GridCell& cell = layerPair.second;
+            
+            if (cell.occupied) {
+                file << cell.type << " " << cell.asset 
+                     << " " << x << " " << y << "\n";
+            }
         }
     }
     
@@ -516,15 +601,20 @@ void Scene_MapEditor::saveLevel(const std::string& filename)
     
     // Save all placed objects from infinite grid
     int objectCount = 0;
-    for (const auto& pair : m_infiniteGrid) {
-        int x = pair.first.first;
-        int y = pair.first.second;
-        const GridCell& cell = pair.second;
+    for (const auto& posPair : m_infiniteGrid) {
+        int x = posPair.first.first;
+        int y = posPair.first.second;
+        const auto& layerMap = posPair.second;
         
-        if (cell.occupied) {
-            file << cell.type << " " << cell.asset 
-                 << " " << x << " " << y << "\n";
-            objectCount++;
+        // Save all layers at this position
+        for (const auto& layerPair : layerMap) {
+            const GridCell& cell = layerPair.second;
+            
+            if (cell.occupied) {
+                file << cell.type << " " << cell.asset 
+                     << " " << x << " " << y << "\n";
+                objectCount++;
+            }
         }
     }
     
@@ -561,7 +651,25 @@ void Scene_MapEditor::loadLevel(const std::string& filename)
             cell.type = type;
             cell.asset = asset;
             cell.occupied = true;
-            setGridCell(x, y, cell);
+            
+            // Parse layer from type (should be 0-4)
+            int layer = 0;
+            try {
+                layer = std::stoi(type);
+                if (layer < 0 || layer > 4) {
+                    layer = 0; // Default to ground layer for invalid layers
+                }
+            } catch (...) {
+                // If type is not a number, try to map old format
+                if (type == "Tile") layer = 1;      // Old tiles go to decoration layer 1
+                else if (type == "Dec") layer = 4;  // Old decorations go to entity layer
+                else if (type == "NPC") layer = 4;  // NPCs go to entity layer
+                else layer = 0;                     // Default to ground layer
+            }
+            
+            // Place object on the correct layer
+            auto posKey = std::make_pair(x, y);
+            m_infiniteGrid[posKey][layer] = cell;
             objectCount++;
         }
     }
@@ -634,30 +742,50 @@ void Scene_MapEditor::drawPlacedObjects()
     Vec2 gridMin = getVisibleGridMin();
     Vec2 gridMax = getVisibleGridMax();
     
-    // Only draw objects in visible area for performance
-    for (int x = static_cast<int>(gridMin.x); x <= static_cast<int>(gridMax.x); x++) {
-        for (int y = static_cast<int>(gridMin.y); y <= static_cast<int>(gridMax.y); y++) {
-            GridCell* cell = getGridCell(x, y);
-            if (cell && cell->occupied) {
-                // Try to get the texture for this asset
-                try {
-                    const sf::Texture& texture = m_game->getAssets().getTexture(cell->asset);
-                    sf::Sprite sprite(texture);
-                    sprite.setPosition(x * TILE_SIZE, y * TILE_SIZE);
-                    
-                    // Scale sprite to fit tile size if needed
-                    sf::Vector2u textureSize = texture.getSize();
-                    float scaleX = static_cast<float>(TILE_SIZE) / textureSize.x;
-                    float scaleY = static_cast<float>(TILE_SIZE) / textureSize.y;
-                    sprite.setScale(scaleX, scaleY);
-                    
-                    m_game->window().draw(sprite);
-                } catch (...) {
-                    // If texture not found, draw a colored rectangle
-                    sf::RectangleShape rect(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-                    rect.setPosition(x * TILE_SIZE, y * TILE_SIZE);
-                    rect.setFillColor(sf::Color::Magenta); // Indicates missing texture
-                    m_game->window().draw(rect);
+    // Render layers in order (0-4) for proper layering
+    for (int layer = 0; layer <= 4; layer++) {
+        // Only draw objects in visible area for performance
+        for (int x = static_cast<int>(gridMin.x); x <= static_cast<int>(gridMax.x); x++) {
+            for (int y = static_cast<int>(gridMin.y); y <= static_cast<int>(gridMax.y); y++) {
+                auto posKey = std::make_pair(x, y);
+                auto posIt = m_infiniteGrid.find(posKey);
+                if (posIt != m_infiniteGrid.end()) {
+                    auto layerIt = posIt->second.find(layer);
+                    if (layerIt != posIt->second.end() && layerIt->second.occupied) {
+                        GridCell& cell = layerIt->second;
+                        
+                        // Try to get the texture for this asset
+                        try {
+                            const sf::Texture& texture = m_game->getAssets().getTexture(cell.asset);
+                            sf::Sprite sprite(texture);
+                            sprite.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+                            
+                            // Scale sprite to fit tile size if needed
+                            sf::Vector2u textureSize = texture.getSize();
+                            float scaleX = static_cast<float>(TILE_SIZE) / textureSize.x;
+                            float scaleY = static_cast<float>(TILE_SIZE) / textureSize.y;
+                            sprite.setScale(scaleX, scaleY);
+                            
+                            // Add slight transparency to non-current layers for visual feedback
+                            if (layer != m_currentLayer) {
+                                sprite.setColor(sf::Color(255, 255, 255, 180));
+                            }
+                            
+                            m_game->window().draw(sprite);
+                        } catch (...) {
+                            // If texture not found, draw a colored rectangle
+                            sf::RectangleShape rect(sf::Vector2f(TILE_SIZE, TILE_SIZE));
+                            rect.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+                            rect.setFillColor(sf::Color::Magenta); // Indicates missing texture
+                            
+                            // Add transparency to non-current layers
+                            if (layer != m_currentLayer) {
+                                rect.setFillColor(sf::Color(255, 0, 255, 180));
+                            }
+                            
+                            m_game->window().draw(rect);
+                        }
+                    }
                 }
             }
         }
@@ -676,7 +804,7 @@ void Scene_MapEditor::drawUI()
     
     // Draw UI text with smaller font size to fit more content
     std::ostringstream oss;
-    oss << "MAP EDITOR (Infinite Grid)\n";
+    oss << "MAP EDITOR (5-Layer System)\n";
     
     // Show current loaded map info
     if (!m_currentFileName.empty()) {
@@ -691,30 +819,50 @@ void Scene_MapEditor::drawUI()
         oss << "Current Map: <new map>\n";
     }
     
-    oss << "Current Type: " << m_currentType << "\n";
+    // Show current layer information with descriptions
+    oss << "Current Layer: " << m_currentLayer;
+    if (m_currentLayer == 0) oss << " (Ground - No Collision)";
+    else if (m_currentLayer == 1) oss << " (Decoration 1 - Collision)";
+    else if (m_currentLayer == 2) oss << " (Decoration 2 - Collision)";
+    else if (m_currentLayer == 3) oss << " (Decoration 3 - Collision)";
+    else if (m_currentLayer == 4) oss << " (Entity - Interactive)";
+    oss << "\n";
+    
     oss << "Current Asset: " << m_currentAsset << "\n";
     oss << "Cursor: (" << static_cast<int>(m_cursorPos.x) << ", " << static_cast<int>(m_cursorPos.y) << ")\n";
-    oss << "Objects: " << m_infiniteGrid.size() << "\n";
+    
+    // Count total objects across all layers
+    int totalObjects = 0;
+    for (const auto& pos : m_infiniteGrid) {
+        totalObjects += pos.second.size();
+    }
+    oss << "Total Objects: " << totalObjects << "\n";
     oss << "Save to: metadata/levels/\n";
     
     // Add division line
     oss << "-----------------------\n";
     
-    // Add cursor tile information
+    // Add cursor tile information for current layer
     int cursorX = static_cast<int>(m_cursorPos.x);
     int cursorY = static_cast<int>(m_cursorPos.y);
     GridCell* cursorCell = getGridCell(cursorX, cursorY);
     
-    oss << "CURSOR TILE INFO:\n";
+    oss << "CURSOR TILE INFO (Layer " << m_currentLayer << "):\n";
     if (cursorCell && cursorCell->occupied) {
-        oss << "Type: " << cursorCell->type << "\n";
+        oss << "Layer: " << cursorCell->type;
+        if (cursorCell->type == "0") oss << " (Ground)";
+        else if (cursorCell->type == "1") oss << " (Decoration 1)";
+        else if (cursorCell->type == "2") oss << " (Decoration 2)";
+        else if (cursorCell->type == "3") oss << " (Decoration 3)";
+        else if (cursorCell->type == "4") oss << " (Entity)";
+        oss << "\n";
         oss << "Asset: " << cursorCell->asset << "\n";
         oss << "Position: (" << cursorX << ", " << cursorY << ")\n";
         oss << "Status: OCCUPIED";
     } else {
         oss << "Position: (" << cursorX << ", " << cursorY << ")\n";
         oss << "Status: EMPTY\n";
-        oss << "Ready to place: " << m_currentType << " " << m_currentAsset;
+        oss << "Ready to place: Layer " << m_currentLayer << " " << m_currentAsset;
     }
     
     // Use clean font size for display

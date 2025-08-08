@@ -1,0 +1,7 @@
+# Level created with Map Editor
+# Format: Type SpriteName X Y
+
+0 Ground 0 0
+1 Bush 0 0
+4 Ground 0 0
+4 PlayerSpawn 0 2

@@ -96,37 +96,102 @@ void CommandOverlay::render()
     float viewRight = viewCenter.x + viewSize.x / 2;
     float viewBottom = viewCenter.y + viewSize.y / 2;
     
-    // Build command string
-    std::ostringstream oss;
+    // Calculate maximum width (half the window width, with margins)
+    float margin = 8.0f;
+    float maxWidth = (viewSize.x / 2.0f) - (margin * 2);
+    
+    // First, try to fit everything in a single line
+    std::ostringstream singleLineTest;
     for (size_t i = 0; i < m_commands.size(); i++) {
-        if (i > 0) oss << "  |  ";
-        oss << m_commands[i].first << ": " << m_commands[i].second;
+        if (i > 0) singleLineTest << "  |  ";
+        singleLineTest << m_commands[i].first << ": " << m_commands[i].second;
     }
     
-    m_text.setString(oss.str());
+    // Test if single line fits within max width
+    sf::Text testText;
+    if (m_text.getFont()) {
+        testText.setFont(*m_text.getFont());
+    }
+    testText.setCharacterSize(m_text.getCharacterSize());
+    testText.setString(singleLineTest.str());
+    float singleLineWidth = testText.getLocalBounds().width;
     
-    // Calculate size and position
-    sf::FloatRect textBounds = m_text.getLocalBounds();
+    // Build command strings - use single line if it fits, otherwise wrap
+    std::vector<std::string> lines;
+    
+    if (singleLineWidth <= maxWidth) {
+        // Single line fits within half window width - use it
+        lines.push_back(singleLineTest.str());
+    } else {
+        // Need to wrap to multiple lines
+        std::ostringstream currentLine;
+        
+        for (size_t i = 0; i < m_commands.size(); i++) {
+            std::string commandStr = m_commands[i].first + ": " + m_commands[i].second;
+            std::string separator = (i > 0) ? "  |  " : "";
+            
+            // Test if adding this command would exceed max width
+            std::string testLine = currentLine.str() + separator + commandStr;
+            testText.setString(testLine);
+            float testWidth = testText.getLocalBounds().width;
+            
+            if (testWidth > maxWidth && !currentLine.str().empty()) {
+                // Current line would be too wide, start a new line
+                lines.push_back(currentLine.str());
+                currentLine.str("");
+                currentLine.clear();
+                currentLine << commandStr;
+            } else {
+                // Add to current line
+                currentLine << separator << commandStr;
+            }
+        }
+        
+        // Add the last line if it has content
+        if (!currentLine.str().empty()) {
+            lines.push_back(currentLine.str());
+        }
+    }
+    
+    // Calculate total dimensions
     float padding = 6.0f;
-    float bgWidth = textBounds.width + padding * 2;
-    float bgHeight = textBounds.height + padding * 2;
+    float lineHeight = m_text.getCharacterSize() + 2.0f; // Small spacing between lines
+    float totalHeight = lines.size() * lineHeight + padding * 2;
     
-    // Position in bottom-right corner of current view with small margin
-    float margin = 8.0f;
+    // Find the widest line for background width
+    float maxLineWidth = 0.0f;
+    for (const std::string& line : lines) {
+        sf::Text tempText;
+        if (m_text.getFont()) {
+            tempText.setFont(*m_text.getFont());
+        }
+        tempText.setCharacterSize(m_text.getCharacterSize());
+        tempText.setString(line);
+        float lineWidth = tempText.getLocalBounds().width;
+        maxLineWidth = std::max(maxLineWidth, lineWidth);
+    }
+    
+    float bgWidth = maxLineWidth + padding * 2;
+    
+    // Position in bottom-right corner of current view
     float posX = viewRight - bgWidth - margin;
-    float posY = viewBottom - bgHeight - margin;
+    float posY = viewBottom - totalHeight - margin;
     
     // Set background
-    m_background.setSize(sf::Vector2f(bgWidth, bgHeight));
+    m_background.setSize(sf::Vector2f(bgWidth, totalHeight));
     m_background.setPosition(posX, posY);
     
-    // Set text position
-    m_text.setPosition(posX + padding, posY + padding);
-    
-    // Draw
+    // Draw background
     try {
         m_game->window().draw(m_background);
-        m_game->window().draw(m_text);
+        
+        // Draw each line of text
+        for (size_t i = 0; i < lines.size(); i++) {
+            m_text.setString(lines[i]);
+            float textY = posY + padding + (i * lineHeight);
+            m_text.setPosition(posX + padding, textY);
+            m_game->window().draw(m_text);
+        }
     } catch (const std::exception& e) {
         std::cout << "Warning: Command overlay draw failed: " << e.what() << std::endl;
     }

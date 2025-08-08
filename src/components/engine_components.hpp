@@ -2,13 +2,110 @@
 
 #include "../vec2.hpp"
 #include "base_component.hpp"
-#include "CSave.hpp"
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 #include <cstdio>
 #include <map>
+#include <vector>
+#include <string>
+#include <functional>
+#include <algorithm>
 
 // Core Engine Components - These are engine-level systems
+
+// Layer-based rendering component for 5-layer world system
+// Rendering order: 0 -> 1 -> 2 -> 3 -> 4
+class CLayer : public Component {
+public:
+    enum LayerType {
+        GROUND = 0,      // Layer 0: Ground tiles - NO collision, base walkable surface
+        DECORATION_1 = 1, // Layer 1: First decoration layer - HAS collision
+        DECORATION_2 = 2, // Layer 2: Second decoration layer - HAS collision  
+        DECORATION_3 = 3, // Layer 3: Third decoration layer - HAS collision
+        ENTITY = 4       // Layer 4: Entity layer - NPCs, Script Tiles, player "habitat"
+    };
+    
+    LayerType layer;
+    int subLayer;  // For fine-grained ordering within the same layer (0 = bottom, higher = top)
+    
+    CLayer(LayerType l, int sub = 0) : layer(l), subLayer(sub) {}
+    ~CLayer() {}
+    
+    // Helper methods
+    static const char* getLayerName(LayerType layer) {
+        switch(layer) {
+            case GROUND: return "Ground";
+            case DECORATION_1: return "Decoration_1";
+            case DECORATION_2: return "Decoration_2";
+            case DECORATION_3: return "Decoration_3";
+            case ENTITY: return "Entity";
+            default: return "Unknown";
+        }
+    }
+    
+    // Get total rendering order for sorting (layer * 100 + subLayer)
+    int getRenderOrder() const {
+        return static_cast<int>(layer) * 100 + subLayer;
+    }
+    
+    // Check if this layer should have collision
+    bool hasCollision() const {
+        return layer >= DECORATION_1 && layer <= DECORATION_3;
+    }
+    
+    // Check if this is the entity layer (for NPCs, Script Tiles)
+    bool isEntityLayer() const {
+        return layer == ENTITY;
+    }
+};
+
+// Save/Load System Component
+class CSave : public Component
+{
+public:
+    bool enabled = true;
+    std::string savePointName = "";
+    std::string displayText = "Save Game";
+    
+    CSave() = default;
+    CSave(const std::string& name, const std::string& text = "Save Game")
+        : savePointName(name), displayText(text) {}
+};
+
+// Script Tile component for interactive tiles that trigger actions
+class CScriptTile : public Component {
+public:
+    enum TriggerType {
+        ON_ENTER,    // Triggered when player enters the tile
+        ON_EXIT,     // Triggered when player exits the tile
+        ON_INTERACT  // Triggered when player presses interact key on tile
+    };
+    
+    std::string scriptName;     // Name/ID of the script to execute
+    TriggerType triggerType;    // When this tile should trigger
+    bool isTriggered;          // Track if tile has been triggered (for one-time events)
+    bool repeatable;           // Can this tile be triggered multiple times?
+    std::string parameters;    // Optional parameters for the script
+    
+    CScriptTile(const std::string& script, TriggerType trigger = ON_ENTER, bool repeat = true)
+        : scriptName(script), triggerType(trigger), isTriggered(false), repeatable(repeat) {}
+    ~CScriptTile() {}
+    
+    // Reset trigger state (useful for repeatable tiles)
+    void reset() {
+        isTriggered = false;
+    }
+    
+    // Check if tile can be triggered
+    bool canTrigger() const {
+        return repeatable || !isTriggered;
+    }
+    
+    // Mark tile as triggered
+    void trigger() {
+        isTriggered = true;
+    }
+};
 
 class CTransform : public Component {
 public:
