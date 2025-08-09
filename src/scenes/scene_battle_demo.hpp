@@ -50,6 +50,16 @@ private:
     void renderDemoMenu();
     void renderBattleInfo();
     void renderConfigInfo();
+    void renderSimpleBattleField();
+    void renderPartyMembers(const sf::RectangleShape& area);
+    void renderEnemies(const sf::RectangleShape& area);
+    void renderBattleStatus();
+    
+    // Utility methods
+    void logBattleStats();
+    void displayLoadedConfigurations();
+    sf::Color getCharacterColor(const std::string& name);
+    sf::Color getEnemyColor(const std::string& name);
     
     // Demo controls
     void handleMenuInput(const Action& action);
@@ -61,7 +71,9 @@ private:
     void testPartyConfiguration();
     void testEnemyConfiguration();
     
-    // Utility methods
-    void logBattleStats();
-    void displayLoadedConfigurations();
+    // Demo battle actions
+    void performDemoAttack();
+    void performDemoHeal();
+    void performDemoSpell();
+    void performDamageTest();
 };

@@ -1,0 +1,39 @@
+# Battle System Assets Configuration
+# Simple colored rectangles and shapes for battle demo
+
+# Character representations (using colored shapes)
+# Format: CHARACTER_ID COLOR_R COLOR_G COLOR_B SIZE_X SIZE_Y SHAPE_TYPE
+
+CHARACTER hero 0 100 255 40 40 circle
+CHARACTER mage 255 0 255 35 35 circle
+CHARACTER warrior 139 69 19 45 45 circle
+CHARACTER rogue 128 0 128 35 35 circle
+
+# Enemy representations
+ENEMY goblin 0 255 0 30 30 square
+ENEMY slime 0 255 127 35 25 oval
+ENEMY rat 139 69 19 25 25 square
+ENEMY spider 64 64 64 30 20 diamond
+ENEMY goblin_chief 0 128 0 40 40 square
+
+ENEMY wolf 105 105 105 35 30 diamond
+ENEMY bear 160 82 45 50 45 square
+ENEMY bandit 220 20 60 35 35 square
+ENEMY treant 34 139 34 45 50 square
+ENEMY orc 128 128 0 40 40 square
+ENEMY bandit_leader 178 34 34 45 45 square
+
+# UI Colors
+UI_PLAYER_AREA 0 100 0 100
+UI_ENEMY_AREA 100 0 0 100
+UI_STATUS_PANEL 0 0 0 150
+UI_HP_BAR_EMPTY 255 0 0 255
+UI_HP_BAR_FULL 0 255 0 255
+UI_MP_BAR_EMPTY 0 0 255 255
+UI_MP_BAR_FULL 0 150 255 255
+
+# Battle Effects (for future use)
+EFFECT_ATTACK 255 255 0 255
+EFFECT_HEAL 0 255 0 255
+EFFECT_MAGIC 255 0 255 255
+EFFECT_DAMAGE 255 0 0 255
