@@ -1,5 +1,6 @@
 #include "game_engine.hpp"
 #include "scenes/scene_menu.hpp"
+#include "scenes/scene_battle_demo.hpp"
 #include <iostream>
 #include <exception>
 #include <algorithm>

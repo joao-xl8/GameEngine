@@ -640,11 +640,12 @@ void Scene_Play::sDoAction(const Action &action)
         }
         else if (action.getName() == "BATTLE")
         {
-            // Trigger simple battle scene
-            std::cout << "Battle triggered! Starting battle scene..." << std::endl;
+            // Trigger battle scene with configuration
+            std::cout << "Battle triggered! Starting configured battle scene..." << std::endl;
             
-            // Create simple battle scene
-            auto battleScene = std::make_shared<Scene_Battle>(m_game);
+            // Create battle scene with level 1 enemies
+            std::vector<std::string> enemyTypes = {"GOBLIN", "SLIME"}; // Example encounter
+            auto battleScene = std::make_shared<Scene_Battle>(m_game, enemyTypes);
             m_game->pushScene("Battle", battleScene);
         }
         else if (action.getName() == "INTERACT")

@@ -5,6 +5,9 @@
 #include <memory>
 #include <queue>
 
+// Forward declaration to avoid circular dependency
+class BattleConfigLoader;
+
 class Scene_Battle : public Scene {
 public:
   enum class BattleState {
@@ -64,6 +67,10 @@ public:
   };
 
 protected:
+  // Battle configuration loader (loaded on demand)
+  std::unique_ptr<BattleConfigLoader> m_configLoader;
+  bool m_configLoaded = false;
+  
   // Battle state
   BattleState m_battleState;
   std::vector<BattleCharacter> m_playerParty;
@@ -166,9 +173,19 @@ public:
   Scene_Battle(GameEngine *game, const std::vector<std::string> &enemyTypes,
                const std::string& returnLevel, const Vec2& returnPos, 
                int returnHealth, float returnPlayTime);
+  
+  // Destructor must be declared in header for unique_ptr with forward declaration
+  ~Scene_Battle();
 
   // Public interface for starting battles
   void addPlayerCharacter(const std::string &name, int hp, int attack, int defense, int speed, int mp = 20);
   void addEnemy(const std::string &name, int hp, int attack, int defense, int speed);
   void startBattle();
+  
+  // Configuration loading methods
+  bool loadBattleConfigurations();
+  void loadPartyFromConfig(const std::vector<std::string>& memberIds, int level = 1);
+  void loadEnemiesFromConfig(int level, const std::vector<std::string>& enemyIds = {});
+  void loadRandomEncounter(int level);
+  BattleConfigLoader* getConfigLoader() { return m_configLoader.get(); }
 };

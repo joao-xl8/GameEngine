@@ -5,6 +5,7 @@
 #include "scene_loading.hpp"
 #include "scene_save_load.hpp"
 #include "scene_level_selector.hpp"
+#include "scene_battle_demo.hpp"
 #include "../game_engine.hpp"
 #include <exception>
 
@@ -23,6 +24,7 @@ void Scene_Menu::init()
     m_menuStrings.push_back("Load Game");
     m_menuStrings.push_back("Load Level");  // Add Load Level option
     m_menuStrings.push_back("Map Editor");
+    m_menuStrings.push_back("Battle Demo");  // Add Battle Demo option
     m_menuStrings.push_back("Options");
     m_menuStrings.push_back("Exit");
     
@@ -177,6 +179,18 @@ void Scene_Menu::sDoAction(const Action &action)
                     try {
                         Scene_Loading::loadMapEditorScene(m_game);
                     } catch (const std::exception& e) {
+                        // If scene creation fails, just quit to prevent crash
+                        m_game->quit();
+                    }
+                }
+                else if (m_menuStrings[m_menuIndex] == "Battle Demo")
+                {
+                    // Launch Battle System Demo
+                    try {
+                        auto battleDemoScene = std::make_shared<Scene_Battle_Demo>(m_game);
+                        m_game->changeScene("BattleDemo", battleDemoScene);
+                    } catch (const std::exception& e) {
+                        std::cout << "Failed to create Battle Demo scene: " << e.what() << std::endl;
                         // If scene creation fails, just quit to prevent crash
                         m_game->quit();
                     }
