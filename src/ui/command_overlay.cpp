@@ -10,8 +10,8 @@ CommandOverlay::CommandOverlay(GameEngine* game) : m_game(game)
 
 void CommandOverlay::setupUI()
 {
-    // Setup background
-    m_background.setFillColor(sf::Color(0, 0, 0, 180));
+    // Setup background - make it solid (opacity 255 instead of 180)
+    m_background.setFillColor(sf::Color(0, 0, 0, 255));
     m_background.setOutlineColor(sf::Color(100, 100, 100));
     m_background.setOutlineThickness(1.0f);
     

@@ -67,9 +67,6 @@ void Scene_Dialogue::init()
     registerAction(sf::Keyboard::Space, "CONFIRM");
     registerAction(sf::Keyboard::C, "BACK");
     
-    // Register choice navigation keys (always available)
-    registerAction(sf::Keyboard::Up, "CHOICE_UP");
-    registerAction(sf::Keyboard::Down, "CHOICE_DOWN");
     registerAction(sf::Keyboard::W, "CHOICE_UP");
     registerAction(sf::Keyboard::S, "CHOICE_DOWN");
     

@@ -95,6 +95,41 @@ protected:
   int m_selectedActionIndex;
   int m_selectedTargetIndex;
   bool m_selectingTarget;
+  
+  // Turn-based system
+  struct TurnEntry {
+    bool isPlayer;
+    int characterIndex;
+    int speed;
+    std::string name;
+  };
+  
+  std::vector<TurnEntry> m_turnQueue;
+  int m_currentTurnIndex;
+  bool m_waitingForPlayerAction;
+  float m_turnTimer;
+  const float TURN_DELAY = 1.0f; // Delay between turns in seconds
+  
+  // Cursor navigation system
+  bool m_cursorOnPlayerSide;  // true = player side, false = enemy side
+  int m_cursorPlayerIndex;    // Which player is selected (0-based)
+  int m_cursorEnemyIndex;     // Which enemy is selected (0-based)
+  bool m_selectingAction;     // true when selecting action, false when selecting target
+  
+  // Battle menu system
+  enum class BattleMenuState {
+    MAIN_MENU,      // Attack, Spells, Items
+    SPELL_MENU,     // List of available spells
+    ITEM_MENU,      // List of available items
+    TARGET_SELECT   // Selecting target for action
+  };
+  
+  BattleMenuState m_menuState;
+  int m_selectedMenuIndex;    // Currently selected menu option
+  std::vector<std::string> m_currentMenuOptions;
+  std::string m_selectedAction; // "ATTACK", "SPELL:FireBall", "ITEM:Potion", etc.
+  std::string m_pendingAction;  // Action waiting for target selection
+  bool m_targetingEnemies;      // true = targeting enemies, false = targeting party
 
   // State persistence (like dialogue scene)
   std::string m_returnLevel;
@@ -133,6 +168,43 @@ protected:
   void executeActions();
   void checkBattleEnd();
   void initializeSpells();
+  
+  // Turn queue system
+  void buildTurnQueue();
+  void resetTurnQueue();
+  TurnEntry getCurrentTurn();
+  bool isCurrentTurnPlayer();
+  void advanceTurn();
+  void enemyAI(int enemyIndex);
+  void updateTurnTimer(float deltaTime);
+  
+  // Cursor navigation system
+  void initializeCursor();
+  void moveCursorLeft();
+  void moveCursorRight();
+  void moveCursorUp();
+  void moveCursorDown();
+  int getCurrentlySelectedPlayerIndex();
+  int getCurrentlySelectedEnemyIndex();
+  void highlightCurrentTurnCharacter();
+  
+  // Battle menu system
+  void initializeBattleMenu();
+  void showMainMenu();
+  void showSpellMenu();
+  void showItemMenu();
+  void handleMenuNavigation(const std::string& direction);
+  void handleMenuSelection();
+  void executeSelectedAction();
+  void renderBattleMenu();
+  
+  // Target selection system
+  void enterTargetSelection(const std::string& action);
+  void handleTargetNavigation(const std::string& direction);
+  void executeActionOnTarget();
+  bool isOffensiveAction(const std::string& action);
+  bool isDefensiveAction(const std::string& action);
+  void renderTargetSelection();
 
   // Action processing
   void queuePlayerAction(BattleAction action);
@@ -149,9 +221,19 @@ protected:
   void renderUI();
   void renderActionMenu();
   void renderSpellMenu();
-  void renderTargetSelection();
   void renderStatusBars();
   void updateCharacterPositions();
+  
+  // Enhanced visual rendering methods
+  void renderPartyMembers(const sf::RectangleShape& area);
+  void renderEnemies(const sf::RectangleShape& area);
+  void renderBattleStatus();
+  
+  // Interactive demo actions
+  void performDemoAttack();
+  void performDemoHeal();
+  void performDemoSpell();
+  void performDemoDefend();
 
   // Input handling
   void handleMenuNavigation(const Action &action);
@@ -164,6 +246,10 @@ protected:
   std::vector<BattleCharacter *> getAliveCharacters(bool playerTeam);
   bool isPlayerTeamAlive();
   bool isEnemyTeamAlive();
+  
+  // Visual utility methods
+  sf::Color getCharacterColor(const std::string& name);
+  sf::Color getEnemyColor(const std::string& name);
 
 public:
   Scene_Battle(GameEngine *game);
