@@ -1,6 +1,6 @@
 #include "player.hpp"
 #include "../game_engine.hpp"
-#include "../components/common_components.hpp"
+#include "../components.hpp"
 #include <iostream>
 
 Player::Player(GameEngine* game, EntityManager* entityManager, const Vec2& tileSize, int playerScale, int gameScale)

@@ -1,5 +1,5 @@
 #include "scene_play.hpp"
-#include "../components/common_components.hpp"
+#include "../components.hpp"
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
 #include "scene_dialogue.hpp"
@@ -645,7 +645,7 @@ void Scene_Play::sDoAction(const Action &action)
             
             // Create simple battle scene
             auto battleScene = std::make_shared<Scene_Battle>(m_game);
-            m_game->changeScene("Battle", battleScene);
+            m_game->pushScene("Battle", battleScene);
         }
         else if (action.getName() == "INTERACT")
         {
@@ -884,8 +884,9 @@ bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
                 continue;
             }
             
-            // Only check collision with decoration layers (1-3) that have collision
-            if (layer->hasCollision())
+            // Only check collision with tiles that have collision enabled
+            auto collision = entity->getComponent<CCollision>();
+            if (collision && collision->isCollidable())
             {
                 if (isColliding(position, size, tileTransform->pos, tileBBox->size))
                 {
@@ -980,7 +981,7 @@ void Scene_Play::startDialogue(std::shared_ptr<Entity> npc)
             auto dialogueScene = std::make_shared<Scene_Dialogue>(
                 m_game, dialogueFile, m_levelPath, currentPlayerPos, currentHealth, currentPlayTime
             );
-            m_game->changeScene("Dialogue", dialogueScene);
+            m_game->pushScene("Dialogue", dialogueScene);
         } catch (const std::exception& e) {
             std::cout << "Error starting dialogue: " << e.what() << std::endl;
         }

@@ -1,0 +1,42 @@
+# Final test for 1x5 rotation fix
+# Testing the specific cases mentioned: WideWall 90° and TallTower 270°
+
+# Reference ground tiles at cursor positions
+0 Ground 5 5 1 0 1 1 5 5
+0 Ground 10 5 1 0 1 1 10 5
+
+# WideWall (5x1) tests
+# Original at 0°: horizontal wall with cursor at top-left (5,5)
+1 WideWall 5 5 1 0 5 1 5 5
+1 WideWall 6 5 1 0 5 1 5 5
+1 WideWall 7 5 1 0 5 1 5 5
+1 WideWall 8 5 1 0 5 1 5 5
+1 WideWall 9 5 1 0 5 1 5 5
+
+# WideWall at 90°: should become vertical with cursor at top-right (10,5)
+# This was the problematic case with (-4,0) vertical offset
+1 WideWall 10 5 1 90 5 1 10 5
+1 WideWall 10 6 1 90 5 1 10 5
+1 WideWall 10 7 1 90 5 1 10 5
+1 WideWall 10 8 1 90 5 1 10 5
+1 WideWall 10 9 1 90 5 1 10 5
+
+# Reference ground tiles for TallTower tests
+0 Ground 5 12 1 0 1 1 5 12
+0 Ground 10 12 1 0 1 1 10 12
+
+# TallTower (1x5) tests  
+# Original at 0°: vertical tower with cursor at top-left (5,12)
+1 TallTower 5 12 1 0 1 5 5 12
+1 TallTower 5 13 1 0 1 5 5 12
+1 TallTower 5 14 1 0 1 5 5 12
+1 TallTower 5 15 1 0 1 5 5 12
+1 TallTower 5 16 1 0 1 5 5 12
+
+# TallTower at 270°: should become horizontal with cursor at bottom-left (10,12)
+# This was the problematic case with (0,-4) horizontal offset
+1 TallTower 10 12 1 270 1 5 10 12
+1 TallTower 11 12 1 270 1 5 10 12
+1 TallTower 12 12 1 270 1 5 10 12
+1 TallTower 13 12 1 270 1 5 10 12
+1 TallTower 14 12 1 270 1 5 10 12

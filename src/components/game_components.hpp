@@ -43,7 +43,7 @@ public:
     bool questCompleted = false;
     
     CNPCDialogue(const std::string& defaultFile = "") 
-        : defaultDialogueFile(defaultFile), currentDialogueFile(defaultFile) {}
+        : currentDialogueFile(defaultFile), defaultDialogueFile(defaultFile) {}
     
     void setDialogueFile(const std::string& filename) {
         currentDialogueFile = filename;
@@ -245,7 +245,7 @@ public:
         }
         
         // Add as new item if there's space
-        if (items.size() < maxSlots) {
+        if (items.size() < static_cast<size_t>(maxSlots)) {
             items.push_back(item);
             return true;
         }

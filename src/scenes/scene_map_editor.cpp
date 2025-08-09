@@ -56,12 +56,18 @@ void Scene_MapEditor::init()
     // Register backspace for filename editing
     registerAction(sf::Keyboard::Backspace, "BACKSPACE");
     
+    // New features
+    registerAction(sf::Keyboard::T, "TOGGLE_COLLISION");  // Toggle collision on current cell
+    registerAction(sf::Keyboard::R, "ROTATE_ASSET");      // Rotate current asset
+    registerAction(sf::Keyboard::V, "SHOW_COLLISION");    // Show/hide collision overlay
+    
     
     // Mouse support - use different approach to avoid key conflicts
     // We'll handle mouse input differently in the action system
     
     // Load available assets and types
     loadAvailableAssets();
+    loadAssetProperties();
     
     // Set up UI text
     m_uiText.setFont(m_game->getAssets().getFont("ShareTech"));
@@ -78,16 +84,8 @@ void Scene_MapEditor::init()
     m_gameView = m_game->window().getDefaultView();
     m_uiView = m_game->window().getDefaultView();
     
-    // Set up asset preview
-    m_previewBackground.setSize(sf::Vector2f(TILE_SIZE + 10, TILE_SIZE + 10));
-    m_previewBackground.setFillColor(sf::Color(50, 50, 50, 200));
-    m_previewBackground.setOutlineColor(sf::Color::White);
-    m_previewBackground.setOutlineThickness(1.0f);
-    
-    m_previewBorder.setSize(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-    m_previewBorder.setFillColor(sf::Color::Transparent);
-    m_previewBorder.setOutlineColor(sf::Color::Yellow);
-    m_previewBorder.setOutlineThickness(2.0f);
+    // Asset preview is now created dynamically in drawAssetPreview()
+    // No need for static initialization
     
     // Set up level selector
     m_levelSelectorBackground.setFillColor(sf::Color(0, 0, 0, 200));
@@ -136,6 +134,11 @@ void Scene_MapEditor::loadAvailableAssets()
     m_availableAssets.push_back("PlayerSpawn");
     m_availableAssets.push_back("Player");
     m_availableAssets.push_back("Dummy");  // Add Dummy NPC
+    m_availableAssets.push_back("Misc1");  // L-shaped asset (2x3)
+    m_availableAssets.push_back("Misc2");  // L-shaped asset (3x2)
+    m_availableAssets.push_back("LargeCastle");  // 5x5 test asset
+    m_availableAssets.push_back("WideWall");     // 5x1 test asset
+    m_availableAssets.push_back("TallTower");    // 1x5 test asset
     
     // Set defaults
     if (!m_availableAssets.empty()) {
@@ -144,6 +147,45 @@ void Scene_MapEditor::loadAvailableAssets()
     if (!m_availableTypes.empty()) {
         m_currentType = m_availableTypes[0];
     }
+}
+
+void Scene_MapEditor::loadAssetProperties()
+{
+    // Load asset properties from configuration file
+    std::ifstream file("metadata/asset_properties.txt");
+    if (!file.is_open()) {
+        std::cout << "Warning: Could not open asset_properties.txt, using defaults" << std::endl;
+        return;
+    }
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        // Skip empty lines and comments
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        
+        std::stringstream ss(line);
+        std::string assetName;
+        int width, height, collision;
+        float rotation;
+        
+        if (ss >> assetName >> width >> height >> collision >> rotation) {
+            AssetProperties props;
+            props.width = width;
+            props.height = height;
+            props.defaultCollision = (collision == 1);
+            props.defaultRotation = rotation;
+            
+            m_assetProperties[assetName] = props;
+            std::cout << "Loaded properties for " << assetName << ": " 
+                      << width << "x" << height << ", collision=" << collision 
+                      << ", rotation=" << rotation << std::endl;
+        }
+    }
+    
+    file.close();
+    std::cout << "Loaded " << m_assetProperties.size() << " asset property definitions" << std::endl;
 }
 
 void Scene_MapEditor::update()
@@ -185,6 +227,12 @@ void Scene_MapEditor::update()
 void Scene_MapEditor::sDoAction(const Action& action)
 {
     if (action.getType() == "START") {
+        // Handle exit confirmation dialog input
+        if (m_showExitConfirmDialog) {
+            handleExitConfirmDialogInput(action);
+            return;
+        }
+        
         // Handle save dialog input
         if (m_showSaveDialog) {
             handleSaveDialogInput(action);
@@ -204,7 +252,12 @@ void Scene_MapEditor::sDoAction(const Action& action)
         }
         
         if (action.getName() == "BACK") {
-            Scene_Loading::loadMenuScene(m_game);
+            // Check for unsaved changes before exiting
+            if (m_hasUnsavedChanges) {
+                m_showExitConfirmDialog = true;
+            } else {
+                Scene_Loading::loadMenuScene(m_game);
+            }
         }
         else if (action.getName() == "UP") {
             m_cursorPos.y--;
@@ -282,6 +335,17 @@ void Scene_MapEditor::sDoAction(const Action& action)
                 m_currentLayer = 4;
                 std::cout << "Switched to Layer 4 (Entity - Interactive)" << std::endl;
             }
+        }
+        // New features
+        else if (action.getName() == "TOGGLE_COLLISION") {
+            toggleCollision();
+        }
+        else if (action.getName() == "ROTATE_ASSET") {
+            rotateAsset();
+        }
+        else if (action.getName() == "SHOW_COLLISION") {
+            m_showCollision = !m_showCollision;
+            std::cout << "Collision overlay: " << (m_showCollision ? "ON" : "OFF") << std::endl;
         }
         else if (action.getName() == "SAVE") {
             if (!m_showSaveDialog && !m_showOverwriteDialog && !m_showLevelSelector) {
@@ -365,18 +429,65 @@ Vec2 Scene_MapEditor::getVisibleGridMax()
 
 void Scene_MapEditor::placeObject()
 {
-    int x = static_cast<int>(m_cursorPos.x);
-    int y = static_cast<int>(m_cursorPos.y);
+    int cursorX = static_cast<int>(m_cursorPos.x);
+    int cursorY = static_cast<int>(m_cursorPos.y);
     
-    GridCell cell;
-    cell.type = std::to_string(m_currentLayer);  // Use current layer as type
-    cell.asset = m_currentAsset;
-    cell.occupied = true;
+    // Get asset properties
+    AssetProperties props = getAssetProperties(m_currentAsset);
     
-    setGridCell(x, y, cell);
+    // Calculate the actual placement position using ORIGINAL dimensions
+    // The function will handle the rotation internally
+    Vec2 placement = calculateRotatedPlacement(cursorX, cursorY, props.width, props.height, m_currentRotation);
+    int x = static_cast<int>(std::round(placement.x));
+    int y = static_cast<int>(std::round(placement.y));
+    
+    // Apply rotation to dimensions for placement validation and cell creation
+    int width = props.width;
+    int height = props.height;
+    if (m_currentRotation == 90.0f || m_currentRotation == 270.0f) {
+        std::swap(width, height);
+    }
+    
+    // Check if we can place the asset at the calculated position
+    if (!canPlaceAsset(x, y, width, height)) {
+        std::cout << "Cannot place " << m_currentAsset << " at calculated position (" << x << ", " << y 
+                  << ") - area occupied or insufficient space" << std::endl;
+        return;
+    }
+    
+    // Clear any existing multi-cell area first (in case we're overwriting)
+    clearMultiCellArea(x, y, width, height);
+    
+    // Place the asset on all required cells
+    for (int dx = 0; dx < width; dx++) {
+        for (int dy = 0; dy < height; dy++) {
+            int placeX = x + dx;
+            int placeY = y + dy;
+            
+            GridCell cell;
+            cell.type = std::to_string(m_currentLayer);
+            cell.asset = m_currentAsset;
+            cell.occupied = true;
+            cell.hasCollision = props.defaultCollision;
+            cell.rotation = m_currentRotation;
+            cell.width = props.width;
+            cell.height = props.height;
+            
+            // Store the origin coordinates for this multi-cell asset
+            cell.originX = x;  // Origin X coordinate
+            cell.originY = y;  // Origin Y coordinate
+            
+            setGridCell(placeX, placeY, cell);
+        }
+    }
     
     std::cout << "Placed Layer " << m_currentLayer << " " << m_currentAsset 
-              << " at (" << x << ", " << y << ")\n";
+              << " (" << width << "x" << height << ") at (" << x << ", " << y 
+              << ") rotation=" << m_currentRotation << "° collision=" 
+              << (props.defaultCollision ? "ON" : "OFF") << " (cursor at " << cursorX << "," << cursorY << ")" << std::endl;
+    
+    // Mark that we have unsaved changes
+    markUnsavedChanges();
 }
 
 void Scene_MapEditor::removeObject()
@@ -384,10 +495,47 @@ void Scene_MapEditor::removeObject()
     int x = static_cast<int>(m_cursorPos.x);
     int y = static_cast<int>(m_cursorPos.y);
     
-    GridCell emptyCell;
-    setGridCell(x, y, emptyCell); // This will remove the cell from the map
-    
-    std::cout << "Removed object at (" << x << ", " << y << ")\n";
+    // Check if there's an object at this position on the current layer
+    auto cellKey = std::make_pair(x, y);
+    if (m_infiniteGrid.find(cellKey) != m_infiniteGrid.end() && 
+        m_infiniteGrid[cellKey].find(m_currentLayer) != m_infiniteGrid[cellKey].end()) {
+        
+        GridCell& cell = m_infiniteGrid[cellKey][m_currentLayer];
+        
+        // If it's a multi-cell asset, remove all cells of this asset instance
+        if (cell.width > 1 || cell.height > 1) {
+            // Apply rotation to dimensions
+            int width = cell.width;
+            int height = cell.height;
+            if (cell.rotation == 90.0f || cell.rotation == 270.0f) {
+                std::swap(width, height);
+            }
+            
+            // Use the stored origin coordinates to remove the entire asset
+            int originX = cell.originX;
+            int originY = cell.originY;
+            
+            clearMultiCellArea(originX, originY, width, height);
+            
+            std::cout << "Removed multi-cell " << cell.asset << " (" << width << "x" << height 
+                      << ") with origin at (" << originX << ", " << originY << ")" << std::endl;
+        } else {
+            // Single cell asset - remove just this cell
+            m_infiniteGrid[cellKey].erase(m_currentLayer);
+            
+            // If no layers remain for this cell, remove the cell entirely
+            if (m_infiniteGrid[cellKey].empty()) {
+                m_infiniteGrid.erase(cellKey);
+            }
+            
+            std::cout << "Removed " << cell.asset << " at (" << x << ", " << y << ")" << std::endl;
+        }
+        
+        // Mark that we have unsaved changes
+        markUnsavedChanges();
+    } else {
+        std::cout << "No object to remove at (" << x << ", " << y << ") on layer " << m_currentLayer << std::endl;
+    }
 }
 
 void Scene_MapEditor::scanAvailableLevels()
@@ -597,7 +745,8 @@ void Scene_MapEditor::saveLevel(const std::string& filename)
     }
     
     file << "# Level created with Map Editor\n";
-    file << "# Format: Type SpriteName X Y\n\n";
+    file << "# Enhanced Format: Layer SpriteName X Y [Collision] [Rotation] [Width] [Height] [OriginX] [OriginY]\n";
+    file << "# Collision: 0=false, 1=true | Rotation: degrees | Width/Height: grid cells | OriginX/Y: multi-cell origin\n\n";
     
     // Save all placed objects from infinite grid
     int objectCount = 0;
@@ -611,8 +760,28 @@ void Scene_MapEditor::saveLevel(const std::string& filename)
             const GridCell& cell = layerPair.second;
             
             if (cell.occupied) {
+                // Basic format: Layer SpriteName X Y
                 file << cell.type << " " << cell.asset 
-                     << " " << x << " " << y << "\n";
+                     << " " << x << " " << y;
+                
+                // Extended format: add collision, rotation, size, and origin if non-default
+                bool hasExtendedData = cell.hasCollision || 
+                                     cell.rotation != 0.0f || 
+                                     cell.width != 1 || 
+                                     cell.height != 1 ||
+                                     cell.originX != x ||
+                                     cell.originY != y;
+                
+                if (hasExtendedData) {
+                    file << " " << (cell.hasCollision ? 1 : 0)
+                         << " " << static_cast<int>(cell.rotation)
+                         << " " << cell.width
+                         << " " << cell.height
+                         << " " << cell.originX
+                         << " " << cell.originY;
+                }
+                
+                file << "\n";
                 objectCount++;
             }
         }
@@ -621,6 +790,9 @@ void Scene_MapEditor::saveLevel(const std::string& filename)
     file.close();
     std::cout << "Level saved to " << filename << " (" << objectCount << " objects)" << std::endl;
     m_currentFileName = filename;
+    
+    // Mark changes as saved
+    markChangesSaved();
 }
 
 void Scene_MapEditor::loadLevel(const std::string& filename)
@@ -645,12 +817,46 @@ void Scene_MapEditor::loadLevel(const std::string& filename)
         std::istringstream iss(line);
         std::string type, asset;
         int x, y;
+        int collision = 0;
+        int rotation = 0;
+        int width = 1;
+        int height = 1;
+        int originX = -1; // Use -1 to indicate not set
+        int originY = -1; // Use -1 to indicate not set
         
+        // Read basic format: Layer SpriteName X Y
         if (iss >> type >> asset >> x >> y) {
             GridCell cell;
             cell.type = type;
             cell.asset = asset;
             cell.occupied = true;
+            
+            // Try to read extended format: Collision Rotation Width Height OriginX OriginY
+            if (iss >> collision >> rotation >> width >> height) {
+                cell.hasCollision = (collision == 1);
+                cell.rotation = static_cast<float>(rotation);
+                cell.width = width;
+                cell.height = height;
+                
+                // Try to read origin coordinates (new format)
+                if (iss >> originX >> originY) {
+                    cell.originX = originX;
+                    cell.originY = originY;
+                } else {
+                    // Old format without origin coordinates - use current position as origin
+                    cell.originX = x;
+                    cell.originY = y;
+                }
+            } else {
+                // Use default values or asset properties
+                AssetProperties props = getAssetProperties(asset);
+                cell.hasCollision = props.defaultCollision;
+                cell.rotation = props.defaultRotation;
+                cell.width = props.width;
+                cell.height = props.height;
+                cell.originX = x; // Default origin to current position
+                cell.originY = y;
+            }
             
             // Parse layer from type (should be 0-4)
             int layer = 0;
@@ -667,10 +873,14 @@ void Scene_MapEditor::loadLevel(const std::string& filename)
                 else layer = 0;                     // Default to ground layer
             }
             
-            // Place object on the correct layer
             auto posKey = std::make_pair(x, y);
             m_infiniteGrid[posKey][layer] = cell;
             objectCount++;
+            
+            std::cout << "Loaded " << asset << " at (" << x << ", " << y 
+                      << ") Layer " << layer << " collision=" << (cell.hasCollision ? "ON" : "OFF")
+                      << " rotation=" << cell.rotation << "° size=" << cell.width << "x" << cell.height
+                      << " origin=(" << cell.originX << "," << cell.originY << ")" << std::endl;
         }
     }
     
@@ -694,6 +904,14 @@ void Scene_MapEditor::sRender()
     drawInfiniteGrid();
     drawPlacedObjects();
     
+    // Draw collision overlay if enabled
+    if (m_showCollision) {
+        drawCollisionOverlay();
+    }
+    
+    // Draw asset size preview
+    drawAssetSizePreview();
+    
     // Draw cursor on top of everything in game view (always visible)
     m_cursor.setPosition(m_cursorPos.x * TILE_SIZE, m_cursorPos.y * TILE_SIZE);
     m_game->window().draw(m_cursor);
@@ -708,6 +926,7 @@ void Scene_MapEditor::sRender()
     drawLevelSelector();
     drawSaveDialog();
     drawOverwriteDialog();
+    drawExitConfirmDialog();
     
     // Draw command overlay (always on top)
     renderCommandOverlay();
@@ -742,6 +961,9 @@ void Scene_MapEditor::drawPlacedObjects()
     Vec2 gridMin = getVisibleGridMin();
     Vec2 gridMax = getVisibleGridMax();
     
+    // Keep track of multi-cell assets we've already drawn to avoid duplicates
+    std::set<std::string> drawnAssets; // Use unique identifier for each asset instance
+    
     // Render layers in order (0-4) for proper layering
     for (int layer = 0; layer <= 4; layer++) {
         // Only draw objects in visible area for performance
@@ -754,17 +976,76 @@ void Scene_MapEditor::drawPlacedObjects()
                     if (layerIt != posIt->second.end() && layerIt->second.occupied) {
                         GridCell& cell = layerIt->second;
                         
+                        // For multi-cell assets, only draw once at the origin cell
+                        AssetProperties props = getAssetProperties(cell.asset);
+                        bool isMultiCell = (props.width > 1 || props.height > 1);
+                        
+                        if (isMultiCell) {
+                            // Check if this is the origin cell
+                            bool isOriginCell = (x == cell.originX && y == cell.originY);
+                            
+                            if (!isOriginCell) continue; // Skip non-origin cells
+                            
+                            // Create unique identifier for this asset instance
+                            std::string assetId = std::to_string(layer) + "_" + 
+                                                std::to_string(cell.originX) + "_" + 
+                                                std::to_string(cell.originY) + "_" + 
+                                                cell.asset;
+                            
+                            // Check if we've already drawn this asset instance
+                            if (drawnAssets.find(assetId) != drawnAssets.end()) continue;
+                            drawnAssets.insert(assetId);
+                        }
+                        
                         // Try to get the texture for this asset
                         try {
                             const sf::Texture& texture = m_game->getAssets().getTexture(cell.asset);
                             sf::Sprite sprite(texture);
-                            sprite.setPosition(x * TILE_SIZE, y * TILE_SIZE);
                             
-                            // Scale sprite to fit tile size if needed
-                            sf::Vector2u textureSize = texture.getSize();
-                            float scaleX = static_cast<float>(TILE_SIZE) / textureSize.x;
-                            float scaleY = static_cast<float>(TILE_SIZE) / textureSize.y;
-                            sprite.setScale(scaleX, scaleY);
+                            if (isMultiCell) {
+                                // For multi-cell assets, scale to fit the entire asset area
+                                sf::Vector2u textureSize = texture.getSize();
+                                
+                                // Apply rotation to dimensions for scaling
+                                int renderWidth = props.width;
+                                int renderHeight = props.height;
+                                if (cell.rotation == 90.0f || cell.rotation == 270.0f) {
+                                    std::swap(renderWidth, renderHeight);
+                                }
+                                
+                                float scaleX = static_cast<float>(renderWidth * TILE_SIZE) / textureSize.x;
+                                float scaleY = static_cast<float>(renderHeight * TILE_SIZE) / textureSize.y;
+                                sprite.setScale(scaleX, scaleY);
+                                
+                                // Set rotation and origin for proper rotation around center
+                                if (cell.rotation != 0.0f) {
+                                    // Set origin to center of the original texture
+                                    sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+                                    sprite.setRotation(cell.rotation);
+                                    
+                                    // Position at the center of the rotated area
+                                    float centerX = x * TILE_SIZE + (renderWidth * TILE_SIZE) / 2.0f;
+                                    float centerY = y * TILE_SIZE + (renderHeight * TILE_SIZE) / 2.0f;
+                                    sprite.setPosition(centerX, centerY);
+                                } else {
+                                    sprite.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+                                }
+                            } else {
+                                // For single-cell assets, scale to fit tile size
+                                sf::Vector2u textureSize = texture.getSize();
+                                float scaleX = static_cast<float>(TILE_SIZE) / textureSize.x;
+                                float scaleY = static_cast<float>(TILE_SIZE) / textureSize.y;
+                                sprite.setScale(scaleX, scaleY);
+                                
+                                // Apply rotation for single-cell assets
+                                if (cell.rotation != 0.0f) {
+                                    sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+                                    sprite.setRotation(cell.rotation);
+                                    sprite.setPosition(x * TILE_SIZE + TILE_SIZE / 2.0f, y * TILE_SIZE + TILE_SIZE / 2.0f);
+                                } else {
+                                    sprite.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+                                }
+                            }
                             
                             // Add slight transparency to non-current layers for visual feedback
                             if (layer != m_currentLayer) {
@@ -774,28 +1055,44 @@ void Scene_MapEditor::drawPlacedObjects()
                             m_game->window().draw(sprite);
                         } catch (...) {
                             // If texture not found, draw a colored rectangle
-                            sf::RectangleShape rect(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-                            rect.setPosition(x * TILE_SIZE, y * TILE_SIZE);
-                            rect.setFillColor(sf::Color::Magenta); // Indicates missing texture
-                            
-                            // Add transparency to non-current layers
-                            if (layer != m_currentLayer) {
-                                rect.setFillColor(sf::Color(255, 0, 255, 180));
+                            if (isMultiCell) {
+                                // Draw rectangle covering the entire multi-cell area
+                                sf::RectangleShape rect(sf::Vector2f(props.width * TILE_SIZE, props.height * TILE_SIZE));
+                                rect.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+                                rect.setFillColor(sf::Color::Magenta); // Indicates missing texture
+                                
+                                if (layer != m_currentLayer) {
+                                    rect.setFillColor(sf::Color(255, 0, 255, 180));
+                                }
+                                
+                                m_game->window().draw(rect);
+                            } else {
+                                // Single cell fallback
+                                sf::RectangleShape rect(sf::Vector2f(TILE_SIZE, TILE_SIZE));
+                                rect.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+                                rect.setFillColor(sf::Color::Magenta);
+                                
+                                if (layer != m_currentLayer) {
+                                    rect.setFillColor(sf::Color(255, 0, 255, 180));
+                                }
+                                
+                                m_game->window().draw(rect);
                             }
-                            
-                            m_game->window().draw(rect);
                         }
                     }
                 }
             }
         }
+        
+        // Clear drawn assets set for next layer
+        drawnAssets.clear();
     }
 }
 
 void Scene_MapEditor::drawUI()
 {
-    // Draw UI background - increased height to accommodate cursor info
-    sf::RectangleShape uiBackground(sf::Vector2f(320, 380));
+    // Draw UI background - increased height by 150px, decreased width by 30px
+    sf::RectangleShape uiBackground(sf::Vector2f(320, 600));
     uiBackground.setPosition(10, 10);
     uiBackground.setFillColor(sf::Color(0, 0, 0, 180));
     uiBackground.setOutlineColor(sf::Color::White);
@@ -804,7 +1101,7 @@ void Scene_MapEditor::drawUI()
     
     // Draw UI text with smaller font size to fit more content
     std::ostringstream oss;
-    oss << "MAP EDITOR (5-Layer System)\n";
+    oss << "MAP EDITOR \n";
     
     // Show current loaded map info
     if (!m_currentFileName.empty()) {
@@ -814,22 +1111,44 @@ void Scene_MapEditor::drawUI()
         if (lastSlash != std::string::npos) {
             displayName = displayName.substr(lastSlash + 1);
         }
-        oss << "Current Map: " << displayName << "\n";
+        oss << "Current Map: " << displayName;
+        if (m_hasUnsavedChanges) {
+            oss << " *"; // Asterisk indicates unsaved changes
+        }
+        oss << "\n";
     } else {
-        oss << "Current Map: <new map>\n";
+        oss << "Current Map: <new map>";
+        if (m_hasUnsavedChanges) {
+            oss << " *"; // Asterisk indicates unsaved changes
+        }
+        oss << "\n";
     }
     
-    // Show current layer information with descriptions
+    // Show current layer information
     oss << "Current Layer: " << m_currentLayer;
-    if (m_currentLayer == 0) oss << " (Ground - No Collision)";
-    else if (m_currentLayer == 1) oss << " (Decoration 1 - Collision)";
-    else if (m_currentLayer == 2) oss << " (Decoration 2 - Collision)";
-    else if (m_currentLayer == 3) oss << " (Decoration 3 - Collision)";
-    else if (m_currentLayer == 4) oss << " (Entity - Interactive)";
+    if (m_currentLayer == 0) oss << " (Ground)";
+    else if (m_currentLayer == 1) oss << " (Decoration 1)";
+    else if (m_currentLayer == 2) oss << " (Decoration 2)";
+    else if (m_currentLayer == 3) oss << " (Decoration 3)";
+    else if (m_currentLayer == 4) oss << " (Entity)";
     oss << "\n";
     
-    oss << "Current Asset: " << m_currentAsset << "\n";
+    // Show current asset and its properties
+    oss << "Current Asset: " << m_currentAsset;
+    if (!m_currentAsset.empty()) {
+        AssetProperties props = getAssetProperties(m_currentAsset);
+        oss << " (" << props.width << "x" << props.height << ")";
+    }
+    oss << "\n";
+    
+    // Show current rotation
+    oss << "Rotation: " << static_cast<int>(m_currentRotation) << "°\n";
+    
+    // Show cursor position
     oss << "Cursor: (" << static_cast<int>(m_cursorPos.x) << ", " << static_cast<int>(m_cursorPos.y) << ")\n";
+    
+    // Show collision overlay status
+    oss << "Collision Overlay: " << (m_showCollision ? "ON" : "OFF") << "\n";
     
     // Count total objects across all layers
     int totalObjects = 0;
@@ -857,6 +1176,9 @@ void Scene_MapEditor::drawUI()
         else if (cursorCell->type == "4") oss << " (Entity)";
         oss << "\n";
         oss << "Asset: " << cursorCell->asset << "\n";
+        oss << "Size: " << cursorCell->width << "x" << cursorCell->height << "\n";
+        oss << "Rotation: " << static_cast<int>(cursorCell->rotation) << "°\n";
+        oss << "Collision: " << (cursorCell->hasCollision ? "ON" : "OFF") << "\n";
         oss << "Position: (" << cursorX << ", " << cursorY << ")\n";
         oss << "Status: OCCUPIED";
     } else {
@@ -864,6 +1186,20 @@ void Scene_MapEditor::drawUI()
         oss << "Status: EMPTY\n";
         oss << "Ready to place: Layer " << m_currentLayer << " " << m_currentAsset;
     }
+    
+    // Add controls section
+    oss << "\n-----------------------\n";
+    oss << "CONTROLS:\n";
+    oss << "WASD: Move cursor\n";
+    oss << "Mouse: Click to place/remove\n";
+    oss << "1-5: Switch layers\n";
+    oss << "Q/E: Change asset\n";
+    oss << "R: Rotate asset (" << static_cast<int>(m_currentRotation) << "°)\n";
+    oss << "T: Toggle collision on cell\n";
+    oss << "V: Show collision overlay\n";
+    oss << "F: Save level\n";
+    oss << "L: Load level\n";
+    oss << "ESC: Back to menu";
     
     // Use clean font size for display
     m_uiText.setCharacterSize(16);  // Increased from 14 to 16
@@ -874,74 +1210,141 @@ void Scene_MapEditor::drawUI()
 
 void Scene_MapEditor::drawAssetPreview()
 {
-    // Position preview on the right side of the screen
-    sf::Vector2u windowSize = m_game->window().getSize();
-    float previewX = windowSize.x - TILE_SIZE - 20;
-    float previewY = 20;
+    // Get asset properties to determine preview size
+    AssetProperties props = getAssetProperties(m_currentAsset);
     
-    // Draw preview background
-    m_previewBackground.setPosition(previewX - 5, previewY - 5);
-    m_game->window().draw(m_previewBackground);
+    // Preview sizing constants
+    const float MAX_PREVIEW_DIMENSION = 200.0f; // Maximum width or height for preview
+    const float MIN_PREVIEW_DIMENSION = 80.0f;   // Minimum width or height for preview
+    const float TILE_PREVIEW_SIZE = 40.0f;       // Size per tile in preview
     
-    // Draw preview border
-    m_previewBorder.setPosition(previewX, previewY);
-    m_game->window().draw(m_previewBorder);
+    // Calculate base preview dimensions (tiles * size per tile)
+    float baseWidth = static_cast<float>(props.width) * TILE_PREVIEW_SIZE;
+    float baseHeight = static_cast<float>(props.height) * TILE_PREVIEW_SIZE;
     
-    // Draw preview sprite
-    try {
-        const sf::Texture& texture = m_game->getAssets().getTexture(m_currentAsset);
-        m_previewSprite.setTexture(texture);
-        m_previewSprite.setPosition(previewX, previewY);
-        
-        // Scale sprite to fit preview size
-        sf::Vector2u textureSize = texture.getSize();
-        float scaleX = static_cast<float>(TILE_SIZE) / textureSize.x;
-        float scaleY = static_cast<float>(TILE_SIZE) / textureSize.y;
-        m_previewSprite.setScale(scaleX, scaleY);
-        
-        m_game->window().draw(m_previewSprite);
-    } catch (...) {
-        // If texture not found, draw a colored rectangle
-        sf::RectangleShape rect(sf::Vector2f(TILE_SIZE, TILE_SIZE));
-        rect.setPosition(previewX, previewY);
-        rect.setFillColor(sf::Color::Magenta);
-        m_game->window().draw(rect);
+    // Calculate scaling factor to fit within max dimensions while preserving aspect ratio
+    float scaleX = MAX_PREVIEW_DIMENSION / baseWidth;
+    float scaleY = MAX_PREVIEW_DIMENSION / baseHeight;
+    float scale = std::min(scaleX, scaleY); // Use the smaller scale to fit both dimensions
+    
+    // Apply scaling but ensure minimum size
+    float previewWidth = std::max(MIN_PREVIEW_DIMENSION, baseWidth * scale);
+    float previewHeight = std::max(MIN_PREVIEW_DIMENSION, baseHeight * scale);
+    
+    // If we had to enforce minimum size, recalculate to maintain aspect ratio
+    float actualAspectRatio = static_cast<float>(props.width) / static_cast<float>(props.height);
+    
+    if (baseWidth * scale < MIN_PREVIEW_DIMENSION) {
+        previewWidth = MIN_PREVIEW_DIMENSION;
+        previewHeight = previewWidth / actualAspectRatio;
+    } else if (baseHeight * scale < MIN_PREVIEW_DIMENSION) {
+        previewHeight = MIN_PREVIEW_DIMENSION;
+        previewWidth = previewHeight * actualAspectRatio;
     }
     
-    // Draw asset name below preview with background for readability
-    sf::Text previewText;
-    previewText.setFont(m_game->getAssets().getFont("ShareTech"));
-    previewText.setCharacterSize(14);  // Increased from 12 to 14
-    previewText.setFillColor(sf::Color::White);
-    previewText.setString(m_currentType + "\n" + m_currentAsset);
+    // Position preview on the right side of the screen with proper spacing
+    sf::Vector2u windowSize = m_game->window().getSize();
+    float margin = 20.0f;
+    float previewX = windowSize.x - previewWidth - margin;
+    float previewY = margin;
     
-    // Add margin between preview box and text
-    float textMargin = 10.0f;
-    float textY = previewY + TILE_SIZE + textMargin;
-    previewText.setPosition(previewX, textY);
+    // Create and draw preview background (larger than the preview for padding)
+    sf::RectangleShape background;
+    float backgroundPadding = 8.0f;
+    background.setSize(sf::Vector2f(previewWidth + backgroundPadding * 2, previewHeight + backgroundPadding * 2));
+    background.setPosition(previewX - backgroundPadding, previewY - backgroundPadding);
+    background.setFillColor(sf::Color(40, 40, 40, 220)); // Dark semi-transparent background
+    background.setOutlineColor(sf::Color(100, 100, 100, 255)); // Gray border
+    background.setOutlineThickness(2.0f);
+    m_game->window().draw(background);
     
-    // Calculate text bounds for centering
-    sf::FloatRect textBounds = previewText.getLocalBounds();
+    // Create and draw preview border (exact size of preview)
+    sf::RectangleShape border;
+    border.setSize(sf::Vector2f(previewWidth, previewHeight));
+    border.setPosition(previewX, previewY);
+    border.setFillColor(sf::Color::Transparent);
+    border.setOutlineColor(sf::Color(255, 255, 0, 200)); // Yellow border with slight transparency
+    border.setOutlineThickness(2.0f);
+    m_game->window().draw(border);
     
-    // Make text background same width as preview box (TILE_SIZE + 10)
-    float backgroundWidth = TILE_SIZE + 10;
-    float backgroundHeight = textBounds.height + 8; // 4px padding top/bottom
+    // Draw the asset texture
+    try {
+        const sf::Texture& texture = m_game->getAssets().getTexture(m_currentAsset);
+        sf::Sprite sprite(texture);
+        sprite.setPosition(previewX, previewY);
+        
+        // Scale sprite to exactly fit the preview dimensions
+        sf::Vector2u textureSize = texture.getSize();
+        float spriteScaleX = previewWidth / static_cast<float>(textureSize.x);
+        float spriteScaleY = previewHeight / static_cast<float>(textureSize.y);
+        sprite.setScale(spriteScaleX, spriteScaleY);
+        
+        m_game->window().draw(sprite);
+    } catch (...) {
+        // If texture not found, draw a colored rectangle with error pattern
+        sf::RectangleShape errorRect(sf::Vector2f(previewWidth, previewHeight));
+        errorRect.setPosition(previewX, previewY);
+        errorRect.setFillColor(sf::Color(255, 0, 255, 180)); // Magenta indicates missing texture
+        m_game->window().draw(errorRect);
+        
+        // Draw an X pattern to indicate error
+        sf::RectangleShape line1(sf::Vector2f(std::sqrt(previewWidth*previewWidth + previewHeight*previewHeight), 2.0f));
+        line1.setPosition(previewX, previewY);
+        line1.setFillColor(sf::Color::Black);
+        line1.setRotation(std::atan2(previewHeight, previewWidth) * 180.0f / 3.14159f);
+        m_game->window().draw(line1);
+        
+        sf::RectangleShape line2(sf::Vector2f(std::sqrt(previewWidth*previewWidth + previewHeight*previewHeight), 2.0f));
+        line2.setPosition(previewX, previewY + previewHeight);
+        line2.setFillColor(sf::Color::Black);
+        line2.setRotation(-std::atan2(previewHeight, previewWidth) * 180.0f / 3.14159f);
+        m_game->window().draw(line2);
+    }
     
-    // Center the text within the background
-    float centeredTextX = (previewX - 5) + (backgroundWidth - textBounds.width) / 2;
-    previewText.setPosition(centeredTextX, textY);
+    // Draw asset information below the preview
+    sf::Text infoText;
+    infoText.setFont(m_game->getAssets().getFont("ShareTech"));
+    infoText.setCharacterSize(16); // Slightly larger text
+    infoText.setFillColor(sf::Color::White);
     
-    // Draw black background behind text matching preview box width
+    // Create detailed asset information
+    std::string assetInfo = "Layer: " + m_currentType + "\n" +
+                           "Asset: " + m_currentAsset + "\n" +
+                           "Size: " + std::to_string(props.width) + "x" + std::to_string(props.height) + "\n" +
+                           "Collision: " + (props.defaultCollision ? "ON" : "OFF");
+    
+    if (m_currentRotation != 0.0f) {
+        assetInfo += "\nRotation: " + std::to_string(static_cast<int>(m_currentRotation)) + "°";
+    }
+    
+    infoText.setString(assetInfo);
+    
+    // Position text below preview with margin
+    float textMargin = 15.0f;
+    float textY = previewY + previewHeight + backgroundPadding + textMargin;
+    
+    // Calculate text bounds for background sizing
+    sf::FloatRect textBounds = infoText.getLocalBounds();
+    
+    // Create text background
     sf::RectangleShape textBackground;
-    textBackground.setSize(sf::Vector2f(backgroundWidth, backgroundHeight));
-    textBackground.setPosition(previewX - 5, textY - 4); // -5 to align with preview box, -4 for padding
-    textBackground.setFillColor(sf::Color(0, 0, 0, 180)); // Semi-transparent black
-    textBackground.setOutlineColor(sf::Color::White);
+    float textPadding = 6.0f;
+    float textBackgroundWidth = std::max(previewWidth + backgroundPadding * 2, textBounds.width + textPadding * 2);
+    float textBackgroundHeight = textBounds.height + textPadding * 2;
+    
+    textBackground.setSize(sf::Vector2f(textBackgroundWidth, textBackgroundHeight));
+    textBackground.setPosition(previewX - backgroundPadding, textY - textPadding);
+    textBackground.setFillColor(sf::Color(20, 20, 20, 200)); // Dark background for text
+    textBackground.setOutlineColor(sf::Color(80, 80, 80, 255));
     textBackground.setOutlineThickness(1.0f);
     m_game->window().draw(textBackground);
     
-    // Draw the text on top of the background
-    m_game->window().draw(previewText);
+    // Center text horizontally within the background
+    float centeredTextX = previewX - backgroundPadding + (textBackgroundWidth - textBounds.width) / 2.0f;
+    infoText.setPosition(centeredTextX, textY);
+    
+    // Draw the text
+    m_game->window().draw(infoText);
 }
 
 void Scene_MapEditor::drawLevelSelector()
@@ -1074,4 +1477,328 @@ Vec2 Scene_MapEditor::gridToScreen(const Vec2& gridPos)
 void Scene_MapEditor::onEnd()
 {
     // Cleanup if needed
+}
+
+void Scene_MapEditor::toggleCollision()
+{
+    // Toggle collision on the current cell
+    int x = static_cast<int>(m_cursorPos.x);
+    int y = static_cast<int>(m_cursorPos.y);
+    
+    auto cellKey = std::make_pair(x, y);
+    if (m_infiniteGrid.find(cellKey) != m_infiniteGrid.end() && 
+        m_infiniteGrid[cellKey].find(m_currentLayer) != m_infiniteGrid[cellKey].end()) {
+        
+        GridCell& cell = m_infiniteGrid[cellKey][m_currentLayer];
+        cell.hasCollision = !cell.hasCollision;
+        
+        std::cout << "Toggled collision at (" << x << ", " << y << ") Layer " << m_currentLayer 
+                  << ": " << (cell.hasCollision ? "ON" : "OFF") << std::endl;
+        
+        // Mark that we have unsaved changes
+        markUnsavedChanges();
+    } else {
+        std::cout << "No object at (" << x << ", " << y << ") Layer " << m_currentLayer << " to toggle collision" << std::endl;
+    }
+}
+
+Vec2 Scene_MapEditor::calculateRotatedPlacement(int cursorX, int cursorY, int width, int height, float rotation)
+{
+    Vec2 placement;
+    
+    // For corner-based rotation, we need to consider the rotated dimensions
+    // to calculate the correct offset from the cursor position
+    
+    if (rotation == 0.0f) {
+        // No rotation - place with top-left corner at cursor
+        placement.x = cursorX;
+        placement.y = cursorY;
+    }
+    else if (rotation == 90.0f) {
+        // 90° clockwise rotation
+        // After rotation: width becomes height, height becomes width
+        // The cursor should be at the top-right corner of the rotated asset
+        // So we need to offset by the new width (which is the original height)
+        int rotatedWidth = height;  // After 90° rotation
+        placement.x = cursorX - (rotatedWidth - 1);
+        placement.y = cursorY;
+    }
+    else if (rotation == 180.0f) {
+        // 180° rotation - dimensions stay the same
+        // Cursor should be at bottom-right corner
+        placement.x = cursorX - (width - 1);
+        placement.y = cursorY - (height - 1);
+    }
+    else if (rotation == 270.0f) {
+        // 270° clockwise rotation
+        // After rotation: width becomes height, height becomes width
+        // The cursor should be at the bottom-left corner of the rotated asset
+        // So we need to offset by the new height (which is the original width)
+        int rotatedHeight = width;  // After 270° rotation
+        placement.x = cursorX;
+        placement.y = cursorY - (rotatedHeight - 1);
+    }
+    
+    return placement;
+}
+
+void Scene_MapEditor::rotateAsset()
+{
+    // Rotate current asset selection
+    m_currentRotation += 90.0f;
+    if (m_currentRotation >= 360.0f) {
+        m_currentRotation = 0.0f;
+    }
+    
+    std::cout << "Asset rotation: " << m_currentRotation << "°" << std::endl;
+}
+
+Scene_MapEditor::AssetProperties Scene_MapEditor::getAssetProperties(const std::string& assetName)
+{
+    auto it = m_assetProperties.find(assetName);
+    if (it != m_assetProperties.end()) {
+        return it->second;
+    }
+    
+    // Return default properties if not found
+    AssetProperties defaultProps;
+    defaultProps.width = 1;
+    defaultProps.height = 1;
+    defaultProps.defaultCollision = false;
+    defaultProps.defaultRotation = 0.0f;
+    return defaultProps;
+}
+
+bool Scene_MapEditor::canPlaceAsset(int x, int y, int width, int height)
+{
+    // Check if all cells in the area are free on the current layer
+    for (int dx = 0; dx < width; dx++) {
+        for (int dy = 0; dy < height; dy++) {
+            int checkX = x + dx;
+            int checkY = y + dy;
+            
+            auto cellKey = std::make_pair(checkX, checkY);
+            if (m_infiniteGrid.find(cellKey) != m_infiniteGrid.end() && 
+                m_infiniteGrid[cellKey].find(m_currentLayer) != m_infiniteGrid[cellKey].end()) {
+                // Cell is occupied on this layer
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void Scene_MapEditor::clearMultiCellArea(int x, int y, int width, int height)
+{
+    // Clear all cells in the area on the current layer
+    for (int dx = 0; dx < width; dx++) {
+        for (int dy = 0; dy < height; dy++) {
+            int clearX = x + dx;
+            int clearY = y + dy;
+            
+            auto cellKey = std::make_pair(clearX, clearY);
+            if (m_infiniteGrid.find(cellKey) != m_infiniteGrid.end()) {
+                m_infiniteGrid[cellKey].erase(m_currentLayer);
+                
+                // If no layers remain for this cell, remove the cell entirely
+                if (m_infiniteGrid[cellKey].empty()) {
+                    m_infiniteGrid.erase(cellKey);
+                }
+            }
+        }
+    }
+}
+
+void Scene_MapEditor::drawCollisionOverlay()
+{
+    // Draw collision indicators for all objects with collision
+    Vec2 gridMin = getVisibleGridMin();
+    Vec2 gridMax = getVisibleGridMax();
+    
+    for (int x = static_cast<int>(gridMin.x); x <= static_cast<int>(gridMax.x); x++) {
+        for (int y = static_cast<int>(gridMin.y); y <= static_cast<int>(gridMax.y); y++) {
+            auto cellKey = std::make_pair(x, y);
+            if (m_infiniteGrid.find(cellKey) != m_infiniteGrid.end()) {
+                for (auto& layerPair : m_infiniteGrid[cellKey]) {
+                    const GridCell& cell = layerPair.second;
+                    
+                    if (cell.hasCollision && cell.occupied) {
+                        // Draw red overlay for collision
+                        sf::RectangleShape collisionOverlay;
+                        collisionOverlay.setSize(sf::Vector2f(TILE_SIZE - 2, TILE_SIZE - 2));
+                        collisionOverlay.setPosition(x * TILE_SIZE + 1, y * TILE_SIZE + 1);
+                        collisionOverlay.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
+                        collisionOverlay.setOutlineColor(sf::Color::Red);
+                        collisionOverlay.setOutlineThickness(1);
+                        
+                        m_game->window().draw(collisionOverlay);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void Scene_MapEditor::drawAssetSizePreview()
+{
+    // Draw preview of asset size at cursor position
+    if (m_currentAsset.empty()) return;
+    
+    AssetProperties props = getAssetProperties(m_currentAsset);
+    
+    int cursorX = static_cast<int>(m_cursorPos.x);
+    int cursorY = static_cast<int>(m_cursorPos.y);
+    
+    // Calculate the actual placement position using ORIGINAL dimensions
+    // The function will handle the rotation internally
+    Vec2 placement = calculateRotatedPlacement(cursorX, cursorY, props.width, props.height, m_currentRotation);
+    int previewX = static_cast<int>(std::round(placement.x));
+    int previewY = static_cast<int>(std::round(placement.y));
+    
+    // Apply rotation to dimensions for preview rendering
+    int width = props.width;
+    int height = props.height;
+    if (m_currentRotation == 90.0f || m_currentRotation == 270.0f) {
+        std::swap(width, height);
+    }
+    
+    // Check if this asset can be placed at the calculated position
+    bool canPlace = canPlaceAsset(previewX, previewY, width, height);
+    
+    // Draw preview rectangles for each cell the asset would occupy
+    for (int dx = 0; dx < width; dx++) {
+        for (int dy = 0; dy < height; dy++) {
+            int cellX = previewX + dx;
+            int cellY = previewY + dy;
+            
+            sf::RectangleShape preview;
+            preview.setSize(sf::Vector2f(TILE_SIZE - 6, TILE_SIZE - 6)); // Slightly smaller for better visibility
+            preview.setPosition(cellX * TILE_SIZE + 3, cellY * TILE_SIZE + 3);
+            
+            if (canPlace) {
+                // Green preview for valid placement
+                preview.setFillColor(sf::Color(0, 255, 0, 100)); // More visible transparency
+                preview.setOutlineColor(sf::Color(0, 200, 0, 255)); // Slightly darker green outline
+            } else {
+                // Red preview for invalid placement
+                preview.setFillColor(sf::Color(255, 0, 0, 100)); // More visible transparency
+                preview.setOutlineColor(sf::Color(200, 0, 0, 255)); // Slightly darker red outline
+            }
+            
+            preview.setOutlineThickness(2);
+            m_game->window().draw(preview);
+        }
+    }
+    
+    // For larger assets (3x3 or bigger), also draw a connecting outline around the entire area
+    if (width >= 3 || height >= 3) {
+        sf::RectangleShape overallOutline;
+        overallOutline.setSize(sf::Vector2f(width * TILE_SIZE - 2, height * TILE_SIZE - 2));
+        overallOutline.setPosition(previewX * TILE_SIZE + 1, previewY * TILE_SIZE + 1);
+        overallOutline.setFillColor(sf::Color::Transparent);
+        
+        if (canPlace) {
+            overallOutline.setOutlineColor(sf::Color(0, 255, 0, 200)); // Green for valid
+        } else {
+            overallOutline.setOutlineColor(sf::Color(255, 0, 0, 200)); // Red for invalid
+        }
+        
+        overallOutline.setOutlineThickness(3);
+        m_game->window().draw(overallOutline);
+    }
+    
+    // Draw cursor indicator at the actual cursor position
+    sf::CircleShape cursorIndicator(8);
+    cursorIndicator.setPosition(cursorX * TILE_SIZE + TILE_SIZE/2 - 8, cursorY * TILE_SIZE + TILE_SIZE/2 - 8);
+    cursorIndicator.setFillColor(sf::Color(255, 255, 0, 150)); // Semi-transparent yellow
+    cursorIndicator.setOutlineColor(sf::Color::Yellow);
+    cursorIndicator.setOutlineThickness(2);
+    m_game->window().draw(cursorIndicator);
+    
+    // Draw rotation indicator
+    if (m_currentRotation != 0.0f) {
+        sf::Text rotationText;
+        rotationText.setFont(m_game->getAssets().getFont("ShareTech"));
+        rotationText.setCharacterSize(16);
+        rotationText.setFillColor(sf::Color::Yellow);
+        rotationText.setString(std::to_string(static_cast<int>(m_currentRotation)) + "°");
+        rotationText.setPosition(cursorX * TILE_SIZE + 5, cursorY * TILE_SIZE + 5);
+        
+        m_game->window().draw(rotationText);
+    }
+}
+
+void Scene_MapEditor::markUnsavedChanges()
+{
+    m_hasUnsavedChanges = true;
+}
+
+void Scene_MapEditor::markChangesSaved()
+{
+    m_hasUnsavedChanges = false;
+}
+
+void Scene_MapEditor::confirmExit()
+{
+    Scene_Loading::loadMenuScene(m_game);
+}
+
+void Scene_MapEditor::handleExitConfirmDialogInput(const Action& action)
+{
+    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+        // Cancel exit, go back to editing
+        m_showExitConfirmDialog = false;
+    }
+    else if (action.getName() == "SAVE") {
+        // Save first, then exit
+        m_showExitConfirmDialog = false;
+        m_showSaveDialog = true;
+        m_inputFileName = "";
+        m_isInputMode = true;
+        // Note: After saving, we'll need to exit - we'll handle this in the save completion
+    }
+    else if (action.getName() == "CONFIRM" || action.getName() == "SELECT") {
+        // Exit without saving
+        confirmExit();
+    }
+}
+
+void Scene_MapEditor::drawExitConfirmDialog()
+{
+    if (!m_showExitConfirmDialog) return;
+    
+    // Calculate dialog size and position - increased height by 50px
+    float dialogWidth = 500;
+    float dialogHeight = 250;
+    sf::Vector2u windowSize = m_game->window().getSize();
+    float dialogX = (windowSize.x - dialogWidth) / 2;
+    float dialogY = (windowSize.y - dialogHeight) / 2;
+    
+    // Draw background
+    sf::RectangleShape background;
+    background.setSize(sf::Vector2f(dialogWidth, dialogHeight));
+    background.setPosition(dialogX, dialogY);
+    background.setFillColor(sf::Color(60, 60, 40)); // Yellow-ish tint for warning
+    background.setOutlineColor(sf::Color::Yellow);
+    background.setOutlineThickness(2);
+    m_game->window().draw(background);
+    
+    // Draw dialog text
+    sf::Text dialogText;
+    dialogText.setFont(m_game->getAssets().getFont("ShareTech"));
+    dialogText.setCharacterSize(18);
+    dialogText.setFillColor(sf::Color::White);
+    
+    std::ostringstream oss;
+    oss << "UNSAVED CHANGES\n\n";
+    oss << "You have unsaved changes in your level.\n";
+    oss << "Are you sure you want to exit without saving?\n\n";
+    oss << "Your changes will be lost!\n\n";
+    oss << "Press SPACE to exit without saving\n";
+    oss << "Press ESC to cancel and continue editing\n";
+    oss << "Press F to save first, then exit";
+    
+    dialogText.setString(oss.str());
+    dialogText.setPosition(dialogX + 20, dialogY + 20);
+    m_game->window().draw(dialogText);
 }

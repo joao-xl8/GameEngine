@@ -1,160 +1,163 @@
-# 5-Layer Demo Level - New Layered System
-# Format: Layer AssetName X Y [ScriptName]
-# Layer 0: Ground (no collision) - base walkable surface
-# Layer 1-3: Decoration layers (with collision) - walls, obstacles
-# Layer 4: Entity layer - NPCs, Script Tiles, interactive objects
+# Level created with Map Editor
+# Enhanced Format: Layer SpriteName X Y [Collision] [Rotation] [Width] [Height]
+# Collision: 0=false, 1=true | Rotation: degrees | Width/Height: grid cells
 
-# LAYER 0: Ground tiles (no collision, base walkable surface)
+0 Ground 0 0
+1 Wall 0 0 1 0 1 1
+0 Ground 0 1
+1 Wall 0 1 1 0 1 1
+0 Ground 0 2
+1 Wall 0 2 1 0 1 1
+0 Ground 0 3
+1 Wall 0 3 1 0 1 1
+0 Ground 0 4
+1 Wall 0 4 1 0 1 1
+0 Ground 0 5
+1 Wall 0 5 1 0 1 1
+0 Ground 0 6
+1 Wall 0 6 1 0 1 1
+0 Ground 0 7
+1 Wall 0 7 1 0 1 1
+0 Ground 0 8
+1 Wall 0 8 1 0 1 1
+0 Ground 0 9
+1 Wall 0 9 1 0 1 1
+0 Ground 1 0
+1 Wall 1 0 1 0 1 1
 0 Ground 1 1
-0 Ground 2 1
-0 Ground 3 1
-0 Ground 4 1
-0 Ground 5 1
-0 Ground 6 1
-0 Ground 7 1
-0 Ground 8 1
-
 0 Ground 1 2
-0 Ground 2 2
-0 Ground 3 2
-0 Ground 4 2
-0 Ground 5 2
-0 Ground 6 2
-0 Ground 7 2
-0 Ground 8 2
-
+3 Bush 1 2 1 0 1 1
 0 Ground 1 3
-0 Ground 2 3
-0 Ground 3 3
-0 Ground 4 3
-0 Ground 5 3
-0 Ground 6 3
-0 Ground 7 3
-0 Ground 8 3
-
+2 Bush 1 3 1 0 1 1
 0 Ground 1 4
-0 Ground 2 4
-0 Ground 3 4
-0 Ground 4 4
-0 Ground 5 4
-0 Ground 6 4
-0 Ground 7 4
-0 Ground 8 4
-
 0 Ground 1 5
-0 Ground 2 5
-0 Ground 3 5
-0 Ground 4 5
-0 Ground 5 5
-0 Ground 6 5
-0 Ground 7 5
-0 Ground 8 5
-
 0 Ground 1 6
-0 Ground 2 6
-0 Ground 3 6
-0 Ground 4 6
-0 Ground 5 6
-0 Ground 6 6
-0 Ground 7 6
-0 Ground 8 6
-
 0 Ground 1 7
-0 Ground 2 7
-0 Ground 3 7
-0 Ground 4 7
-0 Ground 5 7
-0 Ground 6 7
-0 Ground 7 7
-0 Ground 8 7
-
+2 Bush 1 7 1 0 1 1
 0 Ground 1 8
+3 Bush 1 8 1 0 1 1
+0 Ground 1 9
+1 Wall 1 9 1 0 1 1
+0 Ground 2 0
+1 Wall 2 0 1 0 1 1
+0 Ground 2 1
+0 Ground 2 2
+2 Bush 2 2 1 0 1 1
+0 Ground 2 3
+4 Dummy 2 3
 0 Ground 2 8
+0 Ground 2 9
+1 Wall 2 9 1 0 1 1
+0 Ground 3 0
+1 Wall 3 0 1 0 1 1
+0 Ground 3 1
+0 Ground 3 2
+0 Ground 3 3
+1 Wall 3 3 1 0 1 1
+0 Ground 3 4
+0 Ground 3 5
+1 Wall 3 5 1 0 1 1
+0 Ground 3 6
 0 Ground 3 8
+0 Ground 3 9
+1 Wall 3 9 1 0 1 1
+0 Ground 4 0
+1 Wall 4 0 1 0 1 1
+0 Ground 4 1
+0 Ground 4 2
+0 Ground 4 3
+1 Wall 4 3 1 0 1 1
+0 Ground 4 4
+4 PlayerSpawn 4 4
+0 Ground 4 5
+1 Wall 4 5 1 0 1 1
+0 Ground 4 6
 0 Ground 4 8
+0 Ground 4 9
+1 Wall 4 9 1 0 1 1
+0 Ground 5 0
+1 Wall 5 0 1 0 1 1
+0 Ground 5 1
+3 Bush 5 1 1 0 1 1
+0 Ground 5 2
+0 Ground 5 3
+1 Wall 5 3 1 0 1 1
+0 Ground 5 4
+1 Wall 5 4 1 0 1 1
+0 Ground 5 5
+1 Wall 5 5 1 0 1 1
+0 Ground 5 6
 0 Ground 5 8
+3 Bush 5 8 1 0 1 1
+0 Ground 5 9
+1 Wall 5 9 1 0 1 1
+0 Ground 6 0
+1 Wall 6 0 1 0 1 1
+0 Ground 6 1
+0 Ground 6 2
+2 Bush 6 2 1 0 1 1
+0 Ground 6 3
+0 Ground 6 4
+2 Bush 6 4 1 0 1 1
+0 Ground 6 5
+0 Ground 6 6
+2 Bush 6 6 1 0 1 1
+0 Ground 6 7
+4 Dummy 6 7
 0 Ground 6 8
+0 Ground 6 9
+1 Wall 6 9 1 0 1 1
+0 Ground 7 0
+1 Wall 7 0 1 0 1 1
+0 Ground 7 1
+0 Ground 7 2
+1 Wall 7 2 1 0 1 1
+0 Ground 7 3
+1 Wall 7 3 1 0 1 1
+0 Ground 7 4
+1 Wall 7 4 1 0 1 1
+0 Ground 7 5
+4 Dummy 7 5
+0 Ground 7 6
+3 Bush 7 6 1 0 1 1
+0 Ground 7 7
 0 Ground 7 8
+0 Ground 7 9
+1 Wall 7 9 1 0 1 1
+0 Ground 8 0
+1 Wall 8 0 1 0 1 1
+0 Ground 8 1
+4 SavePoint 8 1
+0 Ground 8 2
+3 Bush 8 2 1 0 1 1
+0 Ground 8 3
+2 Bush 8 3 1 0 1 1
+0 Ground 8 4
+0 Ground 8 5
+0 Ground 8 6
+0 Ground 8 7
+2 Bush 8 7 1 0 1 1
 0 Ground 8 8
-
-# LAYER 1: First decoration layer (walls - has collision)
-1 Wall 0 0
-1 Wall 1 0
-1 Wall 2 0
-1 Wall 3 0
-1 Wall 4 0
-1 Wall 5 0
-1 Wall 6 0
-1 Wall 7 0
-1 Wall 8 0
-1 Wall 9 0
-
-1 Wall 0 1
-1 Wall 9 1
-1 Wall 0 2
-1 Wall 9 2
-1 Wall 0 3
-1 Wall 9 3
-1 Wall 0 4
-1 Wall 9 4
-1 Wall 0 5
-1 Wall 9 5
-1 Wall 0 6
-1 Wall 9 6
-1 Wall 0 7
-1 Wall 9 7
-1 Wall 0 8
-1 Wall 9 8
-
-1 Wall 0 9
-1 Wall 1 9
-1 Wall 2 9
-1 Wall 3 9
-1 Wall 4 9
-1 Wall 5 9
-1 Wall 6 9
-1 Wall 7 9
-1 Wall 8 9
-1 Wall 9 9
-
-# Internal walls
-1 Wall 3 5
-1 Wall 4 5
-1 Wall 5 5
-
-# LAYER 2: Second decoration layer (bushes - has collision)
-2 Bush 2 2
-2 Bush 6 2
-2 Bush 2 6
-2 Bush 6 6
-
-# LAYER 3: Third decoration layer (additional decorations - has collision)
-# This layer could be used for higher decorations, signs, etc.
-# For now, we'll leave it empty to demonstrate the concept
-
-# LAYER 4: Entity layer (NPCs, Script Tiles, interactive objects)
-# Player spawn point
-4 PlayerSpawn 2 4
-
-# NPC
-4 Dummy 5 3
-
-# Save points
-4 SavePoint 7 3
-4 SavePoint 3 7
-
-# Example Script Tiles (tiles that trigger actions when stepped on)
-# Format: 4 TileName X Y ScriptName
-4 Ground 6 4 teleport_script
-4 Ground 4 6 heal_script
-
-# Layer Summary:
-# Layer 0 (Ground): 64 walkable ground tiles - NO collision
-# Layer 1 (Walls): 39 wall tiles - HAS collision  
-# Layer 2 (Bushes): 4 bush decorations - HAS collision
-# Layer 3 (Extra): Empty - available for more decorations
-# Layer 4 (Entities): 6 interactive objects - NPCs, spawn, save points, script tiles
-#
-# Total: 113 entities across 5 layers
-# Collision only on layers 1-3 (walls and decorations)
-# Interactive elements only on layer 4 (entity layer)
+3 Bush 8 8 1 0 1 1
+0 Ground 8 9
+1 Wall 8 9 1 0 1 1
+0 Ground 9 0
+1 Wall 9 0 1 0 1 1
+0 Ground 9 1
+1 Wall 9 1 1 0 1 1
+0 Ground 9 2
+1 Wall 9 2 1 0 1 1
+0 Ground 9 3
+1 Wall 9 3 1 0 1 1
+0 Ground 9 4
+1 Wall 9 4 1 0 1 1
+0 Ground 9 5
+1 Wall 9 5 1 0 1 1
+0 Ground 9 6
+1 Wall 9 6 1 0 1 1
+0 Ground 9 7
+1 Wall 9 7 1 0 1 1
+0 Ground 9 8
+1 Wall 9 8 1 0 1 1
+0 Ground 9 9
+1 Wall 9 9 1 0 1 1

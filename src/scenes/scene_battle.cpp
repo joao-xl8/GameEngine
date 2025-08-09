@@ -37,8 +37,8 @@ void Scene_Battle::update() {
 void Scene_Battle::sDoAction(const Action& action) {
     if (action.getType() == "START" && action.getName() == "BACK") {
         std::cout << "Exiting battle scene" << std::endl;
-        // Return to play scene (use level_1.txt as default)
-        m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level_1.txt"));
+        // Return to the previous scene that called this battle
+        m_game->popScene();
     }
 }
 

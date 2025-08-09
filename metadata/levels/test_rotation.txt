@@ -1,0 +1,21 @@
+# Test level for rotation around cursor functionality
+# Enhanced Format: Layer SpriteName X Y [Collision] [Rotation] [Width] [Height] [OriginX] [OriginY]
+
+# Place some assets with different rotations to test visual rotation
+# Misc1 (2x3) at different rotations
+1 Misc1 2 2 1 0 2 3 2 2
+1 Misc1 6 1 1 90 2 3 6 1
+1 Misc1 9 2 1 180 2 3 9 2
+1 Misc1 13 1 1 270 2 3 13 1
+
+# Misc2 (3x2) at different rotations  
+1 Misc2 2 6 1 0 3 2 2 6
+1 Misc2 7 6 1 90 3 2 7 6
+1 Misc2 11 6 1 180 3 2 11 6
+1 Misc2 15 6 1 270 3 2 15 6
+
+# Single cell assets with rotation (should rotate visually)
+0 Ground 2 10 1 0 1 1 2 10
+0 Ground 4 10 1 90 1 1 4 10
+0 Ground 6 10 1 180 1 1 6 10
+0 Ground 8 10 1 270 1 1 8 10

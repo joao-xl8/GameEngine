@@ -1,0 +1,36 @@
+# Test level specifically for 1x5 asset rotation behavior
+# Enhanced Format: Layer SpriteName X Y [Collision] [Rotation] [Width] [Height] [OriginX] [OriginY]
+
+# TallTower (1x5) at cursor position (5,5) with different rotations
+# This should demonstrate the rotation behavior around the cursor
+
+# 0° rotation: 1x5 vertical tower at (5,5)
+1 TallTower 5 5 1 0 1 5 5 5
+1 TallTower 5 6 1 0 1 5 5 5
+1 TallTower 5 7 1 0 1 5 5 5
+1 TallTower 5 8 1 0 1 5 5 5
+1 TallTower 5 9 1 0 1 5 5 5
+
+# 90° rotation: becomes 5x1 horizontal, should rotate around (5,5)
+1 TallTower 1 5 1 90 1 5 1 5
+1 TallTower 2 5 1 90 1 5 1 5
+1 TallTower 3 5 1 90 1 5 1 5
+1 TallTower 4 5 1 90 1 5 1 5
+1 TallTower 5 5 1 90 1 5 1 5
+
+# 180° rotation: 1x5 vertical, flipped around (5,5)
+1 TallTower 5 1 1 180 1 5 5 1
+1 TallTower 5 2 1 180 1 5 5 1
+1 TallTower 5 3 1 180 1 5 5 1
+1 TallTower 5 4 1 180 1 5 5 1
+1 TallTower 5 5 1 180 1 5 5 1
+
+# 270° rotation: becomes 5x1 horizontal, rotated around (5,5)
+1 TallTower 5 1 1 270 1 5 5 1
+1 TallTower 6 1 1 270 1 5 5 1
+1 TallTower 7 1 1 270 1 5 5 1
+1 TallTower 8 1 1 270 1 5 5 1
+1 TallTower 9 1 1 270 1 5 5 1
+
+# Add some ground tiles to show the cursor positions
+0 Ground 5 5 1 0 1 1 5 5

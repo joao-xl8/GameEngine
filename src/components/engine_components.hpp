@@ -18,11 +18,11 @@
 class CLayer : public Component {
 public:
     enum LayerType {
-        GROUND = 0,      // Layer 0: Ground tiles - NO collision, base walkable surface
-        DECORATION_1 = 1, // Layer 1: First decoration layer - HAS collision
-        DECORATION_2 = 2, // Layer 2: Second decoration layer - HAS collision  
-        DECORATION_3 = 3, // Layer 3: Third decoration layer - HAS collision
-        ENTITY = 4       // Layer 4: Entity layer - NPCs, Script Tiles, player "habitat"
+        GROUND = 0,      // Layer 0: Ground tiles - collision optional
+        DECORATION_1 = 1, // Layer 1: First decoration layer - collision optional
+        DECORATION_2 = 2, // Layer 2: Second decoration layer - collision optional  
+        DECORATION_3 = 3, // Layer 3: Third decoration layer - collision optional
+        ENTITY = 4       // Layer 4: Entity layer - collision optional
     };
     
     LayerType layer;
@@ -47,15 +47,77 @@ public:
     int getRenderOrder() const {
         return static_cast<int>(layer) * 100 + subLayer;
     }
+};
+
+// Multi-cell tile component for assets that occupy multiple grid cells
+class CMultiCell : public Component {
+public:
+    int width;   // Width in grid cells
+    int height;  // Height in grid cells
+    int originX; // Origin cell X (top-left corner)
+    int originY; // Origin cell Y (top-left corner)
+    float rotation; // Rotation in degrees (0, 90, 180, 270)
     
-    // Check if this layer should have collision
-    bool hasCollision() const {
-        return layer >= DECORATION_1 && layer <= DECORATION_3;
+    CMultiCell(int w = 1, int h = 1, int ox = 0, int oy = 0, float rot = 0.0f) 
+        : width(w), height(h), originX(ox), originY(oy), rotation(rot) {}
+    
+    // Check if a grid position is occupied by this multi-cell asset
+    bool occupiesCell(int x, int y) const {
+        // Apply rotation to check occupied cells
+        int rotatedWidth = width;
+        int rotatedHeight = height;
+        
+        // For 90° and 270° rotations, swap width and height
+        if (rotation == 90.0f || rotation == 270.0f) {
+            rotatedWidth = height;
+            rotatedHeight = width;
+        }
+        
+        return (x >= originX && x < originX + rotatedWidth && 
+                y >= originY && y < originY + rotatedHeight);
     }
     
-    // Check if this is the entity layer (for NPCs, Script Tiles)
-    bool isEntityLayer() const {
-        return layer == ENTITY;
+    // Get all cells occupied by this asset
+    std::vector<std::pair<int, int>> getOccupiedCells() const {
+        std::vector<std::pair<int, int>> cells;
+        
+        int rotatedWidth = width;
+        int rotatedHeight = height;
+        
+        // For 90° and 270° rotations, swap width and height
+        if (rotation == 90.0f || rotation == 270.0f) {
+            rotatedWidth = height;
+            rotatedHeight = width;
+        }
+        
+        for (int x = originX; x < originX + rotatedWidth; x++) {
+            for (int y = originY; y < originY + rotatedHeight; y++) {
+                cells.push_back({x, y});
+            }
+        }
+        
+        return cells;
+    }
+};
+
+// Collision component - independent of layer
+class CCollision : public Component {
+public:
+    bool hasCollision;
+    Vec2 collisionSize;  // Custom collision size (defaults to sprite size)
+    Vec2 collisionOffset; // Offset from sprite position
+    
+    CCollision(bool collision = true, Vec2 size = Vec2(0, 0), Vec2 offset = Vec2(0, 0))
+        : hasCollision(collision), collisionSize(size), collisionOffset(offset) {}
+    
+    // Check if collision is enabled
+    bool isCollidable() const {
+        return hasCollision;
+    }
+    
+    // Toggle collision
+    void toggleCollision() {
+        hasCollision = !hasCollision;
     }
 };
 
@@ -450,4 +512,109 @@ public:
         position.y + halfHeight  // bottom
     };
   }
+};
+
+// Grid-based movement component for tile-based games
+class CGridMovement : public Component {
+public:
+    float gridSize = 64.0f;
+    float moveSpeed = 4.0f;
+    bool smoothMovement = true;
+    bool canMove = true;
+    
+    // Grid position (in grid coordinates)
+    Vec2 gridPos;
+    
+    // Target position for smooth movement
+    Vec2 targetPosition;
+    Vec2 previousPosition;
+    bool isMoving = false;
+    float moveProgress = 0.0f;
+    
+    CGridMovement(float grid = 64.0f, float speed = 4.0f, bool smooth = true)
+        : gridSize(grid), moveSpeed(speed), smoothMovement(smooth) {}
+    
+    void snapToGrid(const Vec2& worldPos) {
+        gridPos.x = std::round(worldPos.x / gridSize);
+        gridPos.y = std::round(worldPos.y / gridSize);
+        targetPosition = Vec2(gridPos.x * gridSize, gridPos.y * gridSize);
+        previousPosition = targetPosition;
+        isMoving = false;
+        moveProgress = 0.0f;
+    }
+    
+    Vec2 getWorldPosition() const {
+        if (smoothMovement && isMoving) {
+            // Interpolate between previous and target position
+            float t = moveProgress;
+            return Vec2(
+                previousPosition.x + (targetPosition.x - previousPosition.x) * t,
+                previousPosition.y + (targetPosition.y - previousPosition.y) * t
+            );
+        }
+        return targetPosition;
+    }
+    
+    bool tryMove(int deltaX, int deltaY) {
+        if (!canMove || isMoving) return false;
+        
+        Vec2 newGridPos = Vec2(gridPos.x + deltaX, gridPos.y + deltaY);
+        Vec2 newWorldPos = Vec2(newGridPos.x * gridSize, newGridPos.y * gridSize);
+        
+        // Update positions
+        previousPosition = targetPosition;
+        gridPos = newGridPos;
+        targetPosition = newWorldPos;
+        
+        if (smoothMovement) {
+            isMoving = true;
+            moveProgress = 0.0f;
+        }
+        
+        return true;
+    }
+    
+    void update(float deltaTime) {
+        if (smoothMovement && isMoving) {
+            moveProgress += moveSpeed * deltaTime;
+            if (moveProgress >= 1.0f) {
+                moveProgress = 1.0f;
+                isMoving = false;
+            }
+        }
+    }
+    
+    // Method for collision-aware movement
+    bool startMoveWithCollisionCheck(const Vec2& direction, const Vec2& /*currentPos*/, const Vec2& size, std::function<bool(Vec2, Vec2)> collisionCheck) {
+        if (!canMove || isMoving) return false;
+        
+        int deltaX = static_cast<int>(direction.x);
+        int deltaY = static_cast<int>(direction.y);
+        
+        Vec2 newGridPos = Vec2(gridPos.x + deltaX, gridPos.y + deltaY);
+        Vec2 newWorldPos = Vec2(newGridPos.x * gridSize, newGridPos.y * gridSize);
+        
+        // Check collision at new position
+        if (collisionCheck && collisionCheck(newWorldPos, size)) {
+            return false; // Movement blocked by collision
+        }
+        
+        // Update positions
+        previousPosition = targetPosition;
+        gridPos = newGridPos;
+        targetPosition = newWorldPos;
+        
+        if (smoothMovement) {
+            isMoving = true;
+            moveProgress = 0.0f;
+        }
+        
+        return true;
+    }
+    
+    // Update movement and return current world position
+    Vec2 updateMovement(float deltaTime, const Vec2& /*currentTransformPos*/) {
+        update(deltaTime);
+        return getWorldPosition();
+    }
 };

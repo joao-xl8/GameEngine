@@ -1,0 +1,27 @@
+# Asset Properties Configuration
+# Format: AssetName Width Height DefaultCollision DefaultRotation
+# Width/Height in grid cells, DefaultCollision (0=false, 1=true), DefaultRotation in degrees
+
+# Single-cell assets
+Ground 1 1 0 0
+Bush 1 1 1 0
+Wall 1 1 1 0
+SavePoint 1 1 0 0
+PlayerSpawn 1 1 0 0
+Player 1 1 0 0
+Dummy 1 1 0 0
+
+# L-shaped multi-cell assets
+Misc1 2 3 1 0
+Misc2 3 2 1 0
+
+# Multi-cell assets (examples for future use)
+Castle 3 4 1 0
+Tower 2 2 1 0
+Bridge 4 1 1 0
+House 2 3 1 0
+Tree 1 2 1 0
+Rock 2 2 1 0
+LargeCastle 5 5 1 0
+WideWall 5 1 1 0
+TallTower 1 5 1 0

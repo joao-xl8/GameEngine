@@ -506,18 +506,9 @@ void Scene_Dialogue::update()
     if (m_dialogueComplete) {
         // Return to play scene when dialogue is complete
         if (m_hasPreservedState) {
-            // Create play scene with preserved state
-            std::cout << "Returning to play scene with preserved state:" << std::endl;
-            std::cout << "  Level: " << m_originalLevel << std::endl;
-            std::cout << "  Position: (" << m_originalPlayerPosition.x << ", " << m_originalPlayerPosition.y << ")" << std::endl;
-            std::cout << "  Health: " << m_originalPlayerHealth << std::endl;
-            
-            auto playScene = std::make_shared<Scene_Play>(m_game, m_originalLevel);
-            
-            // Set the custom spawn position to preserve player location
-            playScene->setCustomSpawnPosition(m_originalPlayerPosition);
-            
-            m_game->changeScene("Play", playScene);
+            std::cout << "Returning to previous scene after dialogue" << std::endl;
+            // Return to the previous scene that called this dialogue
+            m_game->popScene();
         } else {
             // Fallback to default behavior (shouldn't happen with new system)
             std::cout << "Warning: No preserved state, using default level" << std::endl;

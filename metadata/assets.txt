@@ -4,6 +4,11 @@ Texture Bush assets/imgs/bush.png
 Texture Wall assets/imgs/wall.png
 Texture SavePoint assets/imgs/save_point.png
 Texture PlayerSpawn assets/imgs/player_spawn.png
+Texture Misc1 assets/imgs/misc1.png
+Texture Misc2 assets/imgs/misc2.png
+Texture LargeCastle assets/imgs/large_castle.png
+Texture WideWall assets/imgs/wide_wall.png
+Texture TallTower assets/imgs/tall_tower.png
 
 # Character Assets - Player
 Texture Player assets/characters/player/sprites/Player.png

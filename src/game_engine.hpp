@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <stack>
 #include <SFML/Graphics.hpp>
 #include "components/engine_components.hpp"
 #include "imgui-SFML.h"
@@ -40,6 +41,9 @@ protected:
     std::string m_currentScene;
     bool m_running = true;
     bool m_fullscreen = false;
+    
+    // Scene stack for proper scene return handling
+    std::stack<std::string> m_sceneStack;
     
     // Timing
     sf::Clock m_deltaClock;
@@ -106,6 +110,8 @@ public:
 
     Assets &getAssets();
     void changeScene(const std::string &sceneName, std::shared_ptr<Scene> scene, bool endCurrentScene = true);
+    void pushScene(const std::string &sceneName, std::shared_ptr<Scene> scene); // Push new scene, keeping current on stack
+    void popScene(); // Return to previous scene
     void quit();
     void update();
 };

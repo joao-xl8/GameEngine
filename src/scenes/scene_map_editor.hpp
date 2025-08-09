@@ -4,6 +4,9 @@
 #include <fstream>
 #include <filesystem>
 #include <map>
+#include <set>
+#include <algorithm>
+#include <cmath>
 
 class Scene_MapEditor : public Scene
 {
@@ -26,13 +29,35 @@ protected:
         std::string type;
         std::string asset;
         bool occupied = false;
+        bool hasCollision = false;  // Independent collision property
+        float rotation = 0.0f;      // Rotation in degrees
+        int width = 1;              // Asset width in cells
+        int height = 1;             // Asset height in cells
+        int originX = 0;            // Origin X coordinate for multi-cell assets
+        int originY = 0;            // Origin Y coordinate for multi-cell assets
     };
     
     // Multi-layer grid: position -> layer -> cell
     std::map<std::pair<int, int>, std::map<int, GridCell>> m_infiniteGrid;
     
+    // Asset properties loaded from configuration
+    struct AssetProperties {
+        int width = 1;
+        int height = 1;
+        bool defaultCollision = false;
+        float defaultRotation = 0.0f;
+    };
+    std::map<std::string, AssetProperties> m_assetProperties;
+    
     // Current layer being edited (0-4)
     int m_currentLayer = 0;
+    
+    // Current asset rotation (0, 90, 180, 270)
+    float m_currentRotation = 0.0f;
+    
+    // Editor modes
+    bool m_showCollision = false;    // Show collision overlay
+    bool m_collisionMode = false;    // Toggle collision mode
     
     // Camera/view
     sf::View m_gameView;
@@ -61,29 +86,39 @@ protected:
     std::string m_currentFileName;
     bool m_showSaveDialog = false;
     bool m_showOverwriteDialog = false;
+    bool m_showExitConfirmDialog = false;  // New exit confirmation dialog
     std::string m_saveFileName;
     std::string m_inputFileName;
     bool m_isInputMode = false;
+    bool m_hasUnsavedChanges = false;      // Track unsaved changes
     
     void init();
     void update();
     void onEnd();
     void sDoAction(const Action &action);
     void loadAvailableAssets();
+    void loadAssetProperties();
     void updateCamera();
     void drawInfiniteGrid();
     void drawUI();
     void drawAssetPreview();
     void drawPlacedObjects();
+    void drawCollisionOverlay();
+    void drawAssetSizePreview();
     void drawLevelSelector();
     void drawSaveDialog();
     void drawOverwriteDialog();
+    void drawExitConfirmDialog();
     void scanAvailableLevels();
     void handleLevelSelectorInput(const Action& action);
     void handleSaveDialogInput(const Action& action);
     void handleOverwriteDialogInput(const Action& action);
+    void handleExitConfirmDialogInput(const Action& action);
     void placeObject();
     void removeObject();
+    void toggleCollision();
+    void rotateAsset();
+    Vec2 calculateRotatedPlacement(int cursorX, int cursorY, int width, int height, float rotation);
     void saveLevel();
     void saveLevel(const std::string& filename);
     void loadLevel(const std::string& filename);
@@ -95,6 +130,12 @@ protected:
     Vec2 getVisibleGridMax();
     Scene_MapEditor::GridCell* getGridCell(int x, int y);
     void setGridCell(int x, int y, const GridCell& cell);
+    bool canPlaceAsset(int x, int y, int width, int height);
+    void clearMultiCellArea(int x, int y, int width, int height);
+    AssetProperties getAssetProperties(const std::string& assetName);
+    void markUnsavedChanges();
+    void markChangesSaved();
+    void confirmExit();
     
 public:
     Scene_MapEditor(GameEngine* game);

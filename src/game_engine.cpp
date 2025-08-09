@@ -323,6 +323,46 @@ void GameEngine::changeScene(const std::string &sceneName, std::shared_ptr<Scene
     scene->init();
 }
 
+void GameEngine::pushScene(const std::string &sceneName, std::shared_ptr<Scene> scene)
+{
+    // Push current scene onto the stack
+    m_sceneStack.push(m_currentScene);
+    
+    // Change to new scene without ending the current one
+    m_currentScene = sceneName;
+    m_scenes[m_currentScene] = scene;
+    scene->init();
+    
+    std::cout << "Pushed scene: " << sceneName << " (can return to " << m_sceneStack.top() << ")" << std::endl;
+}
+
+void GameEngine::popScene()
+{
+    if (m_sceneStack.empty()) {
+        std::cout << "Warning: No scene to pop back to, staying in current scene" << std::endl;
+        return;
+    }
+    
+    // End current scene
+    m_scenes[m_currentScene]->onEnd();
+    
+    // Get previous scene from stack
+    std::string previousScene = m_sceneStack.top();
+    m_sceneStack.pop();
+    
+    std::cout << "Popping back to scene: " << previousScene << std::endl;
+    
+    // Return to previous scene (it should still exist in m_scenes)
+    if (m_scenes.find(previousScene) != m_scenes.end()) {
+        m_currentScene = previousScene;
+        // Don't call init() again as the scene should maintain its state
+    } else {
+        std::cout << "Error: Previous scene " << previousScene << " no longer exists!" << std::endl;
+        // Fallback to menu or a safe scene
+        changeScene("Menu", std::make_shared<Scene_Menu>(this));
+    }
+}
+
 void GameEngine::quit()
 {
     m_running = false;

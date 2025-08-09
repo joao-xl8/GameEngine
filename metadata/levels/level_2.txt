@@ -1,7 +1,29 @@
 # Level created with Map Editor
-# Format: Type SpriteName X Y
+# Enhanced Format: Layer SpriteName X Y [Collision] [Rotation] [Width] [Height]
+# Collision: 0=false, 1=true | Rotation: degrees | Width/Height: grid cells
 
+0 Wall -2 -2 1 0 1 1
+0 Wall -2 -1 1 0 1 1
+0 Wall -2 0 1 0 1 1
+0 Wall -2 1 1 0 1 1
+0 Wall -2 2 1 0 1 1
+0 Wall -2 3 1 0 1 1
+0 Wall -2 4 1 0 1 1
+0 Wall -1 -2 1 0 1 1
+0 Dummy -1 2
+0 Wall -1 4 1 0 1 1
+0 Wall 0 -2 1 0 1 1
 0 Ground 0 0
-1 Bush 0 0
+1 Bush 0 0 1 0 1 1
 4 Ground 0 0
 4 PlayerSpawn 0 2
+0 Wall 0 4 1 0 1 1
+0 Wall 1 -2 1 0 1 1
+0 Wall 1 4 1 0 1 1
+0 Wall 2 -2 1 0 1 1
+0 Wall 2 -1 1 0 1 1
+0 Wall 2 0 1 0 1 1
+0 Wall 2 1 1 0 1 1
+0 Wall 2 2 1 0 1 1
+0 Wall 2 3 1 0 1 1
+0 Wall 2 4 1 0 1 1

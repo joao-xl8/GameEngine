@@ -1,6 +1,6 @@
 #include "npc.hpp"
 #include "../game_engine.hpp"
-#include "../components/common_components.hpp"
+#include "../components.hpp"
 #include <iostream>
 #include <cmath>
 

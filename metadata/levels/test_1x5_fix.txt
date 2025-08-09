@@ -1,0 +1,38 @@
+# Test level to verify 1x5 rotation fix
+# Testing both WideWall (5x1) and TallTower (1x5) rotations
+
+# Ground tiles to mark cursor positions for reference
+0 Ground 5 5 1 0 1 1 5 5
+0 Ground 10 5 1 0 1 1 10 5
+0 Ground 15 5 1 0 1 1 15 5
+0 Ground 20 5 1 0 1 1 20 5
+
+# WideWall (5x1) tests - cursor at (5,5)
+# 0° rotation: horizontal wall starting at cursor
+1 WideWall 5 5 1 0 5 1 5 5
+1 WideWall 6 5 1 0 5 1 5 5
+1 WideWall 7 5 1 0 5 1 5 5
+1 WideWall 8 5 1 0 5 1 5 5
+1 WideWall 9 5 1 0 5 1 5 5
+
+# 90° rotation: should become vertical, cursor at top-right
+1 WideWall 10 5 1 90 5 1 10 5
+1 WideWall 10 6 1 90 5 1 10 5
+1 WideWall 10 7 1 90 5 1 10 5
+1 WideWall 10 8 1 90 5 1 10 5
+1 WideWall 10 9 1 90 5 1 10 5
+
+# TallTower (1x5) tests - cursor at (15,5)
+# 0° rotation: vertical tower starting at cursor
+1 TallTower 15 5 1 0 1 5 15 5
+1 TallTower 15 6 1 0 1 5 15 5
+1 TallTower 15 7 1 0 1 5 15 5
+1 TallTower 15 8 1 0 1 5 15 5
+1 TallTower 15 9 1 0 1 5 15 5
+
+# 270° rotation: should become horizontal, cursor at bottom-left
+1 TallTower 20 5 1 270 1 5 20 5
+1 TallTower 21 5 1 270 1 5 20 5
+1 TallTower 22 5 1 270 1 5 20 5
+1 TallTower 23 5 1 270 1 5 20 5
+1 TallTower 24 5 1 270 1 5 20 5
