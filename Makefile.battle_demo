@@ -1,0 +1,65 @@
+# Makefile for Battle System Demo
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -g
+INCLUDES = -I./src
+
+# Source files for battle config loader
+BATTLE_SOURCES = src/battle_config_loader.cpp
+
+# Test executable
+BATTLE_TEST = battle_demo_test
+BATTLE_TEST_SOURCES = battle_demo_test.cpp $(BATTLE_SOURCES)
+
+# Default target
+all: test_battle_config
+
+# Build and run the battle configuration test
+test_battle_config: $(BATTLE_TEST)
+	@echo "Running battle configuration test..."
+	./$(BATTLE_TEST)
+
+# Build the battle test executable
+$(BATTLE_TEST): $(BATTLE_TEST_SOURCES)
+	@echo "Compiling battle configuration test..."
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(BATTLE_TEST) $(BATTLE_TEST_SOURCES)
+
+# Clean build files
+clean:
+	rm -f $(BATTLE_TEST)
+
+# Show configuration files
+show_configs:
+	@echo "=== Battle Configuration Files ==="
+	@echo "Party Members:"
+	@ls -la metadata/characters/party_*.txt 2>/dev/null || echo "  No party member files found"
+	@echo ""
+	@echo "Enemy Files:"
+	@ls -la metadata/characters/enemies_*.txt 2>/dev/null || echo "  No enemy files found"
+	@echo ""
+	@echo "Spell Database:"
+	@ls -la metadata/characters/spells.txt 2>/dev/null || echo "  No spell database found"
+
+# Validate configuration files exist
+validate_configs:
+	@echo "Validating configuration files..."
+	@test -f metadata/characters/spells.txt && echo "✓ Spell database found" || echo "✗ Spell database missing"
+	@test -f metadata/characters/party_hero.txt && echo "✓ Hero config found" || echo "✗ Hero config missing"
+	@test -f metadata/characters/party_mage.txt && echo "✓ Mage config found" || echo "✗ Mage config missing"
+	@test -f metadata/characters/party_warrior.txt && echo "✓ Warrior config found" || echo "✗ Warrior config missing"
+	@test -f metadata/characters/party_rogue.txt && echo "✓ Rogue config found" || echo "✗ Rogue config missing"
+	@test -f metadata/characters/enemies_level_1.txt && echo "✓ Level 1 enemies found" || echo "✗ Level 1 enemies missing"
+	@test -f metadata/characters/enemies_level_2.txt && echo "✓ Level 2 enemies found" || echo "✗ Level 2 enemies missing"
+
+# Help target
+help:
+	@echo "Battle System Demo Makefile"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all                 - Build and run battle configuration test"
+	@echo "  test_battle_config  - Build and run battle configuration test"
+	@echo "  show_configs        - List all configuration files"
+	@echo "  validate_configs    - Check if all required config files exist"
+	@echo "  clean               - Remove build files"
+	@echo "  help                - Show this help message"
+
+.PHONY: all test_battle_config clean show_configs validate_configs help

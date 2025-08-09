@@ -1,0 +1,28 @@
+# Hero - Main Protagonist
+# Basic Stats
+NAME Hero
+HP 120
+ATTACK 15
+DEFENSE 12
+SPEED 14
+MP 30
+SPRITE_TEXTURE player_idle
+DESCRIPTION "The main protagonist with balanced stats and sword mastery"
+
+# Growth Stats (per level)
+HP_GROWTH 8
+ATTACK_GROWTH 2
+DEFENSE_GROWTH 2
+SPEED_GROWTH 1
+MP_GROWTH 3
+
+# Equipment Slots
+WEAPON_TYPE sword
+ARMOR_TYPE light
+ACCESSORY_TYPE ring
+
+# Known Spells (SpellID)
+SPELL heal_minor
+SPELL sword_strike
+SPELL guard_stance
+SPELL flame_slash

@@ -1,0 +1,377 @@
+# Spell Database
+# Format: SPELL_ID NAME MP_COST BASE_DAMAGE SPELL_TYPE TARGET_TYPE DESCRIPTION
+
+# Hero Spells
+SPELL_ID heal_minor
+NAME Minor Heal
+MP_COST 8
+BASE_DAMAGE -25
+SPELL_TYPE healing
+TARGET_TYPE ally
+DESCRIPTION "Restores a small amount of HP to an ally"
+END_SPELL
+
+SPELL_ID sword_strike
+NAME Sword Strike
+MP_COST 5
+BASE_DAMAGE 15
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "A focused sword attack with increased accuracy"
+END_SPELL
+
+SPELL_ID guard_stance
+NAME Guard Stance
+MP_COST 3
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE self
+DESCRIPTION "Increases defense for the next turn"
+END_SPELL
+
+SPELL_ID flame_slash
+NAME Flame Slash
+MP_COST 12
+BASE_DAMAGE 20
+SPELL_TYPE fire
+TARGET_TYPE enemy
+DESCRIPTION "A sword attack imbued with fire magic"
+END_SPELL
+
+# Mage Spells
+SPELL_ID fireball
+NAME Fireball
+MP_COST 10
+BASE_DAMAGE 25
+SPELL_TYPE fire
+TARGET_TYPE enemy
+DESCRIPTION "A classic fire spell that burns the target"
+END_SPELL
+
+SPELL_ID ice_shard
+NAME Ice Shard
+MP_COST 8
+BASE_DAMAGE 18
+SPELL_TYPE ice
+TARGET_TYPE enemy
+DESCRIPTION "Sharp ice projectile that may slow the target"
+END_SPELL
+
+SPELL_ID lightning_bolt
+NAME Lightning Bolt
+MP_COST 12
+BASE_DAMAGE 22
+SPELL_TYPE lightning
+TARGET_TYPE enemy
+DESCRIPTION "Fast electrical attack with high accuracy"
+END_SPELL
+
+SPELL_ID mana_restore
+NAME Mana Restore
+MP_COST 0
+BASE_DAMAGE -20
+SPELL_TYPE mana
+TARGET_TYPE ally
+DESCRIPTION "Restores MP to an ally"
+END_SPELL
+
+SPELL_ID magic_shield
+NAME Magic Shield
+MP_COST 15
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE ally
+DESCRIPTION "Creates a magical barrier that absorbs damage"
+END_SPELL
+
+SPELL_ID meteor
+NAME Meteor
+MP_COST 25
+BASE_DAMAGE 40
+SPELL_TYPE fire
+TARGET_TYPE all_enemies
+DESCRIPTION "Devastating fire spell that hits all enemies"
+END_SPELL
+
+SPELL_ID freeze
+NAME Freeze
+MP_COST 18
+BASE_DAMAGE 15
+SPELL_TYPE ice
+TARGET_TYPE enemy
+DESCRIPTION "Ice spell that may paralyze the target"
+END_SPELL
+
+# Warrior Spells
+SPELL_ID power_strike
+NAME Power Strike
+MP_COST 8
+BASE_DAMAGE 25
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "A devastating melee attack"
+END_SPELL
+
+SPELL_ID defensive_stance
+NAME Defensive Stance
+MP_COST 5
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE self
+DESCRIPTION "Greatly increases defense but reduces speed"
+END_SPELL
+
+SPELL_ID berserker_rage
+NAME Berserker Rage
+MP_COST 15
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE self
+DESCRIPTION "Increases attack but reduces defense"
+END_SPELL
+
+SPELL_ID taunt
+NAME Taunt
+MP_COST 3
+BASE_DAMAGE 0
+SPELL_TYPE debuff
+TARGET_TYPE enemy
+DESCRIPTION "Forces enemy to target this character"
+END_SPELL
+
+SPELL_ID armor_break
+NAME Armor Break
+MP_COST 10
+BASE_DAMAGE 12
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Attack that reduces enemy defense"
+END_SPELL
+
+# Rogue Spells
+SPELL_ID backstab
+NAME Backstab
+MP_COST 6
+BASE_DAMAGE 20
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "High damage attack with critical hit chance"
+END_SPELL
+
+SPELL_ID poison_blade
+NAME Poison Blade
+MP_COST 8
+BASE_DAMAGE 12
+SPELL_TYPE poison
+TARGET_TYPE enemy
+DESCRIPTION "Attack that inflicts poison damage over time"
+END_SPELL
+
+SPELL_ID shadow_step
+NAME Shadow Step
+MP_COST 10
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE self
+DESCRIPTION "Increases speed and evasion for next turn"
+END_SPELL
+
+SPELL_ID smoke_bomb
+NAME Smoke Bomb
+MP_COST 12
+BASE_DAMAGE 0
+SPELL_TYPE debuff
+TARGET_TYPE all_enemies
+DESCRIPTION "Reduces accuracy of all enemies"
+END_SPELL
+
+SPELL_ID critical_strike
+NAME Critical Strike
+MP_COST 15
+BASE_DAMAGE 18
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Attack with guaranteed critical hit"
+END_SPELL
+
+SPELL_ID steal
+NAME Steal
+MP_COST 5
+BASE_DAMAGE 0
+SPELL_TYPE utility
+TARGET_TYPE enemy
+DESCRIPTION "Attempts to steal gold or items from enemy"
+END_SPELL
+
+# Enemy Spells - Level 1
+SPELL_ID club_swing
+NAME Club Swing
+MP_COST 2
+BASE_DAMAGE 10
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Basic melee attack with crude weapon"
+END_SPELL
+
+SPELL_ID rock_throw
+NAME Rock Throw
+MP_COST 3
+BASE_DAMAGE 8
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Ranged attack with thrown stone"
+END_SPELL
+
+SPELL_ID goblin_screech
+NAME Goblin Screech
+MP_COST 5
+BASE_DAMAGE 0
+SPELL_TYPE debuff
+TARGET_TYPE enemy
+DESCRIPTION "Loud screech that may stun the target"
+END_SPELL
+
+SPELL_ID acid_spit
+NAME Acid Spit
+MP_COST 4
+BASE_DAMAGE 12
+SPELL_TYPE acid
+TARGET_TYPE enemy
+DESCRIPTION "Corrosive projectile attack"
+END_SPELL
+
+SPELL_ID slime_bounce
+NAME Slime Bounce
+MP_COST 3
+BASE_DAMAGE 8
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Bouncing attack that may hit multiple times"
+END_SPELL
+
+SPELL_ID absorb
+NAME Absorb
+MP_COST 6
+BASE_DAMAGE -8
+SPELL_TYPE healing
+TARGET_TYPE self
+DESCRIPTION "Absorbs damage to heal self"
+END_SPELL
+
+SPELL_ID split
+NAME Split
+MP_COST 10
+BASE_DAMAGE 0
+SPELL_TYPE summon
+TARGET_TYPE self
+DESCRIPTION "Creates a smaller slime copy"
+END_SPELL
+
+SPELL_ID bite
+NAME Bite
+MP_COST 2
+BASE_DAMAGE 12
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Basic bite attack"
+END_SPELL
+
+SPELL_ID scratch
+NAME Scratch
+MP_COST 1
+BASE_DAMAGE 8
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Quick claw attack"
+END_SPELL
+
+SPELL_ID disease_bite
+NAME Disease Bite
+MP_COST 4
+BASE_DAMAGE 10
+SPELL_TYPE poison
+TARGET_TYPE enemy
+DESCRIPTION "Bite that may inflict disease"
+END_SPELL
+
+SPELL_ID poison_bite
+NAME Poison Bite
+MP_COST 5
+BASE_DAMAGE 14
+SPELL_TYPE poison
+TARGET_TYPE enemy
+DESCRIPTION "Venomous bite attack"
+END_SPELL
+
+SPELL_ID web_trap
+NAME Web Trap
+MP_COST 8
+BASE_DAMAGE 0
+SPELL_TYPE debuff
+TARGET_TYPE enemy
+DESCRIPTION "Traps enemy in web, reducing speed"
+END_SPELL
+
+SPELL_ID venom_spit
+NAME Venom Spit
+MP_COST 6
+BASE_DAMAGE 16
+SPELL_TYPE poison
+TARGET_TYPE enemy
+DESCRIPTION "Ranged poison attack"
+END_SPELL
+
+SPELL_ID stealth
+NAME Stealth
+MP_COST 10
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE self
+DESCRIPTION "Becomes harder to target"
+END_SPELL
+
+# Boss Spells - Level 1
+SPELL_ID war_club_smash
+NAME War Club Smash
+MP_COST 8
+BASE_DAMAGE 20
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Powerful overhead attack"
+END_SPELL
+
+SPELL_ID rally_goblins
+NAME Rally Goblins
+MP_COST 12
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE all_allies
+DESCRIPTION "Boosts attack of all goblin allies"
+END_SPELL
+
+SPELL_ID intimidate
+NAME Intimidate
+MP_COST 5
+BASE_DAMAGE 0
+SPELL_TYPE debuff
+TARGET_TYPE enemy
+DESCRIPTION "Reduces enemy attack power"
+END_SPELL
+
+SPELL_ID berserker_fury
+NAME Berserker Fury
+MP_COST 15
+BASE_DAMAGE 0
+SPELL_TYPE buff
+TARGET_TYPE self
+DESCRIPTION "Increases attack and speed dramatically"
+END_SPELL
+
+SPELL_ID throwing_spear
+NAME Throwing Spear
+MP_COST 6
+BASE_DAMAGE 18
+SPELL_TYPE physical
+TARGET_TYPE enemy
+DESCRIPTION "Ranged spear attack with high accuracy"
+END_SPELL

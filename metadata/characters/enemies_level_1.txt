@@ -1,0 +1,130 @@
+# Level 1 Enemies - Starting Area
+
+# GOBLIN Profile
+ENEMY_ID GOBLIN
+NAME Goblin
+HP 25
+ATTACK 8
+DEFENSE 5
+SPEED 12
+MP 10
+SPRITE_TEXTURE goblin_idle
+DESCRIPTION "A small green creature with crude weapons"
+# Attacks and Spells
+SPELL club_swing
+SPELL rock_throw
+SPELL goblin_screech
+# AI Behavior
+AI_TYPE aggressive
+AI_SPELL_CHANCE 20
+# Rewards
+EXP_REWARD 15
+GOLD_REWARD 8
+END_ENEMY
+
+# SLIME Profile
+ENEMY_ID SLIME
+NAME Slime
+HP 30
+ATTACK 6
+DEFENSE 3
+SPEED 8
+MP 15
+SPRITE_TEXTURE slime_idle
+DESCRIPTION "A gelatinous blob that absorbs damage"
+# Attacks and Spells
+SPELL acid_spit
+SPELL slime_bounce
+SPELL absorb
+SPELL split
+# AI Behavior
+AI_TYPE defensive
+AI_SPELL_CHANCE 30
+# Rewards
+EXP_REWARD 12
+GOLD_REWARD 5
+END_ENEMY
+
+# GIANT_RAT Profile
+ENEMY_ID RAT
+NAME Giant_Rat
+HP 20
+ATTACK 10
+DEFENSE 4
+SPEED 14
+MP 5
+SPRITE_TEXTURE rat_idle
+DESCRIPTION "An oversized rodent with sharp teeth"
+# Attacks and Spells
+SPELL bite
+SPELL scratch
+SPELL disease_bite
+# AI Behavior
+AI_TYPE hit_and_run
+AI_SPELL_CHANCE 15
+# Rewards
+EXP_REWARD 18
+GOLD_REWARD 10
+END_ENEMY
+
+# CAVE_SPIDER Profile
+ENEMY_ID SPIDER
+NAME Cave_Spider
+HP 22
+ATTACK 12
+DEFENSE 6
+SPEED 16
+MP 20
+SPRITE_TEXTURE spider_idle
+DESCRIPTION "A venomous arachnid that lurks in shadows"
+# Attacks and Spells
+SPELL poison_bite
+SPELL web_trap
+SPELL venom_spit
+SPELL stealth
+# AI Behavior
+AI_TYPE tactical
+AI_SPELL_CHANCE 40
+# Rewards
+EXP_REWARD 20
+GOLD_REWARD 12
+END_ENEMY
+
+# GOBLIN_CHIEF Profile (Mini-Boss)
+ENEMY_ID GOBLIN_CHIEF
+NAME Goblin_Chief
+HP 60
+ATTACK 15
+DEFENSE 10
+SPEED 10
+MP 25
+SPRITE_TEXTURE goblin_chief_idle
+DESCRIPTION "Leader of the goblin tribe with enhanced combat skills"
+# Attacks and Spells
+SPELL war_club_smash
+SPELL rally_goblins
+SPELL intimidate
+SPELL berserker_fury
+SPELL throwing_spear
+# AI Behavior
+AI_TYPE boss
+AI_SPELL_CHANCE 60
+# Rewards
+EXP_REWARD 80
+GOLD_REWARD 50
+END_ENEMY
+
+# Enemy Groups (for encounter generation)
+GROUP_WEAK GOBLIN
+GROUP_WEAK SLIME
+GROUP_WEAK RAT
+GROUP_MEDIUM GOBLIN GOBLIN
+GROUP_MEDIUM SPIDER RAT
+GROUP_STRONG GOBLIN GOBLIN SLIME
+GROUP_BOSS GOBLIN_CHIEF GOBLIN GOBLIN
+
+# Encounter Rates (percentage)
+ENCOUNTER_RATE_WEAK 40
+ENCOUNTER_RATE_MEDIUM 35
+ENCOUNTER_RATE_STRONG 20
+ENCOUNTER_RATE_BOSS 5

@@ -1,0 +1,29 @@
+# Gareth - Heavy Warrior
+# Basic Stats
+NAME Gareth
+HP 150
+ATTACK 20
+DEFENSE 18
+SPEED 10
+MP 20
+SPRITE_TEXTURE warrior_idle
+DESCRIPTION "A strong fighter with exceptional defense and heavy weapon mastery"
+
+# Growth Stats (per level)
+HP_GROWTH 12
+ATTACK_GROWTH 3
+DEFENSE_GROWTH 3
+SPEED_GROWTH 1
+MP_GROWTH 2
+
+# Equipment Slots
+WEAPON_TYPE axe
+ARMOR_TYPE heavy
+ACCESSORY_TYPE shield
+
+# Known Spells (SpellID)
+SPELL power_strike
+SPELL defensive_stance
+SPELL berserker_rage
+SPELL taunt
+SPELL armor_break

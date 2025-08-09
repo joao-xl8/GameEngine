@@ -1,0 +1,160 @@
+# Level 2 Enemies - Forest Area
+
+# FOREST_WOLF Profile
+ENEMY_ID WOLF
+NAME Forest_Wolf
+HP 45
+ATTACK 18
+DEFENSE 12
+SPEED 18
+MP 15
+SPRITE_TEXTURE wolf_idle
+DESCRIPTION "A fierce predator that hunts in packs"
+# Attacks and Spells
+SPELL bite
+SPELL howl
+SPELL pack_tactics
+SPELL pounce
+# AI Behavior
+AI_TYPE pack_hunter
+AI_SPELL_CHANCE 25
+# Rewards
+EXP_REWARD 25
+GOLD_REWARD 15
+END_ENEMY
+
+# BROWN_BEAR Profile
+ENEMY_ID BEAR
+NAME Brown_Bear
+HP 80
+ATTACK 22
+DEFENSE 16
+SPEED 12
+MP 10
+SPRITE_TEXTURE bear_idle
+DESCRIPTION "A massive creature with powerful claws"
+# Attacks and Spells
+SPELL claw_swipe
+SPELL bear_charge
+SPELL roar
+SPELL maul
+# AI Behavior
+AI_TYPE berserker
+AI_SPELL_CHANCE 30
+# Rewards
+EXP_REWARD 45
+GOLD_REWARD 25
+END_ENEMY
+
+# BANDIT Profile
+ENEMY_ID BANDIT
+NAME Bandit
+HP 50
+ATTACK 20
+DEFENSE 14
+SPEED 15
+MP 20
+SPRITE_TEXTURE bandit_idle
+DESCRIPTION "A human outlaw seeking easy prey"
+# Attacks and Spells
+SPELL sword_slash
+SPELL dirty_fighting
+SPELL smoke_bomb
+SPELL steal_gold
+SPELL backstab
+# AI Behavior
+AI_TYPE opportunist
+AI_SPELL_CHANCE 35
+# Rewards
+EXP_REWARD 30
+GOLD_REWARD 20
+END_ENEMY
+
+# YOUNG_TREANT Profile
+ENEMY_ID TREANT
+NAME Young_Treant
+HP 70
+ATTACK 16
+DEFENSE 20
+SPEED 8
+MP 30
+SPRITE_TEXTURE treant_idle
+DESCRIPTION "A living tree that guards the forest"
+# Attacks and Spells
+SPELL root_entangle
+SPELL branch_whip
+SPELL bark_armor
+SPELL nature_heal
+SPELL thorn_volley
+# AI Behavior
+AI_TYPE guardian
+AI_SPELL_CHANCE 50
+# Rewards
+EXP_REWARD 55
+GOLD_REWARD 30
+END_ENEMY
+
+# ORC_WARRIOR Profile
+ENEMY_ID ORC
+NAME Orc_Warrior
+HP 65
+ATTACK 24
+DEFENSE 18
+SPEED 14
+MP 15
+SPRITE_TEXTURE orc_idle
+DESCRIPTION "A brutal warrior from the mountain clans"
+# Attacks and Spells
+SPELL axe_chop
+SPELL war_cry
+SPELL brutal_strike
+SPELL intimidate
+# AI Behavior
+AI_TYPE aggressive
+AI_SPELL_CHANCE 20
+# Rewards
+EXP_REWARD 35
+GOLD_REWARD 18
+END_ENEMY
+
+# BANDIT_LEADER Profile (Boss)
+ENEMY_ID BANDIT_LEADER
+NAME Bandit_Leader
+HP 120
+ATTACK 28
+DEFENSE 20
+SPEED 16
+MP 40
+SPRITE_TEXTURE bandit_leader_idle
+DESCRIPTION "Cunning leader of the forest bandits"
+# Attacks and Spells
+SPELL dual_strike
+SPELL command_bandits
+SPELL poison_blade
+SPELL evasion
+SPELL leadership_aura
+SPELL execute
+# AI Behavior
+AI_TYPE boss
+AI_SPELL_CHANCE 70
+# Rewards
+EXP_REWARD 150
+GOLD_REWARD 100
+END_ENEMY
+
+# Enemy Groups
+GROUP_WEAK WOLF
+GROUP_WEAK BANDIT
+GROUP_MEDIUM WOLF WOLF
+GROUP_MEDIUM BANDIT ORC
+GROUP_STRONG BEAR WOLF
+GROUP_STRONG ORC ORC BANDIT
+GROUP_ELITE TREANT
+GROUP_BOSS BANDIT_LEADER BANDIT BANDIT
+
+# Encounter Rates
+ENCOUNTER_RATE_WEAK 30
+ENCOUNTER_RATE_MEDIUM 35
+ENCOUNTER_RATE_STRONG 25
+ENCOUNTER_RATE_ELITE 8
+ENCOUNTER_RATE_BOSS 2

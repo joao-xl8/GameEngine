@@ -1,0 +1,32 @@
+# Lyra - Elemental Mage
+# Basic Stats
+NAME Lyra
+HP 80
+ATTACK 10
+DEFENSE 8
+SPEED 12
+MP 60
+SPRITE_TEXTURE mage_idle
+DESCRIPTION "A powerful spellcaster specializing in elemental magic"
+
+# Growth Stats (per level)
+HP_GROWTH 5
+ATTACK_GROWTH 1
+DEFENSE_GROWTH 1
+SPEED_GROWTH 1
+MP_GROWTH 8
+
+# Equipment Slots
+WEAPON_TYPE staff
+ARMOR_TYPE robe
+ACCESSORY_TYPE amulet
+
+# Known Spells (SpellID)
+SPELL fireball
+SPELL ice_shard
+SPELL lightning_bolt
+SPELL heal_minor
+SPELL mana_restore
+SPELL magic_shield
+SPELL meteor
+SPELL freeze

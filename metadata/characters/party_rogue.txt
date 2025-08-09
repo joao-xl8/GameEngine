@@ -1,0 +1,30 @@
+# Kira - Shadow Rogue
+# Basic Stats
+NAME Kira
+HP 100
+ATTACK 18
+DEFENSE 10
+SPEED 16
+MP 25
+SPRITE_TEXTURE rogue_idle
+DESCRIPTION "A fast attacker specializing in critical hits and stealth"
+
+# Growth Stats (per level)
+HP_GROWTH 7
+ATTACK_GROWTH 3
+DEFENSE_GROWTH 1
+SPEED_GROWTH 2
+MP_GROWTH 2
+
+# Equipment Slots
+WEAPON_TYPE dagger
+ARMOR_TYPE light
+ACCESSORY_TYPE cloak
+
+# Known Spells (SpellID)
+SPELL backstab
+SPELL poison_blade
+SPELL shadow_step
+SPELL smoke_bomb
+SPELL critical_strike
+SPELL steal
