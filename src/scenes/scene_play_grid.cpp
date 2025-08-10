@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <chrono>
+#include <set>
 
 void Scene_PlayGrid::init(const std::string &levelPath)
 {
@@ -73,6 +74,8 @@ void Scene_PlayGrid::init(const std::string &levelPath)
         return;
     }
     std::string line;
+    std::set<std::string> processedAssets; // Track processed multi-cell assets to avoid duplicates
+    
     while (std::getline(file, line))
     {
         // Skip empty lines and comments
@@ -104,6 +107,36 @@ void Scene_PlayGrid::init(const std::string &levelPath)
             ss.clear();
             ss.str(line);
             ss >> layerStr >> spriteName >> x >> y >> scriptName;
+        }
+        
+        // For multi-cell assets, only process the origin tile
+        bool isMultiCell = (width > 1 || height > 1);
+        if (isMultiCell) {
+            // Check if this is the origin tile
+            bool isOriginTile = (originX == x && originY == y);
+            
+            if (!isOriginTile) {
+                // Skip non-origin tiles of multi-cell assets
+                std::printf("Skipping non-origin tile of %s at (%d, %d) - origin at (%d, %d)\n", 
+                           spriteName.c_str(), x, y, originX, originY);
+                continue;
+            }
+            
+            // Create unique identifier for this asset instance
+            std::string assetId = std::to_string(std::stoi(layerStr)) + "_" + 
+                                std::to_string(originX) + "_" + 
+                                std::to_string(originY) + "_" + 
+                                spriteName;
+            
+            // Check if we've already processed this asset instance
+            if (processedAssets.find(assetId) != processedAssets.end()) {
+                std::printf("Already processed multi-cell asset %s, skipping duplicate\n", assetId.c_str());
+                continue;
+            }
+            processedAssets.insert(assetId);
+            
+            std::printf("Processing multi-cell asset %s (%dx%d) at origin (%d, %d)\n", 
+                       spriteName.c_str(), width, height, originX, originY);
         }
         
         // Parse layer number
@@ -181,8 +214,29 @@ void Scene_PlayGrid::init(const std::string &levelPath)
         
         // Add collision only if explicitly specified in the level file
         if (collision == 1) {
-            e->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(m_tileSize));
-            std::printf("Added collision to %s at (%d, %d)\n", spriteName.c_str(), x, y);
+            // For multi-cell assets, create collision box that covers the entire asset area
+            if (isMultiCell) {
+                // Calculate the actual occupied area dimensions after rotation
+                int occupiedWidth = width;
+                int occupiedHeight = height;
+                if (rotation == 90 || rotation == 270) {
+                    std::swap(occupiedWidth, occupiedHeight);
+                }
+                
+                // Create collision box for the entire multi-cell area
+                Vec2 collisionSize{
+                    static_cast<float>(occupiedWidth * m_tileSize.x), 
+                    static_cast<float>(occupiedHeight * m_tileSize.y)
+                };
+                e->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(collisionSize));
+                
+                std::printf("Added multi-cell collision (%dx%d tiles) to %s at (%d, %d)\n", 
+                           occupiedWidth, occupiedHeight, spriteName.c_str(), x, y);
+            } else {
+                // Single-cell collision
+                e->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(m_tileSize));
+                std::printf("Added single-cell collision to %s at (%d, %d)\n", spriteName.c_str(), x, y);
+            }
         }
         
         // Handle special entity layer objects (layer 4)
