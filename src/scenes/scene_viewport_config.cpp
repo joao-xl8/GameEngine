@@ -2,6 +2,7 @@
 #include "scene_menu.hpp"
 #include "scene_options.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <sstream>
 #include <iomanip>
 
@@ -56,15 +57,14 @@ Scene_ScreenConfig::Scene_ScreenConfig(GameEngine* game) : Scene(game)
 void Scene_ScreenConfig::init()
 {
     // Standard navigation controls
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::A, "LEFT");
-    registerAction(sf::Keyboard::D, "RIGHT");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
+    registerAction(sf::Keyboard::A, ActionTypes::LEFT);
+    registerAction(sf::Keyboard::D, ActionTypes::RIGHT);
     
     // Standard confirm/cancel controls
-    registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::C, "CANCEL");
-    registerAction(sf::Keyboard::C, "BACK");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
+    registerAction(sf::Keyboard::C, ActionTypes::BACK);
     
     setupUI();
 }
@@ -296,7 +296,7 @@ void Scene_ScreenConfig::sDoAction(const Action& action)
             } else if (m_selectedOption == 6) { // Back to Options
                 m_game->changeScene("Options", std::make_shared<Scene_Options>(m_game));
             }
-        } else if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+        } else if (action.getName() == "BACK") {
             // Play menu back sound (only if sound is enabled)
             if (m_game->isSoundEnabled()) {
                 if (auto globalSound = m_game->getGlobalSoundManager()) {

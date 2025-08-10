@@ -2,6 +2,7 @@
 #include "scene_menu.hpp"
 #include "scene_play.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -17,14 +18,14 @@ Scene_SaveLoad::Scene_SaveLoad(GameEngine* gameEngine, Mode mode, const SaveData
 void Scene_SaveLoad::init()
 {
     // Standard navigation controls
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::A, "LEFT");
-    registerAction(sf::Keyboard::D, "RIGHT");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
+    registerAction(sf::Keyboard::A, ActionTypes::LEFT);
+    registerAction(sf::Keyboard::D, ActionTypes::RIGHT);
     
     // Standard confirm/cancel controls
-    registerAction(sf::Keyboard::Space, "SELECT");
-    registerAction(sf::Keyboard::C, "BACK");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
+    registerAction(sf::Keyboard::C, ActionTypes::BACK);
     
     // Load save slots
     m_saveSlots = m_saveSystem.getAllSaveSlots();
@@ -152,7 +153,7 @@ void Scene_SaveLoad::sDoAction(const Action& action)
                 }
             }
             scrollDown();
-        } else if (action.getName() == "SELECT") {
+        } else if (action.getName() == "CONFIRM") {
             // Play menu confirm sound (only if sound is enabled)
             if (m_game->isSoundEnabled()) {
                 if (auto globalSound = m_game->getGlobalSoundManager()) {
@@ -160,7 +161,7 @@ void Scene_SaveLoad::sDoAction(const Action& action)
                     globalSound->playSound("menu_confirm", volume);
                 }
             }
-            std::cout << "SELECT pressed on slot " << m_selectedSlot << std::endl;
+            std::cout << "CONFIRM pressed on slot " << m_selectedSlot << std::endl;
             selectSlot();
         } else if (action.getName() == "BACK") {
             // Play menu back sound (only if sound is enabled)
@@ -343,14 +344,14 @@ void Scene_SaveLoad::handleOverwriteInput(const Action& action)
 {
     std::cout << "Overwrite dialog input: " << action.getName() << std::endl;
     
-    if (action.getName() == "LEFT" || action.getName() == "RIGHT" || 
-        action.getName() == "UP" || action.getName() == "DOWN") {
+    if (action.getName() == ActionTypes::LEFT || action.getName() == ActionTypes::RIGHT || 
+        action.getName() == ActionTypes::UP || action.getName() == ActionTypes::DOWN) {
         // Toggle between Yes and No
         m_overwriteConfirm = !m_overwriteConfirm;
         std::cout << "Toggled to: " << (m_overwriteConfirm ? "YES" : "NO") << std::endl;
         setupOverwriteDialog(); // Update display
-    } else if (action.getName() == "SELECT") {
-        std::cout << "SELECT pressed, confirm = " << (m_overwriteConfirm ? "YES" : "NO") << std::endl;
+    } else if (action.getName() == "CONFIRM") {
+        std::cout << "CONFIRM pressed, confirm = " << (m_overwriteConfirm ? "YES" : "NO") << std::endl;
         if (m_overwriteConfirm) {
             // User confirmed overwrite
             std::cout << "Overwriting slot " << m_overwriteSlotNumber << "..." << std::endl;

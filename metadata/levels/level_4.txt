@@ -1,0 +1,14 @@
+# Level created with Map Editor
+# Enhanced Format: Layer SpriteName X Y [Collision] [Rotation] [Width] [Height] [OriginX] [OriginY]
+# Collision: 0=false, 1=true | Rotation: degrees | Width/Height: grid cells | OriginX/Y: multi-cell origin
+
+0 TallTower -4 -1 1 90 1 5 -4 -1
+0 TallTower -3 -1 1 90 1 5 -4 -1
+0 TallTower -2 -1 1 90 1 5 -4 -1
+0 TallTower -1 -1 1 90 1 5 -4 -1
+0 TallTower 0 -1 1 90 1 5 -4 -1
+0 TallTower 0 0 1 270 1 5 0 0
+0 TallTower 1 0 1 270 1 5 0 0
+0 TallTower 2 0 1 270 1 5 0 0
+0 TallTower 3 0 1 270 1 5 0 0
+0 TallTower 4 0 1 270 1 5 0 0

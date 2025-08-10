@@ -2,6 +2,7 @@
 #include "scene_menu.hpp"
 #include "scene_play.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -64,14 +65,14 @@ Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile
 void Scene_Dialogue::init()
 {
     // Register ALL input actions for dialogue once
-    registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::C, "BACK");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
+    registerAction(sf::Keyboard::C, ActionTypes::BACK);
     
-    registerAction(sf::Keyboard::W, "CHOICE_UP");
-    registerAction(sf::Keyboard::S, "CHOICE_DOWN");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
     
     // Register dialogue log key
-    registerAction(sf::Keyboard::B, "SHOW_LOG");
+    registerAction(sf::Keyboard::B, ActionTypes::SHOW_LOG);
     
     // Initialize sound manager
     m_soundManager = std::make_shared<CSound>();
@@ -529,16 +530,16 @@ void Scene_Dialogue::sDoAction(const Action& action)
         
         if (m_showingLog) {
             // Handle log navigation
-            if (action.getName() == "CHOICE_UP") {
+            if (action.getName() == "UP") {
                 scrollLog(-1);
-            } else if (action.getName() == "CHOICE_DOWN") {
+            } else if (action.getName() == "DOWN") {
                 scrollLog(1);
-            } else if (action.getName() == "SHOW_LOG" || action.getName() == "BACK") {
+            } else if (action.getName() == ActionTypes::SHOW_LOG || action.getName() == ActionTypes::BACK) {
                 hideDialogueLog();
             }
         } else if (m_showingChoices) {
             // Handle choice navigation
-            if (action.getName() == "CHOICE_UP") {
+            if (action.getName() == "UP") {
                 std::cout << "Choice UP - Current: " << m_selectedChoice;
                 m_selectedChoice = (m_selectedChoice - 1 + m_currentChoices.size()) % m_currentChoices.size();
                 std::cout << " -> New: " << m_selectedChoice << std::endl;
@@ -549,7 +550,7 @@ void Scene_Dialogue::sDoAction(const Action& action)
                     m_choiceTexts[i].setString((isSelected ? "> " : "  ") + m_currentChoices[i].text);
                     m_choiceTexts[i].setFillColor(isSelected ? sf::Color::Yellow : sf::Color::White);
                 }
-            } else if (action.getName() == "CHOICE_DOWN") {
+            } else if (action.getName() == "DOWN") {
                 std::cout << "Choice DOWN - Current: " << m_selectedChoice;
                 m_selectedChoice = (m_selectedChoice + 1) % m_currentChoices.size();
                 std::cout << " -> New: " << m_selectedChoice << std::endl;

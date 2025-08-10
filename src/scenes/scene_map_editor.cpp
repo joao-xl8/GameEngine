@@ -2,6 +2,7 @@
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -19,16 +20,16 @@ Scene_MapEditor::Scene_MapEditor(GameEngine* game)
 void Scene_MapEditor::init()
 {
     // Standard back control
-    registerAction(sf::Keyboard::Escape, "BACK");
+    registerAction(sf::Keyboard::Escape, ActionTypes::BACK);
     
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::A, "LEFT");
-    registerAction(sf::Keyboard::D, "RIGHT");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
+    registerAction(sf::Keyboard::A, ActionTypes::LEFT);
+    registerAction(sf::Keyboard::D, ActionTypes::RIGHT);
 
     // Standard confirm/cancel controls
-    registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::C, "CANCEL");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
+    registerAction(sf::Keyboard::C, ActionTypes::CANCEL);
     
     // Asset/Type selection
     registerAction(sf::Keyboard::Q, "PREV_ASSET");
@@ -37,8 +38,8 @@ void Scene_MapEditor::init()
     registerAction(sf::Keyboard::X, "NEXT_TYPE");
     
     // File operations
-    registerAction(sf::Keyboard::F, "SAVE");
-    registerAction(sf::Keyboard::L, "LOAD");
+    registerAction(sf::Keyboard::F, ActionTypes::SAVE);
+    registerAction(sf::Keyboard::L, ActionTypes::LOAD);
     
     // Layer switching keys (1-5)
     registerAction(sf::Keyboard::Num1, "LAYER_0");
@@ -448,6 +449,13 @@ void Scene_MapEditor::placeObject()
         std::swap(width, height);
     }
     
+    // Debug output for placement calculation
+    std::cout << "Placement calculation: " << m_currentAsset << " (" << props.width << "x" << props.height 
+              << ") at rotation " << m_currentRotation << "°" << std::endl;
+    std::cout << "  Cursor: (" << cursorX << ", " << cursorY << ")" << std::endl;
+    std::cout << "  Calculated placement: (" << x << ", " << y << ")" << std::endl;
+    std::cout << "  Final dimensions: " << width << "x" << height << std::endl;
+    
     // Check if we can place the asset at the calculated position
     if (!canPlaceAsset(x, y, width, height)) {
         std::cout << "Cannot place " << m_currentAsset << " at calculated position (" << x << ", " << y 
@@ -569,10 +577,10 @@ void Scene_MapEditor::scanAvailableLevels()
 
 void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
 {
-    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+    if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         m_showLevelSelector = false;
     }
-    else if (action.getName() == "UP") {
+    else if (action.getName() == ActionTypes::UP) {
         if (m_selectedLevelIndex > 0) {
             m_selectedLevelIndex--;
         } else {
@@ -582,7 +590,7 @@ void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
     else if (action.getName() == "DOWN") {
         m_selectedLevelIndex = (m_selectedLevelIndex + 1) % m_availableLevels.size();
     }
-    else if (action.getName() == "CONFIRM" || action.getName() == "LOAD") {
+    else if (action.getName() == ActionTypes::CONFIRM || action.getName() == "LOAD") {
         // Load selected level from levels directory
         if (!m_availableLevels.empty()) {
             std::string selectedFile = "metadata/levels/" + m_availableLevels[m_selectedLevelIndex];
@@ -594,13 +602,13 @@ void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
 
 void Scene_MapEditor::handleSaveDialogInput(const Action& action)
 {
-    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+    if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         // Cancel save dialog
         m_showSaveDialog = false;
         m_inputFileName = "";
         m_isInputMode = false;
     }
-    else if (action.getName() == "CONFIRM" || action.getName() == "SAVE") {
+    else if (action.getName() == ActionTypes::CONFIRM || action.getName() == "SAVE") {
         // Confirm filename
         if (!m_inputFileName.empty()) {
             std::string filename = "level_" + m_inputFileName;
@@ -663,15 +671,15 @@ void Scene_MapEditor::handleSaveDialogInput(const Action& action)
 
 void Scene_MapEditor::handleOverwriteDialogInput(const Action& action)
 {
-    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+    if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         // Cancel and go back to save dialog
         m_showOverwriteDialog = false;
         m_showSaveDialog = true;
     }
-    else if (action.getName() == "UP" || action.getName() == "DOWN") {
+    else if (action.getName() == ActionTypes::UP || action.getName() == ActionTypes::DOWN) {
         // Toggle between Yes/No (we'll implement this in the draw method)
     }
-    else if (action.getName() == "CONFIRM" || action.getName() == "SAVE") {
+    else if (action.getName() == ActionTypes::CONFIRM || action.getName() == "SAVE") {
         // Confirm overwrite
         saveLevel(m_saveFileName);
         m_showOverwriteDialog = false;
@@ -1006,28 +1014,38 @@ void Scene_MapEditor::drawPlacedObjects()
                                 // For multi-cell assets, scale to fit the entire asset area
                                 sf::Vector2u textureSize = texture.getSize();
                                 
-                                // Apply rotation to dimensions for scaling
-                                int renderWidth = props.width;
-                                int renderHeight = props.height;
+                                // Calculate the actual occupied area dimensions after rotation
+                                int occupiedWidth = props.width;
+                                int occupiedHeight = props.height;
                                 if (cell.rotation == 90.0f || cell.rotation == 270.0f) {
-                                    std::swap(renderWidth, renderHeight);
+                                    std::swap(occupiedWidth, occupiedHeight);
                                 }
                                 
-                                float scaleX = static_cast<float>(renderWidth * TILE_SIZE) / textureSize.x;
-                                float scaleY = static_cast<float>(renderHeight * TILE_SIZE) / textureSize.y;
-                                sprite.setScale(scaleX, scaleY);
+                                // For rotated assets, we need to handle scaling differently
+                                if (cell.rotation == 90.0f || cell.rotation == 270.0f) {
+                                    // For 90/270 degree rotations, swap the scaling
+                                    float scaleX = static_cast<float>(occupiedWidth * TILE_SIZE) / textureSize.y;
+                                    float scaleY = static_cast<float>(occupiedHeight * TILE_SIZE) / textureSize.x;
+                                    sprite.setScale(scaleX, scaleY);
+                                } else {
+                                    // For 0/180 degree rotations, use normal scaling
+                                    float scaleX = static_cast<float>(occupiedWidth * TILE_SIZE) / textureSize.x;
+                                    float scaleY = static_cast<float>(occupiedHeight * TILE_SIZE) / textureSize.y;
+                                    sprite.setScale(scaleX, scaleY);
+                                }
                                 
                                 // Set rotation and origin for proper rotation around center
                                 if (cell.rotation != 0.0f) {
-                                    // Set origin to center of the original texture
+                                    // Set origin to center of the texture
                                     sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
                                     sprite.setRotation(cell.rotation);
                                     
-                                    // Position at the center of the rotated area
-                                    float centerX = x * TILE_SIZE + (renderWidth * TILE_SIZE) / 2.0f;
-                                    float centerY = y * TILE_SIZE + (renderHeight * TILE_SIZE) / 2.0f;
+                                    // Position at the center of the occupied area
+                                    float centerX = x * TILE_SIZE + (occupiedWidth * TILE_SIZE) / 2.0f;
+                                    float centerY = y * TILE_SIZE + (occupiedHeight * TILE_SIZE) / 2.0f;
                                     sprite.setPosition(centerX, centerY);
                                 } else {
+                                    // No rotation - position at top-left
                                     sprite.setPosition(x * TILE_SIZE, y * TILE_SIZE);
                                 }
                             } else {
@@ -1213,14 +1231,21 @@ void Scene_MapEditor::drawAssetPreview()
     // Get asset properties to determine preview size
     AssetProperties props = getAssetProperties(m_currentAsset);
     
+    // Apply rotation to dimensions for preview sizing (clockwise rotation)
+    int displayWidth = props.width;
+    int displayHeight = props.height;
+    if (m_currentRotation == 90.0f || m_currentRotation == 270.0f) {
+        std::swap(displayWidth, displayHeight);
+    }
+    
     // Preview sizing constants
     const float MAX_PREVIEW_DIMENSION = 200.0f; // Maximum width or height for preview
     const float MIN_PREVIEW_DIMENSION = 80.0f;   // Minimum width or height for preview
     const float TILE_PREVIEW_SIZE = 40.0f;       // Size per tile in preview
     
-    // Calculate base preview dimensions (tiles * size per tile)
-    float baseWidth = static_cast<float>(props.width) * TILE_PREVIEW_SIZE;
-    float baseHeight = static_cast<float>(props.height) * TILE_PREVIEW_SIZE;
+    // Calculate base preview dimensions using rotated dimensions (tiles * size per tile)
+    float baseWidth = static_cast<float>(displayWidth) * TILE_PREVIEW_SIZE;
+    float baseHeight = static_cast<float>(displayHeight) * TILE_PREVIEW_SIZE;
     
     // Calculate scaling factor to fit within max dimensions while preserving aspect ratio
     float scaleX = MAX_PREVIEW_DIMENSION / baseWidth;
@@ -1232,7 +1257,7 @@ void Scene_MapEditor::drawAssetPreview()
     float previewHeight = std::max(MIN_PREVIEW_DIMENSION, baseHeight * scale);
     
     // If we had to enforce minimum size, recalculate to maintain aspect ratio
-    float actualAspectRatio = static_cast<float>(props.width) / static_cast<float>(props.height);
+    float actualAspectRatio = static_cast<float>(displayWidth) / static_cast<float>(displayHeight);
     
     if (baseWidth * scale < MIN_PREVIEW_DIMENSION) {
         previewWidth = MIN_PREVIEW_DIMENSION;
@@ -1267,16 +1292,35 @@ void Scene_MapEditor::drawAssetPreview()
     border.setOutlineThickness(2.0f);
     m_game->window().draw(border);
     
-    // Draw the asset texture
+    // Draw the asset texture with proper rotation
     try {
         const sf::Texture& texture = m_game->getAssets().getTexture(m_currentAsset);
         sf::Sprite sprite(texture);
-        sprite.setPosition(previewX, previewY);
-        
-        // Scale sprite to exactly fit the preview dimensions
         sf::Vector2u textureSize = texture.getSize();
-        float spriteScaleX = previewWidth / static_cast<float>(textureSize.x);
-        float spriteScaleY = previewHeight / static_cast<float>(textureSize.y);
+        
+        // Always set origin to center for consistent rotation
+        sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+        
+        // Apply rotation
+        sprite.setRotation(m_currentRotation);
+        
+        // Position at the center of the preview area
+        sprite.setPosition(previewX + previewWidth / 2.0f, previewY + previewHeight / 2.0f);
+        
+        // Scale sprite to fit the preview dimensions
+        // For rotated sprites, we need to map texture dimensions correctly to preview dimensions
+        float spriteScaleX, spriteScaleY;
+        
+        if (m_currentRotation == 90.0f || m_currentRotation == 270.0f) {
+            // For 90°/270° rotations, texture width maps to preview height and vice versa
+            spriteScaleX = previewWidth / static_cast<float>(textureSize.y);
+            spriteScaleY = previewHeight / static_cast<float>(textureSize.x);
+        } else {
+            // For 0°/180° rotations, normal mapping
+            spriteScaleX = previewWidth / static_cast<float>(textureSize.x);
+            spriteScaleY = previewHeight / static_cast<float>(textureSize.y);
+        }
+        
         sprite.setScale(spriteScaleX, spriteScaleY);
         
         m_game->window().draw(sprite);
@@ -1307,15 +1351,19 @@ void Scene_MapEditor::drawAssetPreview()
     infoText.setCharacterSize(16); // Slightly larger text
     infoText.setFillColor(sf::Color::White);
     
-    // Create detailed asset information
+    // Create detailed asset information showing both original and rotated dimensions
     std::string assetInfo = "Layer: " + m_currentType + "\n" +
-                           "Asset: " + m_currentAsset + "\n" +
-                           "Size: " + std::to_string(props.width) + "x" + std::to_string(props.height) + "\n" +
-                           "Collision: " + (props.defaultCollision ? "ON" : "OFF");
+                           "Asset: " + m_currentAsset + "\n";
     
     if (m_currentRotation != 0.0f) {
-        assetInfo += "\nRotation: " + std::to_string(static_cast<int>(m_currentRotation)) + "°";
+        assetInfo += "Original: " + std::to_string(props.width) + "x" + std::to_string(props.height) + "\n";
+        assetInfo += "Rotated: " + std::to_string(displayWidth) + "x" + std::to_string(displayHeight) + "\n";
+        assetInfo += "Rotation: " + std::to_string(static_cast<int>(m_currentRotation)) + "°\n";
+    } else {
+        assetInfo += "Size: " + std::to_string(props.width) + "x" + std::to_string(props.height) + "\n";
     }
+    
+    assetInfo += "Collision: " + std::string(props.defaultCollision ? "ON" : "OFF");
     
     infoText.setString(assetInfo);
     
@@ -1550,7 +1598,17 @@ void Scene_MapEditor::rotateAsset()
         m_currentRotation = 0.0f;
     }
     
-    std::cout << "Asset rotation: " << m_currentRotation << "°" << std::endl;
+    // Debug output for rotation
+    AssetProperties props = getAssetProperties(m_currentAsset);
+    int rotatedWidth = props.width;
+    int rotatedHeight = props.height;
+    if (m_currentRotation == 90.0f || m_currentRotation == 270.0f) {
+        std::swap(rotatedWidth, rotatedHeight);
+    }
+    
+    std::cout << "Asset rotation: " << m_currentRotation << "° - " << m_currentAsset 
+              << " (" << props.width << "x" << props.height << ") -> (" 
+              << rotatedWidth << "x" << rotatedHeight << ")" << std::endl;
 }
 
 Scene_MapEditor::AssetProperties Scene_MapEditor::getAssetProperties(const std::string& assetName)
@@ -1665,7 +1723,50 @@ void Scene_MapEditor::drawAssetSizePreview()
     // Check if this asset can be placed at the calculated position
     bool canPlace = canPlaceAsset(previewX, previewY, width, height);
     
-    // Draw preview rectangles for each cell the asset would occupy
+    // First, draw the actual asset sprite (same logic as placed assets)
+    try {
+        const sf::Texture& texture = m_game->getAssets().getTexture(m_currentAsset);
+        sf::Sprite sprite(texture);
+        sf::Vector2u textureSize = texture.getSize();
+        
+        // Calculate the actual occupied area dimensions after rotation
+        int occupiedWidth = props.width;
+        int occupiedHeight = props.height;
+        if (m_currentRotation == 90.0f || m_currentRotation == 270.0f) {
+            std::swap(occupiedWidth, occupiedHeight);
+        }
+        
+        // For rotated assets, we need to handle scaling differently
+        if (m_currentRotation == 90.0f || m_currentRotation == 270.0f) {
+            // For 90/270 degree rotations, swap the scaling
+            float scaleX = static_cast<float>(occupiedWidth * TILE_SIZE) / textureSize.y;
+            float scaleY = static_cast<float>(occupiedHeight * TILE_SIZE) / textureSize.x;
+            sprite.setScale(scaleX, scaleY);
+        } else {
+            // For 0/180 degree rotations, use normal scaling
+            float scaleX = static_cast<float>(occupiedWidth * TILE_SIZE) / textureSize.x;
+            float scaleY = static_cast<float>(occupiedHeight * TILE_SIZE) / textureSize.y;
+            sprite.setScale(scaleX, scaleY);
+        }
+        
+        // Set rotation and origin for proper rotation around center
+        sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+        sprite.setRotation(m_currentRotation);
+        
+        // Position at the center of the occupied area
+        float centerX = previewX * TILE_SIZE + (occupiedWidth * TILE_SIZE) / 2.0f;
+        float centerY = previewY * TILE_SIZE + (occupiedHeight * TILE_SIZE) / 2.0f;
+        sprite.setPosition(centerX, centerY);
+        
+        // Make it semi-transparent to show it's a preview
+        sprite.setColor(sf::Color(255, 255, 255, 180));
+        
+        m_game->window().draw(sprite);
+    } catch (...) {
+        // If texture not found, we'll just show the colored rectangles
+    }
+    
+    // Then draw preview rectangles on top for each cell the asset would occupy
     for (int dx = 0; dx < width; dx++) {
         for (int dy = 0; dy < height; dy++) {
             int cellX = previewX + dx;
@@ -1676,12 +1777,12 @@ void Scene_MapEditor::drawAssetSizePreview()
             preview.setPosition(cellX * TILE_SIZE + 3, cellY * TILE_SIZE + 3);
             
             if (canPlace) {
-                // Green preview for valid placement
-                preview.setFillColor(sf::Color(0, 255, 0, 100)); // More visible transparency
+                // Green preview for valid placement - more transparent since asset is underneath
+                preview.setFillColor(sf::Color(0, 255, 0, 60)); // Less opaque
                 preview.setOutlineColor(sf::Color(0, 200, 0, 255)); // Slightly darker green outline
             } else {
-                // Red preview for invalid placement
-                preview.setFillColor(sf::Color(255, 0, 0, 100)); // More visible transparency
+                // Red preview for invalid placement - more transparent since asset is underneath
+                preview.setFillColor(sf::Color(255, 0, 0, 60)); // Less opaque
                 preview.setOutlineColor(sf::Color(200, 0, 0, 255)); // Slightly darker red outline
             }
             
@@ -1745,7 +1846,7 @@ void Scene_MapEditor::confirmExit()
 
 void Scene_MapEditor::handleExitConfirmDialogInput(const Action& action)
 {
-    if (action.getName() == "BACK" || action.getName() == "CANCEL") {
+    if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         // Cancel exit, go back to editing
         m_showExitConfirmDialog = false;
     }
@@ -1757,7 +1858,7 @@ void Scene_MapEditor::handleExitConfirmDialogInput(const Action& action)
         m_isInputMode = true;
         // Note: After saving, we'll need to exit - we'll handle this in the save completion
     }
-    else if (action.getName() == "CONFIRM" || action.getName() == "SELECT") {
+    else if (action.getName() == "CONFIRM") {
         // Exit without saving
         confirmExit();
     }

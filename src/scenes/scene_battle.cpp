@@ -1,6 +1,7 @@
 #include "scene_battle.hpp"
 #include "../game_engine.hpp"
 #include "../battle_config_loader.hpp"
+#include "../action_types.hpp"
 #include "scene_play.hpp"
 #include <iostream>
 
@@ -70,18 +71,18 @@ Scene_Battle::~Scene_Battle() {
 
 void Scene_Battle::init() {
     // Register battle controls
-    registerAction(sf::Keyboard::B, "BACK");
-    registerAction(sf::Keyboard::Escape, "BACK");
+    registerAction(sf::Keyboard::B, ActionTypes::BACK);
+    registerAction(sf::Keyboard::Escape, ActionTypes::BACK);
     
     // Menu navigation controls
-    registerAction(sf::Keyboard::Space, "SELECT");
-    registerAction(sf::Keyboard::C, "CANCEL");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
+    registerAction(sf::Keyboard::C, ActionTypes::CANCEL);
     
     // WASD navigation
-    registerAction(sf::Keyboard::A, "LEFT");
-    registerAction(sf::Keyboard::D, "RIGHT");
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::S, "DOWN");
+    registerAction(sf::Keyboard::A, ActionTypes::LEFT);
+    registerAction(sf::Keyboard::D, ActionTypes::RIGHT);
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
     
     // Initialize battle state
     m_battleState = BattleState::ENTERING;
@@ -146,11 +147,11 @@ void Scene_Battle::sDoAction(const Action& action) {
             // During player's turn - handle menu or target selection
             if (m_menuState == BattleMenuState::TARGET_SELECT) {
                 // Target selection mode
-                if (action.getName() == "LEFT" || action.getName() == "RIGHT") {
+                if (action.getName() == ActionTypes::LEFT || action.getName() == ActionTypes::RIGHT) {
                     handleTargetNavigation("HORIZONTAL");
-                } else if (action.getName() == "UP" || action.getName() == "DOWN") {
+                } else if (action.getName() == ActionTypes::UP || action.getName() == ActionTypes::DOWN) {
                     handleTargetNavigation("VERTICAL");
-                } else if (action.getName() == "SELECT") {
+                } else if (action.getName() == "CONFIRM") {
                     executeActionOnTarget();
                 } else if (action.getName() == "CANCEL") {
                     // Cancel target selection, return to previous menu
@@ -165,9 +166,9 @@ void Scene_Battle::sDoAction(const Action& action) {
                 }
             } else {
                 // Menu navigation mode
-                if (action.getName() == "UP" || action.getName() == "DOWN") {
-                    handleMenuNavigation(action.getName() == "UP" ? "UP" : "DOWN");
-                } else if (action.getName() == "SELECT") {
+                if (action.getName() == ActionTypes::UP || action.getName() == ActionTypes::DOWN) {
+                    handleMenuNavigation(action.getName() == ActionTypes::UP ? "UP" : "DOWN");
+                } else if (action.getName() == "CONFIRM") {
                     handleMenuSelection();
                 } else if (action.getName() == "CANCEL") {
                     // Cancel current menu, go back to previous level
@@ -196,7 +197,7 @@ void Scene_Battle::sDoAction(const Action& action) {
                 moveCursorUp();
             } else if (action.getName() == "DOWN") {
                 moveCursorDown();
-            } else if (action.getName() == "SELECT") {
+            } else if (action.getName() == "CONFIRM") {
                 std::cout << "Not your turn! Wait for your character's turn." << std::endl;
             } else if (action.getName() == "CANCEL") {
                 std::cout << "Not your turn! Wait for your character's turn." << std::endl;

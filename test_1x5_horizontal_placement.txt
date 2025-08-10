@@ -1,0 +1,50 @@
+# Test level to verify 1x5 vertical assets are placed horizontally when rotated
+# This addresses the specific issue: "1x5 vertical asset with rotation is not being placed horizontally"
+
+# Ground tiles to mark cursor positions
+0 Ground 10 5 1 0 1 1 10 5
+0 Ground 15 5 1 0 1 1 15 5
+
+# TallTower (1x5) - Original vertical placement at cursor (5,5)
+1 TallTower 5 5 1 0 1 5 5 5
+1 TallTower 5 6 1 0 1 5 5 5
+1 TallTower 5 7 1 0 1 5 5 5
+1 TallTower 5 8 1 0 1 5 5 5
+1 TallTower 5 9 1 0 1 5 5 5
+
+# TallTower (1x5) - 90° rotation should be HORIZONTAL (5x1) at cursor (10,5)
+# Expected: placement at (6,5) to (10,5) - 5 cells horizontally
+1 TallTower 6 5 1 90 1 5 6 5
+1 TallTower 7 5 1 90 1 5 6 5
+1 TallTower 8 5 1 90 1 5 6 5
+1 TallTower 9 5 1 90 1 5 6 5
+1 TallTower 10 5 1 90 1 5 6 5
+
+# TallTower (1x5) - 270° rotation should be HORIZONTAL (5x1) at cursor (15,5)
+# Expected: placement at (15,5) to (19,5) - 5 cells horizontally
+1 TallTower 15 5 1 270 1 5 15 5
+1 TallTower 16 5 1 270 1 5 15 5
+1 TallTower 17 5 1 270 1 5 15 5
+1 TallTower 18 5 1 270 1 5 15 5
+1 TallTower 19 5 1 270 1 5 15 5
+
+# Visual separator
+0 Ground 5 10 1 0 1 1 5 10
+0 Ground 10 10 1 0 1 1 10 10
+0 Ground 15 10 1 0 1 1 15 10
+
+# Test with WideWall (5x1) for comparison - should become vertical when rotated
+# WideWall (5x1) - Original horizontal placement at cursor (5,10)
+1 WideWall 5 10 1 0 5 1 5 10
+1 WideWall 6 10 1 0 5 1 5 10
+1 WideWall 7 10 1 0 5 1 5 10
+1 WideWall 8 10 1 0 5 1 5 10
+1 WideWall 9 10 1 0 5 1 5 10
+
+# WideWall (5x1) - 90° rotation should be VERTICAL (1x5) at cursor (10,10)
+# Expected: placement at (10,10) to (10,14) - 5 cells vertically
+1 WideWall 10 10 1 90 5 1 10 10
+1 WideWall 10 11 1 90 5 1 10 10
+1 WideWall 10 12 1 90 5 1 10 10
+1 WideWall 10 13 1 90 5 1 10 10
+1 WideWall 10 14 1 90 5 1 10 10

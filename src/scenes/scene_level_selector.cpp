@@ -3,6 +3,7 @@
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <iostream>
 #include <algorithm>
 
@@ -13,16 +14,12 @@ Scene_LevelSelector::Scene_LevelSelector(GameEngine* game) : Scene(game)
 void Scene_LevelSelector::init()
 {
     // Standard navigation controls
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::Up, "UP");
-    registerAction(sf::Keyboard::Down, "DOWN");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
     
     // Standard confirm/cancel controls
-    registerAction(sf::Keyboard::Space, "CONFIRM");
-    registerAction(sf::Keyboard::Enter, "CONFIRM");
-    registerAction(sf::Keyboard::C, "CANCEL");
-    registerAction(sf::Keyboard::Escape, "CANCEL");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
+    registerAction(sf::Keyboard::C, ActionTypes::CANCEL);
     
     // Setup UI elements
     m_titleText.setFont(m_game->getAssets().getFont("ShareTech"));

@@ -3,17 +3,18 @@
 #include "scene_viewport_config.hpp"
 #include "scene_sound_settings.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <exception>
 
 void Scene_Options::init()
 {
     // Standard navigation controls
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::S, "DOWN");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
     
     // Standard confirm/cancel controls
-    registerAction(sf::Keyboard::Space, "SELECT");
-    registerAction(sf::Keyboard::C, "QUIT");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
+    registerAction(sf::Keyboard::C, ActionTypes::BACK);
 
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_menuText.setFillColor(sf::Color::White);
@@ -114,7 +115,7 @@ void Scene_Options::sDoAction(const Action &action)
             
             m_menuIndex = (m_menuIndex + 1) % m_menuStrings.size();
         }
-        else if (action.getName() == "SELECT")
+        else if (action.getName() == "CONFIRM")
         {
             // Play menu confirm sound (only if sound is enabled)
             if (m_game->isSoundEnabled()) {
@@ -157,7 +158,7 @@ void Scene_Options::sDoAction(const Action &action)
                 }
             }
         }
-        else if (action.getName() == "QUIT")
+        else if (action.getName() == "BACK")
         {
             // Play menu back sound (only if sound is enabled)
             if (m_game->isSoundEnabled()) {

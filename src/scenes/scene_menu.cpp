@@ -6,16 +6,17 @@
 #include "scene_save_load.hpp"
 #include "scene_level_selector.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <exception>
 
 void Scene_Menu::init()
 {
     // Standard navigation controls
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::S, "DOWN");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
     
     // Standard confirm/quit controls
-    registerAction(sf::Keyboard::Space, "SELECT");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
 
     m_menuText.setFont(m_game->getAssets().getFont("ShareTech"));
     m_menuText.setFillColor(sf::Color::White);
@@ -91,7 +92,7 @@ void Scene_Menu::sDoAction(const Action &action)
 {
     if (action.getType() == "START")
     {
-        if (action.getName() == "UP")
+        if (action.getName() == ActionTypes::UP)
         {
             // Play menu navigation sound (only if sound is enabled)
             if (m_game->isSoundEnabled()) {
@@ -110,7 +111,7 @@ void Scene_Menu::sDoAction(const Action &action)
                 m_menuIndex = m_menuStrings.size() - 1;
             }
         }
-        else if (action.getName() == "DOWN")
+        else if (action.getName() == ActionTypes::DOWN)
         {
             // Play menu navigation sound (only if sound is enabled)
             if (m_game->isSoundEnabled()) {
@@ -122,7 +123,7 @@ void Scene_Menu::sDoAction(const Action &action)
             
             m_menuIndex = (m_menuIndex + 1) % m_menuStrings.size();
         }
-        else if (action.getName() == "SELECT")
+        else if (action.getName() == ActionTypes::CONFIRM)
         {
             // Play menu confirm sound (only if sound is enabled)
             if (m_game->isSoundEnabled()) {
@@ -203,7 +204,7 @@ void Scene_Menu::sDoAction(const Action &action)
                 }
             }
         }
-        else if (action.getName() == "QUIT")
+        else if (action.getName() == ActionTypes::QUIT)
         {
             m_game->quit();
         }

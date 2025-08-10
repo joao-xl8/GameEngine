@@ -6,6 +6,7 @@
 #include "scene_battle.hpp"
 #include "scene_save_load.hpp"
 #include "../game_engine.hpp"
+#include "../action_types.hpp"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -13,8 +14,8 @@
 void Scene_Play::init(const std::string &levelPath)
 {
     // Game controls
-    registerAction(sf::Keyboard::Escape, "PAUSE");
-    registerAction(sf::Keyboard::C, "RESUME");
+    registerAction(sf::Keyboard::Escape, ActionTypes::PAUSE);
+    registerAction(sf::Keyboard::C, ActionTypes::BACK);
     registerAction(sf::Keyboard::T, "TOGGLE_TEXTURE");
     registerAction(sf::Keyboard::K, "TOGGLE_COLLISION");
     registerAction(sf::Keyboard::G, "TOGGLE_GRID");
@@ -23,16 +24,16 @@ void Scene_Play::init(const std::string &levelPath)
     registerAction(sf::Keyboard::B, "BATTLE");
     
     // Interaction controls
-    registerAction(sf::Keyboard::E, "INTERACT");
+    registerAction(sf::Keyboard::E, ActionTypes::INTERACT);
     
     // Player movement controls
-    registerAction(sf::Keyboard::W, "UP");
-    registerAction(sf::Keyboard::A, "LEFT");
-    registerAction(sf::Keyboard::S, "DOWN");
-    registerAction(sf::Keyboard::D, "RIGHT");
+    registerAction(sf::Keyboard::W, ActionTypes::UP);
+    registerAction(sf::Keyboard::A, ActionTypes::LEFT);
+    registerAction(sf::Keyboard::S, ActionTypes::DOWN);
+    registerAction(sf::Keyboard::D, ActionTypes::RIGHT);
     
     // Standard confirm control
-    registerAction(sf::Keyboard::Space, "SELECT");
+    registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
 
     m_tileText.setCharacterSize(18);  // Increased from 16 to 18
     m_tileText.setFont(m_game->getAssets().getFont("ShareTech"));
@@ -1135,13 +1136,13 @@ void Scene_Play::handlePauseMenuInput(const Action& action)
 {
     std::cout << "Pause menu input: " << action.getName() << std::endl;
     
-    if (action.getName() == "UP" || action.getName() == "DOWN" || 
-        action.getName() == "LEFT" || action.getName() == "RIGHT") {
+    if (action.getName() == ActionTypes::UP || action.getName() == ActionTypes::DOWN || 
+        action.getName() == ActionTypes::LEFT || action.getName() == ActionTypes::RIGHT) {
         // Toggle between Resume (0) and Main Menu (1)
         m_pauseMenuSelection = (m_pauseMenuSelection == 0) ? 1 : 0;
         std::cout << "Selected option: " << (m_pauseMenuSelection == 0 ? "Resume" : "Main Menu") << std::endl;
         setupPauseMenu(); // Update display
-    } else if (action.getName() == "SELECT") {
+    } else if (action.getName() == "CONFIRM") {
         std::cout << "Confirming selection: " << (m_pauseMenuSelection == 0 ? "Resume" : "Main Menu") << std::endl;
         if (m_pauseMenuSelection == 0) {
             // Resume game
@@ -1157,7 +1158,7 @@ void Scene_Play::handlePauseMenuInput(const Action& action)
         // ESC to resume
         std::cout << "ESC pressed - resuming game" << std::endl;
         hidePauseMenu();
-    } else if (action.getName() == "RESUME") {
+    } else if (action.getName() == "BACK") {
         // C to resume (same as ESC)
         std::cout << "C pressed - resuming game" << std::endl;
         hidePauseMenu();

@@ -32,8 +32,6 @@ void Scene_Loading::init()
 {
     // Register input for skipping loading screen
     registerAction(sf::Keyboard::Space, "SKIP");
-    registerAction(sf::Keyboard::Enter, "SKIP");
-    registerAction(sf::Keyboard::Escape, "SKIP");
     
     setupVisuals();
     
