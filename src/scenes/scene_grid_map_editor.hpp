@@ -64,6 +64,13 @@ protected:
     sf::View m_uiView;
     Vec2 m_cameraPos;
     float m_cameraSpeed = 5.0f;
+    float m_zoomLevel = 1.0f;         // Current zoom level
+    float m_minZoom = 0.25f;          // Minimum zoom (zoomed out)
+    float m_maxZoom = 4.0f;           // Maximum zoom (zoomed in)
+    float m_zoomStep = 0.1f;          // Zoom increment/decrement
+    
+    // UI controls
+    bool m_showInfoPanel = true;      // Toggle for info panel visibility
     
     // UI elements
     sf::Text m_uiText;

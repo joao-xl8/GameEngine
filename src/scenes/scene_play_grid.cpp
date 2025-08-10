@@ -107,6 +107,14 @@ void Scene_PlayGrid::init(const std::string &levelPath)
             ss.clear();
             ss.str(line);
             ss >> layerStr >> spriteName >> x >> y >> scriptName;
+            
+            // For old format, assume single-cell asset with origin at current position
+            width = 1;
+            height = 1;
+            originX = x;
+            originY = y;
+            collision = 0;
+            rotation = 0;
         }
         
         // For multi-cell assets, only process the origin tile
@@ -199,14 +207,43 @@ void Scene_PlayGrid::init(const std::string &levelPath)
             // Update the transform to use the center position
             e->getComponent<CTransform>()->pos = Vec2{centerX, centerY};
             
-            std::printf("Applied rotation %d° to %s at (%d, %d) -> center (%.1f, %.1f)\n", 
+            std::printf("Applied rotation %ddeg to %s at (%d, %d) -> center (%.1f, %.1f)\n", 
                        rotation, spriteName.c_str(), x, y, centerX, centerY);
         } else {
-            // No rotation - use standard scaling and positioning
+            // 0deg rotation - still need proper multi-cell scaling and positioning
             sf::Vector2u textureSize = spriteComponent->sprite.getTexture()->getSize();
-            float scaleX = static_cast<float>(m_tileSize.x) / textureSize.x;
-            float scaleY = static_cast<float>(m_tileSize.y) / textureSize.y;
-            spriteComponent->sprite.setScale(scaleX, scaleY);
+            
+            if (isMultiCell) {
+                // For multi-cell assets at 0deg, use same logic as rotated assets
+                int occupiedWidth = width;
+                int occupiedHeight = height;
+                
+                // Scale to cover the entire multi-cell area
+                float scaleX = static_cast<float>(occupiedWidth * m_tileSize.x) / textureSize.x;
+                float scaleY = static_cast<float>(occupiedHeight * m_tileSize.y) / textureSize.y;
+                spriteComponent->sprite.setScale(scaleX, scaleY);
+                
+                // Set origin to center for consistency
+                spriteComponent->sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+                
+                // Position at the center of the occupied area
+                float centerX = x * m_tileSize.x + (occupiedWidth * m_tileSize.x) / 2.0f;
+                float centerY = y * m_tileSize.y + (occupiedHeight * m_tileSize.y) / 2.0f;
+                
+                // Update the transform to use the center position
+                e->getComponent<CTransform>()->pos = Vec2{centerX, centerY};
+                
+                std::printf("Applied 0deg multi-cell scaling to %s (%dx%d) at (%d, %d) -> center (%.1f, %.1f)\n", 
+                           spriteName.c_str(), width, height, x, y, centerX, centerY);
+            } else {
+                // Single-cell asset - use standard scaling and positioning
+                float scaleX = static_cast<float>(m_tileSize.x) / textureSize.x;
+                float scaleY = static_cast<float>(m_tileSize.y) / textureSize.y;
+                spriteComponent->sprite.setScale(scaleX, scaleY);
+                
+                std::printf("Applied single-cell scaling to %s at (%d, %d)\n", 
+                           spriteName.c_str(), x, y);
+            }
         }
         
         e->addComponent<CSprite>(spriteComponent);
@@ -293,7 +330,7 @@ void Scene_PlayGrid::init(const std::string &levelPath)
         
         std::string logMessage = "Loaded " + std::string(CLayer::getLayerName(layer)) + " '" + spriteName + "' on layer " + std::to_string(layerNum) + " at position (" + std::to_string(x) + ", " + std::to_string(y) + ")";
         if (rotation != 0) {
-            logMessage += " with rotation " + std::to_string(rotation) + "°";
+            logMessage += " with rotation " + std::to_string(rotation) + "deg";
         }
         if (collision == 1) {
             logMessage += " with collision";

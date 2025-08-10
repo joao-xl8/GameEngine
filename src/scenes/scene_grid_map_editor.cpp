@@ -62,6 +62,13 @@ void Scene_GridMapEditor::init()
     registerAction(sf::Keyboard::R, "ROTATE_ASSET");      // Rotate current asset
     registerAction(sf::Keyboard::V, "SHOW_COLLISION");    // Show/hide collision overlay
     
+    // Zoom controls
+    registerAction(sf::Keyboard::Up, "ZOOM_IN");          // Zoom in
+    registerAction(sf::Keyboard::Down, "ZOOM_OUT");       // Zoom out
+    
+    // UI controls
+    registerAction(sf::Keyboard::I, "TOGGLE_INFO");       // Toggle info panel
+    
     
     // Mouse support - use different approach to avoid key conflicts
     // We'll handle mouse input differently in the action system
@@ -83,6 +90,8 @@ void Scene_GridMapEditor::init()
     
     // Initialize camera views
     m_gameView = m_game->window().getDefaultView();
+    m_gameView.setSize(m_game->window().getSize().x / m_zoomLevel, 
+                      m_game->window().getSize().y / m_zoomLevel);
     m_uiView = m_game->window().getDefaultView();
     
     // Asset preview is now created dynamically in drawAssetPreview()
@@ -106,6 +115,11 @@ void Scene_GridMapEditor::init()
     std::cout << "C: Remove object\n";
     std::cout << "Q/E: Change asset\n";
     std::cout << "Z/X: Change type\n";
+    std::cout << "R: Rotate asset\n";
+    std::cout << "T: Toggle collision on cell\n";
+    std::cout << "V: Show/hide collision overlay\n";
+    std::cout << "Up/Down Arrows: Zoom in/out\n";
+    std::cout << "I: Toggle info panel\n";
     std::cout << "F: Save level (to metadata/levels/)\n";
     std::cout << "L: Open level selector GUI\n";
     std::cout << "Escape: Back to menu\n";
@@ -191,37 +205,6 @@ void Scene_GridMapEditor::loadAssetProperties()
 
 void Scene_GridMapEditor::update()
 {
-    // Handle mouse input directly to avoid key conflicts
-    static bool leftMousePressed = false;
-    static bool rightMousePressed = false;
-    
-    bool leftMouseDown = sf::Mouse::isButtonPressed(sf::Mouse::Left);
-    bool rightMouseDown = sf::Mouse::isButtonPressed(sf::Mouse::Right);
-    
-    // Handle left mouse click (place object)
-    if (leftMouseDown && !leftMousePressed) {
-        sf::Vector2i mousePos = sf::Mouse::getPosition(m_game->window());
-        sf::Vector2f worldPos = m_game->window().mapPixelToCoords(mousePos, m_gameView);
-        Vec2 gridPos = screenToGrid(Vec2(worldPos.x, worldPos.y));
-        m_cursorPos = gridPos;
-        updateCamera();
-        placeObject();
-    }
-    
-    // Handle right mouse click (remove object)
-    if (rightMouseDown && !rightMousePressed) {
-        sf::Vector2i mousePos = sf::Mouse::getPosition(m_game->window());
-        sf::Vector2f worldPos = m_game->window().mapPixelToCoords(mousePos, m_gameView);
-        Vec2 gridPos = screenToGrid(Vec2(worldPos.x, worldPos.y));
-        m_cursorPos = gridPos;
-        updateCamera();
-        removeObject();
-    }
-    
-    // Update mouse state for next frame
-    leftMousePressed = leftMouseDown;
-    rightMousePressed = rightMouseDown;
-    
     sRender();
 }
 
@@ -343,6 +326,22 @@ void Scene_GridMapEditor::sDoAction(const Action& action)
         }
         else if (action.getName() == "ROTATE_ASSET") {
             rotateAsset();
+        }
+        else if (action.getName() == "ZOOM_IN") {
+            m_zoomLevel = std::min(m_maxZoom, m_zoomLevel + m_zoomStep);
+            m_gameView.setSize(m_game->window().getSize().x / m_zoomLevel, 
+                              m_game->window().getSize().y / m_zoomLevel);
+            std::cout << "Zoom level: " << std::fixed << std::setprecision(1) << m_zoomLevel << "x" << std::endl;
+        }
+        else if (action.getName() == "ZOOM_OUT") {
+            m_zoomLevel = std::max(m_minZoom, m_zoomLevel - m_zoomStep);
+            m_gameView.setSize(m_game->window().getSize().x / m_zoomLevel, 
+                              m_game->window().getSize().y / m_zoomLevel);
+            std::cout << "Zoom level: " << std::fixed << std::setprecision(1) << m_zoomLevel << "x" << std::endl;
+        }
+        else if (action.getName() == "TOGGLE_INFO") {
+            m_showInfoPanel = !m_showInfoPanel;
+            std::cout << "Info panel: " << (m_showInfoPanel ? "ON" : "OFF") << std::endl;
         }
         else if (action.getName() == "SHOW_COLLISION") {
             m_showCollision = !m_showCollision;
@@ -1109,9 +1108,44 @@ void Scene_GridMapEditor::drawPlacedObjects()
 
 void Scene_GridMapEditor::drawUI()
 {
-    // Draw UI background - increased height by 150px, decreased width by 30px
-    sf::RectangleShape uiBackground(sf::Vector2f(320, 600));
-    uiBackground.setPosition(10, 10);
+    // Always draw the header bar with collapse button
+    sf::RectangleShape headerBackground(sf::Vector2f(320, 40));
+    headerBackground.setPosition(10, 10);
+    headerBackground.setFillColor(sf::Color(0, 0, 0, 200));
+    headerBackground.setOutlineColor(sf::Color::White);
+    headerBackground.setOutlineThickness(1.0f);
+    m_game->window().draw(headerBackground);
+    
+    // Draw collapse/expand indicator and title
+    sf::Text headerText;
+    headerText.setFont(m_game->getAssets().getFont("ShareTech"));
+    headerText.setCharacterSize(16);
+    headerText.setFillColor(sf::Color::White);
+    headerText.setPosition(20, 20);
+    
+    std::string collapseIndicator = m_showInfoPanel ? "[-] " : "[+] ";
+    headerText.setString(collapseIndicator + "MAP EDITOR");
+    m_game->window().draw(headerText);
+    
+    // Show zoom level in header
+    sf::Text zoomText;
+    zoomText.setFont(m_game->getAssets().getFont("ShareTech"));
+    zoomText.setCharacterSize(14);
+    zoomText.setFillColor(sf::Color::Yellow);
+    zoomText.setPosition(250, 22);
+    std::ostringstream zoomStream;
+    zoomStream << std::fixed << std::setprecision(1) << m_zoomLevel << "x";
+    zoomText.setString(zoomStream.str());
+    m_game->window().draw(zoomText);
+    
+    // Only draw the full panel if expanded
+    if (!m_showInfoPanel) {
+        return;
+    }
+    
+    // Draw expanded UI background
+    sf::RectangleShape uiBackground(sf::Vector2f(320, 560));
+    uiBackground.setPosition(10, 50);
     uiBackground.setFillColor(sf::Color(0, 0, 0, 180));
     uiBackground.setOutlineColor(sf::Color::White);
     uiBackground.setOutlineThickness(1.0f);
@@ -1119,7 +1153,6 @@ void Scene_GridMapEditor::drawUI()
     
     // Draw UI text with smaller font size to fit more content
     std::ostringstream oss;
-    oss << "MAP EDITOR \n";
     
     // Show current loaded map info
     if (!m_currentFileName.empty()) {
@@ -1160,7 +1193,7 @@ void Scene_GridMapEditor::drawUI()
     oss << "\n";
     
     // Show current rotation
-    oss << "Rotation: " << static_cast<int>(m_currentRotation) << "°\n";
+    oss << "Rotation: " << static_cast<int>(m_currentRotation) << "deg\n";
     
     // Show cursor position
     oss << "Cursor: (" << static_cast<int>(m_cursorPos.x) << ", " << static_cast<int>(m_cursorPos.y) << ")\n";
@@ -1195,7 +1228,7 @@ void Scene_GridMapEditor::drawUI()
         oss << "\n";
         oss << "Asset: " << cursorCell->asset << "\n";
         oss << "Size: " << cursorCell->width << "x" << cursorCell->height << "\n";
-        oss << "Rotation: " << static_cast<int>(cursorCell->rotation) << "°\n";
+        oss << "Rotation: " << static_cast<int>(cursorCell->rotation) << "deg\n";
         oss << "Collision: " << (cursorCell->hasCollision ? "ON" : "OFF") << "\n";
         oss << "Position: (" << cursorX << ", " << cursorY << ")\n";
         oss << "Status: OCCUPIED";
@@ -1205,24 +1238,12 @@ void Scene_GridMapEditor::drawUI()
         oss << "Ready to place: Layer " << m_currentLayer << " " << m_currentAsset;
     }
     
-    // Add controls section
-    oss << "\n-----------------------\n";
-    oss << "CONTROLS:\n";
-    oss << "WASD: Move cursor\n";
-    oss << "Mouse: Click to place/remove\n";
-    oss << "1-5: Switch layers\n";
-    oss << "Q/E: Change asset\n";
-    oss << "R: Rotate asset (" << static_cast<int>(m_currentRotation) << "°)\n";
-    oss << "T: Toggle collision on cell\n";
-    oss << "V: Show collision overlay\n";
-    oss << "F: Save level\n";
-    oss << "L: Load level\n";
-    oss << "ESC: Back to menu";
-    
+    // No need for commands section because we have overlay
+    //
     // Use clean font size for display
     m_uiText.setCharacterSize(16);  // Increased from 14 to 16
     m_uiText.setString(oss.str());
-    m_uiText.setPosition(20, 20);
+    m_uiText.setPosition(20, 60);  // Moved down to account for header
     m_game->window().draw(m_uiText);
 }
 
@@ -1358,7 +1379,7 @@ void Scene_GridMapEditor::drawAssetPreview()
     if (m_currentRotation != 0.0f) {
         assetInfo += "Original: " + std::to_string(props.width) + "x" + std::to_string(props.height) + "\n";
         assetInfo += "Rotated: " + std::to_string(displayWidth) + "x" + std::to_string(displayHeight) + "\n";
-        assetInfo += "Rotation: " + std::to_string(static_cast<int>(m_currentRotation)) + "°\n";
+        assetInfo += "Rotation: " + std::to_string(static_cast<int>(m_currentRotation)) + "deg\n";
     } else {
         assetInfo += "Size: " + std::to_string(props.width) + "x" + std::to_string(props.height) + "\n";
     }
@@ -1378,7 +1399,7 @@ void Scene_GridMapEditor::drawAssetPreview()
     sf::RectangleShape textBackground;
     float textPadding = 6.0f;
     float textBackgroundWidth = std::max(previewWidth + backgroundPadding * 2, textBounds.width + textPadding * 2);
-    float textBackgroundHeight = textBounds.height + textPadding * 2;
+    float textBackgroundHeight = std::min(previewHeight + backgroundPadding * 2, textBounds.height + textPadding * 3);
     
     textBackground.setSize(sf::Vector2f(textBackgroundWidth, textBackgroundHeight));
     textBackground.setPosition(previewX - backgroundPadding, textY - textPadding);
@@ -1822,7 +1843,7 @@ void Scene_GridMapEditor::drawAssetSizePreview()
         rotationText.setFont(m_game->getAssets().getFont("ShareTech"));
         rotationText.setCharacterSize(16);
         rotationText.setFillColor(sf::Color::Yellow);
-        rotationText.setString(std::to_string(static_cast<int>(m_currentRotation)) + "°");
+        rotationText.setString(std::to_string(static_cast<int>(m_currentRotation)) + "deg");
         rotationText.setPosition(cursorX * TILE_SIZE + 5, cursorY * TILE_SIZE + 5);
         
         m_game->window().draw(rotationText);
