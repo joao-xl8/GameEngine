@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
-class Scene_MapEditor : public Scene
+class Scene_GridMapEditor : public Scene
 {
 protected:
     // Grid settings - now supports infinite grid
@@ -128,7 +128,7 @@ protected:
     Vec2 gridToScreen(const Vec2& gridPos);
     Vec2 getVisibleGridMin();
     Vec2 getVisibleGridMax();
-    Scene_MapEditor::GridCell* getGridCell(int x, int y);
+    Scene_GridMapEditor::GridCell* getGridCell(int x, int y);
     void setGridCell(int x, int y, const GridCell& cell);
     bool canPlaceAsset(int x, int y, int width, int height);
     void clearMultiCellArea(int x, int y, int width, int height);
@@ -138,6 +138,6 @@ protected:
     void confirmExit();
     
 public:
-    Scene_MapEditor(GameEngine* game);
+    Scene_GridMapEditor(GameEngine* game);
     void sRender();
 };

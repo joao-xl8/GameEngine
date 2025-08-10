@@ -1,4 +1,4 @@
-#include "scene_map_editor.hpp"
+#include "scene_grid_map_editor.hpp"
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
 #include "../game_engine.hpp"
@@ -11,13 +11,13 @@
 #include <filesystem>
 #include <algorithm>
 
-Scene_MapEditor::Scene_MapEditor(GameEngine* game)
+Scene_GridMapEditor::Scene_GridMapEditor(GameEngine* game)
     : Scene(game), m_cameraPos(0, 0), m_cursorPos(0, 0), m_currentFileName("new_level.txt")
 {
     init();
 }
 
-void Scene_MapEditor::init()
+void Scene_GridMapEditor::init()
 {
     // Standard back control
     registerAction(sf::Keyboard::Escape, ActionTypes::BACK);
@@ -114,7 +114,7 @@ void Scene_MapEditor::init()
     std::cout << "Levels: metadata/levels/ | Config: metadata/\n";
 }
 
-void Scene_MapEditor::loadAvailableAssets()
+void Scene_GridMapEditor::loadAvailableAssets()
 {
     // Load from assets.txt to get available textures
     m_availableAssets.clear();
@@ -150,7 +150,7 @@ void Scene_MapEditor::loadAvailableAssets()
     }
 }
 
-void Scene_MapEditor::loadAssetProperties()
+void Scene_GridMapEditor::loadAssetProperties()
 {
     // Load asset properties from configuration file
     std::ifstream file("metadata/asset_properties.txt");
@@ -189,7 +189,7 @@ void Scene_MapEditor::loadAssetProperties()
     std::cout << "Loaded " << m_assetProperties.size() << " asset property definitions" << std::endl;
 }
 
-void Scene_MapEditor::update()
+void Scene_GridMapEditor::update()
 {
     // Handle mouse input directly to avoid key conflicts
     static bool leftMousePressed = false;
@@ -225,7 +225,7 @@ void Scene_MapEditor::update()
     sRender();
 }
 
-void Scene_MapEditor::sDoAction(const Action& action)
+void Scene_GridMapEditor::sDoAction(const Action& action)
 {
     if (action.getType() == "START") {
         // Handle exit confirmation dialog input
@@ -365,7 +365,7 @@ void Scene_MapEditor::sDoAction(const Action& action)
     }
 }
 
-void Scene_MapEditor::updateCamera()
+void Scene_GridMapEditor::updateCamera()
 {
     // Center camera on cursor position
     Vec2 targetPos = gridToScreen(m_cursorPos);
@@ -381,7 +381,7 @@ void Scene_MapEditor::updateCamera()
     m_gameView.setCenter(m_cameraPos.x, m_cameraPos.y);
 }
 
-Scene_MapEditor::GridCell* Scene_MapEditor::getGridCell(int x, int y)
+Scene_GridMapEditor::GridCell* Scene_GridMapEditor::getGridCell(int x, int y)
 {
     auto posKey = std::make_pair(x, y);
     auto posIt = m_infiniteGrid.find(posKey);
@@ -394,7 +394,7 @@ Scene_MapEditor::GridCell* Scene_MapEditor::getGridCell(int x, int y)
     return nullptr;
 }
 
-void Scene_MapEditor::setGridCell(int x, int y, const GridCell& cell)
+void Scene_GridMapEditor::setGridCell(int x, int y, const GridCell& cell)
 {
     auto posKey = std::make_pair(x, y);
     if (cell.occupied) {
@@ -412,14 +412,14 @@ void Scene_MapEditor::setGridCell(int x, int y, const GridCell& cell)
     }
 }
 
-Vec2 Scene_MapEditor::getVisibleGridMin()
+Vec2 Scene_GridMapEditor::getVisibleGridMin()
 {
     sf::Vector2f topLeft = m_game->window().mapPixelToCoords(sf::Vector2i(0, 0), m_gameView);
     Vec2 gridMin = screenToGrid(Vec2(topLeft.x, topLeft.y));
     return Vec2(gridMin.x - 1, gridMin.y - 1); // Add buffer
 }
 
-Vec2 Scene_MapEditor::getVisibleGridMax()
+Vec2 Scene_GridMapEditor::getVisibleGridMax()
 {
     sf::Vector2u windowSize = m_game->window().getSize();
     sf::Vector2f bottomRight = m_game->window().mapPixelToCoords(
@@ -428,7 +428,7 @@ Vec2 Scene_MapEditor::getVisibleGridMax()
     return Vec2(gridMax.x + 1, gridMax.y + 1); // Add buffer
 }
 
-void Scene_MapEditor::placeObject()
+void Scene_GridMapEditor::placeObject()
 {
     int cursorX = static_cast<int>(m_cursorPos.x);
     int cursorY = static_cast<int>(m_cursorPos.y);
@@ -498,7 +498,7 @@ void Scene_MapEditor::placeObject()
     markUnsavedChanges();
 }
 
-void Scene_MapEditor::removeObject()
+void Scene_GridMapEditor::removeObject()
 {
     int x = static_cast<int>(m_cursorPos.x);
     int y = static_cast<int>(m_cursorPos.y);
@@ -546,7 +546,7 @@ void Scene_MapEditor::removeObject()
     }
 }
 
-void Scene_MapEditor::scanAvailableLevels()
+void Scene_GridMapEditor::scanAvailableLevels()
 {
     m_availableLevels.clear();
     m_selectedLevelIndex = 0;
@@ -575,7 +575,7 @@ void Scene_MapEditor::scanAvailableLevels()
     std::cout << "Found " << m_availableLevels.size() << " level files in metadata/levels/" << std::endl;
 }
 
-void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
+void Scene_GridMapEditor::handleLevelSelectorInput(const Action& action)
 {
     if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         m_showLevelSelector = false;
@@ -600,7 +600,7 @@ void Scene_MapEditor::handleLevelSelectorInput(const Action& action)
     }
 }
 
-void Scene_MapEditor::handleSaveDialogInput(const Action& action)
+void Scene_GridMapEditor::handleSaveDialogInput(const Action& action)
 {
     if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         // Cancel save dialog
@@ -669,7 +669,7 @@ void Scene_MapEditor::handleSaveDialogInput(const Action& action)
     }
 }
 
-void Scene_MapEditor::handleOverwriteDialogInput(const Action& action)
+void Scene_GridMapEditor::handleOverwriteDialogInput(const Action& action)
 {
     if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         // Cancel and go back to save dialog
@@ -687,13 +687,13 @@ void Scene_MapEditor::handleOverwriteDialogInput(const Action& action)
     }
 }
 
-bool Scene_MapEditor::fileExists(const std::string& filename)
+bool Scene_GridMapEditor::fileExists(const std::string& filename)
 {
     std::ifstream file(filename);
     return file.good();
 }
 
-std::string Scene_MapEditor::sanitizeFileName(const std::string& input)
+std::string Scene_GridMapEditor::sanitizeFileName(const std::string& input)
 {
     std::string result;
     for (char c : input) {
@@ -704,7 +704,7 @@ std::string Scene_MapEditor::sanitizeFileName(const std::string& input)
     return result;
 }
 
-void Scene_MapEditor::saveLevel()
+void Scene_GridMapEditor::saveLevel()
 {
     // Generate filename with timestamp in levels directory
     auto now = std::time(nullptr);
@@ -744,7 +744,7 @@ void Scene_MapEditor::saveLevel()
     m_currentFileName = filename;
 }
 
-void Scene_MapEditor::saveLevel(const std::string& filename)
+void Scene_GridMapEditor::saveLevel(const std::string& filename)
 {
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -803,7 +803,7 @@ void Scene_MapEditor::saveLevel(const std::string& filename)
     markChangesSaved();
 }
 
-void Scene_MapEditor::loadLevel(const std::string& filename)
+void Scene_GridMapEditor::loadLevel(const std::string& filename)
 {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -901,7 +901,7 @@ void Scene_MapEditor::loadLevel(const std::string& filename)
     updateCamera();
 }
 
-void Scene_MapEditor::sRender()
+void Scene_GridMapEditor::sRender()
 {
     // Update camera position
     updateCamera();
@@ -940,7 +940,7 @@ void Scene_MapEditor::sRender()
     renderCommandOverlay();
 }
 
-void Scene_MapEditor::drawInfiniteGrid()
+void Scene_GridMapEditor::drawInfiniteGrid()
 {
     Vec2 gridMin = getVisibleGridMin();
     Vec2 gridMax = getVisibleGridMax();
@@ -964,7 +964,7 @@ void Scene_MapEditor::drawInfiniteGrid()
     // Cursor is now drawn separately in sRender() to ensure it's always on top
 }
 
-void Scene_MapEditor::drawPlacedObjects()
+void Scene_GridMapEditor::drawPlacedObjects()
 {
     Vec2 gridMin = getVisibleGridMin();
     Vec2 gridMax = getVisibleGridMax();
@@ -1107,7 +1107,7 @@ void Scene_MapEditor::drawPlacedObjects()
     }
 }
 
-void Scene_MapEditor::drawUI()
+void Scene_GridMapEditor::drawUI()
 {
     // Draw UI background - increased height by 150px, decreased width by 30px
     sf::RectangleShape uiBackground(sf::Vector2f(320, 600));
@@ -1226,7 +1226,7 @@ void Scene_MapEditor::drawUI()
     m_game->window().draw(m_uiText);
 }
 
-void Scene_MapEditor::drawAssetPreview()
+void Scene_GridMapEditor::drawAssetPreview()
 {
     // Get asset properties to determine preview size
     AssetProperties props = getAssetProperties(m_currentAsset);
@@ -1395,7 +1395,7 @@ void Scene_MapEditor::drawAssetPreview()
     m_game->window().draw(infoText);
 }
 
-void Scene_MapEditor::drawLevelSelector()
+void Scene_GridMapEditor::drawLevelSelector()
 {
     if (!m_showLevelSelector) return;
     
@@ -1435,7 +1435,7 @@ void Scene_MapEditor::drawLevelSelector()
     m_game->window().draw(m_levelSelectorText);
 }
 
-void Scene_MapEditor::drawSaveDialog()
+void Scene_GridMapEditor::drawSaveDialog()
 {
     if (!m_showSaveDialog) return;
     
@@ -1474,7 +1474,7 @@ void Scene_MapEditor::drawSaveDialog()
     m_game->window().draw(dialogText);
 }
 
-void Scene_MapEditor::drawOverwriteDialog()
+void Scene_GridMapEditor::drawOverwriteDialog()
 {
     if (!m_showOverwriteDialog) return;
     
@@ -1512,22 +1512,22 @@ void Scene_MapEditor::drawOverwriteDialog()
     m_game->window().draw(dialogText);
 }
 
-Vec2 Scene_MapEditor::screenToGrid(const Vec2& screenPos)
+Vec2 Scene_GridMapEditor::screenToGrid(const Vec2& screenPos)
 {
     return Vec2(std::floor(screenPos.x / TILE_SIZE), std::floor(screenPos.y / TILE_SIZE));
 }
 
-Vec2 Scene_MapEditor::gridToScreen(const Vec2& gridPos)
+Vec2 Scene_GridMapEditor::gridToScreen(const Vec2& gridPos)
 {
     return Vec2(gridPos.x * TILE_SIZE, gridPos.y * TILE_SIZE);
 }
 
-void Scene_MapEditor::onEnd()
+void Scene_GridMapEditor::onEnd()
 {
     // Cleanup if needed
 }
 
-void Scene_MapEditor::toggleCollision()
+void Scene_GridMapEditor::toggleCollision()
 {
     // Toggle collision on the current cell
     int x = static_cast<int>(m_cursorPos.x);
@@ -1550,7 +1550,7 @@ void Scene_MapEditor::toggleCollision()
     }
 }
 
-Vec2 Scene_MapEditor::calculateRotatedPlacement(int cursorX, int cursorY, int width, int height, float rotation)
+Vec2 Scene_GridMapEditor::calculateRotatedPlacement(int cursorX, int cursorY, int width, int height, float rotation)
 {
     Vec2 placement;
     
@@ -1590,7 +1590,7 @@ Vec2 Scene_MapEditor::calculateRotatedPlacement(int cursorX, int cursorY, int wi
     return placement;
 }
 
-void Scene_MapEditor::rotateAsset()
+void Scene_GridMapEditor::rotateAsset()
 {
     // Rotate current asset selection
     m_currentRotation += 90.0f;
@@ -1611,7 +1611,7 @@ void Scene_MapEditor::rotateAsset()
               << rotatedWidth << "x" << rotatedHeight << ")" << std::endl;
 }
 
-Scene_MapEditor::AssetProperties Scene_MapEditor::getAssetProperties(const std::string& assetName)
+Scene_GridMapEditor::AssetProperties Scene_GridMapEditor::getAssetProperties(const std::string& assetName)
 {
     auto it = m_assetProperties.find(assetName);
     if (it != m_assetProperties.end()) {
@@ -1627,7 +1627,7 @@ Scene_MapEditor::AssetProperties Scene_MapEditor::getAssetProperties(const std::
     return defaultProps;
 }
 
-bool Scene_MapEditor::canPlaceAsset(int x, int y, int width, int height)
+bool Scene_GridMapEditor::canPlaceAsset(int x, int y, int width, int height)
 {
     // Check if all cells in the area are free on the current layer
     for (int dx = 0; dx < width; dx++) {
@@ -1646,7 +1646,7 @@ bool Scene_MapEditor::canPlaceAsset(int x, int y, int width, int height)
     return true;
 }
 
-void Scene_MapEditor::clearMultiCellArea(int x, int y, int width, int height)
+void Scene_GridMapEditor::clearMultiCellArea(int x, int y, int width, int height)
 {
     // Clear all cells in the area on the current layer
     for (int dx = 0; dx < width; dx++) {
@@ -1667,7 +1667,7 @@ void Scene_MapEditor::clearMultiCellArea(int x, int y, int width, int height)
     }
 }
 
-void Scene_MapEditor::drawCollisionOverlay()
+void Scene_GridMapEditor::drawCollisionOverlay()
 {
     // Draw collision indicators for all objects with collision
     Vec2 gridMin = getVisibleGridMin();
@@ -1697,7 +1697,7 @@ void Scene_MapEditor::drawCollisionOverlay()
     }
 }
 
-void Scene_MapEditor::drawAssetSizePreview()
+void Scene_GridMapEditor::drawAssetSizePreview()
 {
     // Draw preview of asset size at cursor position
     if (m_currentAsset.empty()) return;
@@ -1829,22 +1829,22 @@ void Scene_MapEditor::drawAssetSizePreview()
     }
 }
 
-void Scene_MapEditor::markUnsavedChanges()
+void Scene_GridMapEditor::markUnsavedChanges()
 {
     m_hasUnsavedChanges = true;
 }
 
-void Scene_MapEditor::markChangesSaved()
+void Scene_GridMapEditor::markChangesSaved()
 {
     m_hasUnsavedChanges = false;
 }
 
-void Scene_MapEditor::confirmExit()
+void Scene_GridMapEditor::confirmExit()
 {
     Scene_Loading::loadMenuScene(m_game);
 }
 
-void Scene_MapEditor::handleExitConfirmDialogInput(const Action& action)
+void Scene_GridMapEditor::handleExitConfirmDialogInput(const Action& action)
 {
     if (action.getName() == ActionTypes::BACK || action.getName() == ActionTypes::CANCEL) {
         // Cancel exit, go back to editing
@@ -1864,7 +1864,7 @@ void Scene_MapEditor::handleExitConfirmDialogInput(const Action& action)
     }
 }
 
-void Scene_MapEditor::drawExitConfirmDialog()
+void Scene_GridMapEditor::drawExitConfirmDialog()
 {
     if (!m_showExitConfirmDialog) return;
     

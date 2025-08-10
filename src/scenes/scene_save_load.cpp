@@ -1,6 +1,6 @@
 #include "scene_save_load.hpp"
 #include "scene_menu.hpp"
-#include "scene_play.hpp"
+#include "scene_play_grid.hpp"
 #include "../game_engine.hpp"
 #include "../action_types.hpp"
 #include <iostream>
@@ -235,7 +235,7 @@ void Scene_SaveLoad::selectSlot()
                 std::cout << "Loaded player position: " << loadedData.playerX << ", " << loadedData.playerY << std::endl;
                 
                 // Switch to play scene with loaded data
-                auto playScene = std::make_shared<Scene_Play>(m_game, loadedData.currentLevel);
+                auto playScene = std::make_shared<Scene_PlayGrid>(m_game, loadedData.currentLevel);
                 
                 // Set the custom spawn position BEFORE initializing the scene
                 playScene->setCustomSpawnPosition(Vec2(loadedData.playerX, loadedData.playerY));
@@ -455,7 +455,7 @@ void Scene_SaveLoad::goBack()
     // Return to the previous scene (play scene when saving from game)
     if (m_mode == SAVE_MODE) {
         // Return to play scene and restore player position
-        auto playScene = std::make_shared<Scene_Play>(m_game, m_currentGameData.currentLevel);
+        auto playScene = std::make_shared<Scene_PlayGrid>(m_game, m_currentGameData.currentLevel);
         
         // Set the custom spawn position BEFORE initializing the scene
         playScene->setCustomSpawnPosition(Vec2(m_currentGameData.playerX, m_currentGameData.playerY));

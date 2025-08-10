@@ -2,7 +2,7 @@
 #include "../game_engine.hpp"
 #include "../battle_config_loader.hpp"
 #include "../action_types.hpp"
-#include "scene_play.hpp"
+#include "scene_play_grid.hpp"
 #include <iostream>
 
 Scene_Battle::Scene_Battle(GameEngine* game) 

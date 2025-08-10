@@ -1,4 +1,4 @@
-#include "scene_play.hpp"
+#include "scene_play_grid.hpp"
 #include "../components.hpp"
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
@@ -11,7 +11,7 @@
 #include <sstream>
 #include <chrono>
 
-void Scene_Play::init(const std::string &levelPath)
+void Scene_PlayGrid::init(const std::string &levelPath)
 {
     // Game controls
     registerAction(sf::Keyboard::Escape, ActionTypes::PAUSE);
@@ -57,7 +57,7 @@ void Scene_Play::init(const std::string &levelPath)
     m_soundManager->addSound("explosion", "assets/sounds/explosion.wav");
     
     // Background music is handled by global sound manager - no need to start it here
-    std::printf("Scene_Play sound effects loaded (background music handled globally)\n");
+    std::printf("Scene_PlayGrid sound effects loaded (background music handled globally)\n");
 
     // load levels
     // Tile Ground 0 0
@@ -184,16 +184,16 @@ void Scene_Play::init(const std::string &levelPath)
     spawnPlayer();
 }
 
-void Scene_Play::init()
+void Scene_PlayGrid::init()
 {
     init(m_levelPath);
 }
 
-void Scene_Play::onEnd()
+void Scene_PlayGrid::onEnd()
 {
 }
 
-void Scene_Play::sAnimation()
+void Scene_PlayGrid::sAnimation()
 {
     for (auto &entity : m_entityManager.getEntities())
     {
@@ -208,7 +208,7 @@ void Scene_Play::sAnimation()
     }
 }
 
-void Scene_Play::sCamera()
+void Scene_PlayGrid::sCamera()
 {
     // Update camera to follow player
     if (m_player && m_player->hasComponent<CCamera>() && m_player->hasComponent<CTransform>())
@@ -244,7 +244,7 @@ void Scene_Play::sCamera()
     }
 }
 
-void Scene_Play::sCollision()
+void Scene_PlayGrid::sCollision()
 {
     // Skip collision handling for grid-based movement
     // Grid movement handles collisions during movement planning
@@ -356,11 +356,11 @@ void Scene_Play::sCollision()
     }
 }
 
-void Scene_Play::sEnemySpawner()
+void Scene_PlayGrid::sEnemySpawner()
 {
 }
 
-void Scene_Play::sMovement()
+void Scene_PlayGrid::sMovement()
 {
     // Update grid movement timer
     if (m_gridMoveTimer > 0.0f) {
@@ -488,7 +488,7 @@ void Scene_Play::sMovement()
     }
 }
 
-void Scene_Play::sRender()
+void Scene_PlayGrid::sRender()
 {
     // GameEngine now handles window clearing and viewport setup
     // Set background color by drawing a full-screen rectangle
@@ -609,7 +609,7 @@ void Scene_Play::sRender()
     renderPauseMenu();
 }
 
-void Scene_Play::sDoAction(const Action &action)
+void Scene_PlayGrid::sDoAction(const Action &action)
 {
     if (action.getType() == "START")
     {
@@ -697,7 +697,7 @@ void Scene_Play::sDoAction(const Action &action)
     }
 }
 
-void Scene_Play::sDebug()
+void Scene_PlayGrid::sDebug()
 {
     // if (m_showGrid)
     // {
@@ -705,7 +705,7 @@ void Scene_Play::sDebug()
     // }
 }
 
-Vec2 Scene_Play::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity)
+Vec2 Scene_PlayGrid::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity)
 {
     if (entity->hasComponent<CTransform>() && entity->hasComponent<CBoundingBox>())
     {
@@ -718,14 +718,14 @@ Vec2 Scene_Play::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity
     return Vec2{0, 0};
 }
 
-Scene_Play::Scene_Play(GameEngine *game, const std::string &levelPath)
+Scene_PlayGrid::Scene_PlayGrid(GameEngine *game, const std::string &levelPath)
     : Scene(game), m_levelPath(levelPath)
 {
     // Initialize game start time for play time tracking
     m_gameStartTime = std::chrono::steady_clock::now();
 }
 
-void Scene_Play::update()
+void Scene_PlayGrid::update()
 {
     // Calculate delta time
     m_deltaTime = m_deltaClock.restart().asSeconds();
@@ -747,14 +747,14 @@ void Scene_Play::update()
     sDebug();
 }
 
-void Scene_Play::setCustomSpawnPosition(const Vec2& position)
+void Scene_PlayGrid::setCustomSpawnPosition(const Vec2& position)
 {
     m_useDefaultSpawn = false;
     m_customSpawnPosition = position;
     std::cout << "Set custom spawn position: " << position.x << ", " << position.y << std::endl;
 }
 
-void Scene_Play::spawnPlayer()
+void Scene_PlayGrid::spawnPlayer()
 {
     m_player = m_entityManager.addEntity("Player");
     
@@ -846,7 +846,7 @@ void Scene_Play::spawnPlayer()
     std::printf("Player spawned at position: %f, %f\n", startPos.x, startPos.y);
 }
 
-bool Scene_Play::isColliding(const Vec2& pos1, const Vec2& size1, const Vec2& pos2, const Vec2& size2)
+bool Scene_PlayGrid::isColliding(const Vec2& pos1, const Vec2& size1, const Vec2& pos2, const Vec2& size2)
 {
     return (pos1.x < pos2.x + size2.x &&
             pos1.x + size1.x > pos2.x &&
@@ -854,7 +854,7 @@ bool Scene_Play::isColliding(const Vec2& pos1, const Vec2& size1, const Vec2& po
             pos1.y + size1.y > pos2.y);
 }
 
-bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
+bool Scene_PlayGrid::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
 {
     // Check window boundaries
     float windowWidth = m_game->window().getSize().x;
@@ -918,7 +918,7 @@ bool Scene_Play::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
 }
 
 // Dialogue interaction system implementation
-void Scene_Play::sInteraction()
+void Scene_PlayGrid::sInteraction()
 {
     if (!m_player || !m_player->hasComponent<CTransform>()) {
         return;
@@ -953,7 +953,7 @@ void Scene_Play::sInteraction()
     }
 }
 
-void Scene_Play::startDialogue(std::shared_ptr<Entity> npc)
+void Scene_PlayGrid::startDialogue(std::shared_ptr<Entity> npc)
 {
     if (!npc || !npc->hasComponent<CSprite>()) {
         return;
@@ -992,7 +992,7 @@ void Scene_Play::startDialogue(std::shared_ptr<Entity> npc)
     }
 }
 
-std::string Scene_Play::getNPCDialogueFile(const std::string& npcName)
+std::string Scene_PlayGrid::getNPCDialogueFile(const std::string& npcName)
 {
     // Map NPC sprite names to their dialogue files
     if (npcName == "Dummy") {
@@ -1012,7 +1012,7 @@ std::string Scene_Play::getNPCDialogueFile(const std::string& npcName)
 
 // Save System Implementation
 
-void Scene_Play::sSaveSystem()
+void Scene_PlayGrid::sSaveSystem()
 {
     if (!m_player) return;
     
@@ -1048,7 +1048,7 @@ void Scene_Play::sSaveSystem()
     }
 }
 
-void Scene_Play::openSaveMenu()
+void Scene_PlayGrid::openSaveMenu()
 {
     // Store current player position before opening save menu
     if (m_player) {
@@ -1061,7 +1061,7 @@ void Scene_Play::openSaveMenu()
     m_game->changeScene("SaveLoad", saveScene);
 }
 
-SaveData Scene_Play::getCurrentGameData()
+SaveData Scene_PlayGrid::getCurrentGameData()
 {
     SaveData data;
     
@@ -1086,7 +1086,7 @@ SaveData Scene_Play::getCurrentGameData()
     return data;
 }
 
-void Scene_Play::applyLoadedGameData(const SaveData& data)
+void Scene_PlayGrid::applyLoadedGameData(const SaveData& data)
 {
     std::cout << "Applying loaded game data..." << std::endl;
     std::cout << "Setting player spawn position to: " << data.playerX << ", " << data.playerY << std::endl;
@@ -1108,7 +1108,7 @@ void Scene_Play::applyLoadedGameData(const SaveData& data)
     std::cout << "Applied loaded game data" << std::endl;
 }
 
-void Scene_Play::autoSaveGame()
+void Scene_PlayGrid::autoSaveGame()
 {
     SaveData data = getCurrentGameData();
     m_saveSystem.autoSave(data);
@@ -1116,7 +1116,7 @@ void Scene_Play::autoSaveGame()
 
 // Pause Menu Implementation
 
-void Scene_Play::showPauseMenu()
+void Scene_PlayGrid::showPauseMenu()
 {
     m_showPauseMenu = true;
     m_pauseMenuSelection = 0; // Default to Resume
@@ -1125,14 +1125,14 @@ void Scene_Play::showPauseMenu()
     std::cout << "Game paused - pause menu shown" << std::endl;
 }
 
-void Scene_Play::hidePauseMenu()
+void Scene_PlayGrid::hidePauseMenu()
 {
     m_showPauseMenu = false;
     setPaused(false); // Unpause the game
     std::cout << "Game resumed - pause menu hidden" << std::endl;
 }
 
-void Scene_Play::handlePauseMenuInput(const Action& action)
+void Scene_PlayGrid::handlePauseMenuInput(const Action& action)
 {
     std::cout << "Pause menu input: " << action.getName() << std::endl;
     
@@ -1167,7 +1167,7 @@ void Scene_Play::handlePauseMenuInput(const Action& action)
     }
 }
 
-void Scene_Play::setupPauseMenu()
+void Scene_PlayGrid::setupPauseMenu()
 {
     // Use window dimensions for UI positioning (not game view)
     sf::Vector2u windowSize = m_game->window().getSize();
@@ -1225,7 +1225,7 @@ void Scene_Play::setupPauseMenu()
     }
 }
 
-void Scene_Play::renderPauseMenu()
+void Scene_PlayGrid::renderPauseMenu()
 {
     if (!m_showPauseMenu) return;
     

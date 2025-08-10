@@ -8,7 +8,7 @@
 class Scene_Dialogue;
 class Scene_SaveLoad;
 
-class Scene_Play : public Scene
+class Scene_PlayGrid : public Scene
 {
     struct PlayerConfig { 
         float X, Y, CX, CY, SPEED, MAXSPEED, JUMP, GRAVITY;
@@ -97,7 +97,7 @@ protected:
     bool wouldCollideAtPosition(const Vec2& position, const Vec2& size);
     Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);
 public:
-    Scene_Play(GameEngine* game, const std::string& levelPath);
+    Scene_PlayGrid(GameEngine* game, const std::string& levelPath);
     void update();
     
     // Public methods for save/load system

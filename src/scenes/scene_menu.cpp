@@ -1,7 +1,7 @@
 #include "scene_menu.hpp"
-#include "scene_play.hpp"
+#include "scene_play_grid.hpp"
 #include "scene_options.hpp"
-#include "scene_map_editor.hpp"
+#include "scene_grid_map_editor.hpp"
 #include "scene_loading.hpp"
 #include "scene_save_load.hpp"
 #include "scene_level_selector.hpp"
@@ -23,7 +23,7 @@ void Scene_Menu::init()
     m_menuStrings.push_back("New Game");
     m_menuStrings.push_back("Load Game");
     m_menuStrings.push_back("Load Level");  // Add Load Level option
-    m_menuStrings.push_back("Map Editor");
+    m_menuStrings.push_back("Grid Map Editor");
     m_menuStrings.push_back("Options");
     m_menuStrings.push_back("Exit");
     

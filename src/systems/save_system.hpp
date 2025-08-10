@@ -9,7 +9,7 @@
 
 // Forward declarations
 class GameEngine;
-class Scene_Play;
+class Scene_PlayGrid;
 
 struct SaveData {
     // Game state

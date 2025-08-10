@@ -1,7 +1,7 @@
 #include "scene_loading.hpp"
-#include "scene_play.hpp"
+#include "scene_play_grid.hpp"
 #include "scene_menu.hpp"
-#include "scene_map_editor.hpp"
+#include "scene_grid_map_editor.hpp"
 #include "../game_engine.hpp"
 #include <iostream>
 #include <fstream>
@@ -317,7 +317,7 @@ void Scene_Loading::loadPlayScene(GameEngine* game, const std::string& levelPath
     };
     
     auto sceneFactory = [game, levelPath]() {
-        return std::make_shared<Scene_Play>(game, levelPath);
+        return std::make_shared<Scene_PlayGrid>(game, levelPath);
     };
     
     auto loadingScene = std::make_shared<Scene_Loading>(game, "Play", sceneFactory, playAssets, playSounds);
@@ -355,7 +355,7 @@ void Scene_Loading::loadMapEditorScene(GameEngine* game)
     };
     
     auto sceneFactory = [game]() {
-        return std::make_shared<Scene_MapEditor>(game);
+        return std::make_shared<Scene_GridMapEditor>(game);
     };
     
     auto loadingScene = std::make_shared<Scene_Loading>(game, "MapEditor", sceneFactory, editorAssets, editorSounds);

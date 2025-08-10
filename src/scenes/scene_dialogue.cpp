@@ -1,6 +1,6 @@
 #include "scene_dialogue.hpp"
 #include "scene_menu.hpp"
-#include "scene_play.hpp"
+#include "scene_play_grid.hpp"
 #include "../game_engine.hpp"
 #include "../action_types.hpp"
 #include <iostream>
@@ -510,7 +510,7 @@ void Scene_Dialogue::update()
         } else {
             // Fallback to default behavior (shouldn't happen with new system)
             std::cout << "Warning: No preserved state, using default level" << std::endl;
-            m_game->changeScene("Play", std::make_shared<Scene_Play>(m_game, "metadata/levels/level_1.txt"));
+            m_game->changeScene("Play", std::make_shared<Scene_PlayGrid>(m_game, "metadata/levels/level_1.txt"));
         }
     }
     

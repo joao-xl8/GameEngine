@@ -1,5 +1,5 @@
 #include "scene_level_selector.hpp"
-#include "scene_play.hpp"
+#include "scene_play_grid.hpp"
 #include "scene_menu.hpp"
 #include "scene_loading.hpp"
 #include "../game_engine.hpp"
