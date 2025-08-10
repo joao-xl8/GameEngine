@@ -172,7 +172,7 @@ void Scene_Menu::sDoAction(const Action &action)
                         m_game->quit();
                     }
                 }
-                else if (m_menuStrings[m_menuIndex] == "Map Editor")
+                else if (m_menuStrings[m_menuIndex] == "Grid Map Editor")
                 {
                     // Use loading screen for Map Editor transition
                     try {

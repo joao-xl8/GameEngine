@@ -131,20 +131,49 @@ void Scene_PlayGrid::init(const std::string &levelPath)
         // Create sprite component with rotation support
         auto spriteComponent = std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName));
         
-        // Apply rotation if specified
+        // Apply rotation if specified - using same logic as grid map editor
         if (rotation != 0) {
-            spriteComponent->sprite.setOrigin(
-                spriteComponent->sprite.getTexture()->getSize().x / 2.0f,
-                spriteComponent->sprite.getTexture()->getSize().y / 2.0f
-            );
+            sf::Vector2u textureSize = spriteComponent->sprite.getTexture()->getSize();
+            
+            // Calculate the actual occupied area dimensions after rotation
+            int occupiedWidth = width;
+            int occupiedHeight = height;
+            if (rotation == 90 || rotation == 270) {
+                std::swap(occupiedWidth, occupiedHeight);
+            }
+            
+            // Apply scaling - same logic as editor
+            if (rotation == 90 || rotation == 270) {
+                // For 90/270 degree rotations, swap the scaling
+                float scaleX = static_cast<float>(occupiedWidth * m_tileSize.x) / textureSize.y;
+                float scaleY = static_cast<float>(occupiedHeight * m_tileSize.y) / textureSize.x;
+                spriteComponent->sprite.setScale(scaleX, scaleY);
+            } else {
+                // For 0/180 degree rotations, use normal scaling
+                float scaleX = static_cast<float>(occupiedWidth * m_tileSize.x) / textureSize.x;
+                float scaleY = static_cast<float>(occupiedHeight * m_tileSize.y) / textureSize.y;
+                spriteComponent->sprite.setScale(scaleX, scaleY);
+            }
+            
+            // Set origin to center of the texture
+            spriteComponent->sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
             spriteComponent->sprite.setRotation(static_cast<float>(rotation));
             
-            // Adjust position to center the rotated sprite
-            auto transform = e->getComponent<CTransform>();
-            transform->pos.x += m_tileSize.x / 2.0f;
-            transform->pos.y += m_tileSize.y / 2.0f;
+            // Position at the center of the occupied area - same as editor
+            float centerX = x * m_tileSize.x + (occupiedWidth * m_tileSize.x) / 2.0f;
+            float centerY = y * m_tileSize.y + (occupiedHeight * m_tileSize.y) / 2.0f;
             
-            std::printf("Applied rotation %d° to %s at (%d, %d)\n", rotation, spriteName.c_str(), x, y);
+            // Update the transform to use the center position
+            e->getComponent<CTransform>()->pos = Vec2{centerX, centerY};
+            
+            std::printf("Applied rotation %d° to %s at (%d, %d) -> center (%.1f, %.1f)\n", 
+                       rotation, spriteName.c_str(), x, y, centerX, centerY);
+        } else {
+            // No rotation - use standard scaling and positioning
+            sf::Vector2u textureSize = spriteComponent->sprite.getTexture()->getSize();
+            float scaleX = static_cast<float>(m_tileSize.x) / textureSize.x;
+            float scaleY = static_cast<float>(m_tileSize.y) / textureSize.y;
+            spriteComponent->sprite.setScale(scaleX, scaleY);
         }
         
         e->addComponent<CSprite>(spriteComponent);
