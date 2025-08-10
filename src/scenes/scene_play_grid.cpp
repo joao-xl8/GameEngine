@@ -150,9 +150,10 @@ void Scene_PlayGrid::init(const std::string &levelPath)
         e->addComponent<CSprite>(spriteComponent);
         e->addComponent<CLayer>(std::make_shared<CLayer>(layer));
         
-        // Add collision for decoration layers (1-3) or if explicitly specified
-        if ((layer >= CLayer::DECORATION_1 && layer <= CLayer::DECORATION_3) || collision == 1) {
+        // Add collision only if explicitly specified in the level file
+        if (collision == 1) {
             e->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(m_tileSize));
+            std::printf("Added collision to %s at (%d, %d)\n", spriteName.c_str(), x, y);
         }
         
         // Handle special entity layer objects (layer 4)
