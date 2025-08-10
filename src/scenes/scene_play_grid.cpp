@@ -84,13 +84,26 @@ void Scene_PlayGrid::init(const std::string &levelPath)
         std::string layerStr;
         std::string spriteName;
         int x, y;
+        
+        // Extended format support: Layer SpriteName X Y [Collision] [Rotation] [Width] [Height] [OriginX] [OriginY]
+        int collision = 0;
+        int rotation = 0;
+        int width = 1;
+        int height = 1;
+        int originX = -1; // Use -1 to indicate not set
+        int originY = -1;
         std::string scriptName = ""; // Optional script name for Script Tiles
         
         ss >> layerStr >> spriteName >> x >> y;
         
-        // Parse optional script name for Script Tiles
-        if (ss >> scriptName) {
-            // Script name was provided
+        // Try to read extended format data
+        if (ss >> collision >> rotation >> width >> height >> originX >> originY) {
+            // Extended format with all parameters
+        } else {
+            // Reset stream and try to read just script name (old format)
+            ss.clear();
+            ss.str(line);
+            ss >> layerStr >> spriteName >> x >> y >> scriptName;
         }
         
         // Parse layer number
@@ -114,11 +127,31 @@ void Scene_PlayGrid::init(const std::string &levelPath)
         
         // Add basic components
         e->addComponent<CTransform>(std::make_shared<CTransform>(Vec2{x * m_tileSize.x, y * m_tileSize.y}));
-        e->addComponent<CSprite>(std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName)));
+        
+        // Create sprite component with rotation support
+        auto spriteComponent = std::make_shared<CSprite>(spriteName, m_game->getAssets().getTexture(spriteName));
+        
+        // Apply rotation if specified
+        if (rotation != 0) {
+            spriteComponent->sprite.setOrigin(
+                spriteComponent->sprite.getTexture()->getSize().x / 2.0f,
+                spriteComponent->sprite.getTexture()->getSize().y / 2.0f
+            );
+            spriteComponent->sprite.setRotation(static_cast<float>(rotation));
+            
+            // Adjust position to center the rotated sprite
+            auto transform = e->getComponent<CTransform>();
+            transform->pos.x += m_tileSize.x / 2.0f;
+            transform->pos.y += m_tileSize.y / 2.0f;
+            
+            std::printf("Applied rotation %d° to %s at (%d, %d)\n", rotation, spriteName.c_str(), x, y);
+        }
+        
+        e->addComponent<CSprite>(spriteComponent);
         e->addComponent<CLayer>(std::make_shared<CLayer>(layer));
         
-        // Add collision for decoration layers (1-3)
-        if (layer >= CLayer::DECORATION_1 && layer <= CLayer::DECORATION_3) {
+        // Add collision for decoration layers (1-3) or if explicitly specified
+        if ((layer >= CLayer::DECORATION_1 && layer <= CLayer::DECORATION_3) || collision == 1) {
             e->addComponent<CBoundingBox>(std::make_shared<CBoundingBox>(m_tileSize));
         }
         
@@ -174,8 +207,14 @@ void Scene_PlayGrid::init(const std::string &levelPath)
             }
         }
         
-        std::printf("Loaded %s '%s' on layer %d at position (%d, %d)\n", 
-                   CLayer::getLayerName(layer), spriteName.c_str(), layerNum, x, y);
+        std::string logMessage = "Loaded " + std::string(CLayer::getLayerName(layer)) + " '" + spriteName + "' on layer " + std::to_string(layerNum) + " at position (" + std::to_string(x) + ", " + std::to_string(y) + ")";
+        if (rotation != 0) {
+            logMessage += " with rotation " + std::to_string(rotation) + "°";
+        }
+        if (collision == 1) {
+            logMessage += " with collision";
+        }
+        std::printf("%s\n", logMessage.c_str());
     }
     file.close();
     std::printf("Level loaded\n");
