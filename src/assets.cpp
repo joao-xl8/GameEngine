@@ -146,6 +146,24 @@ const sf::SoundBuffer &Assets::getSoundBuffer(const std::string &name) const
     return it->second;
 }
 
+void Assets::addShader(const std::string &name, const std::string &fragmentPath)
+{
+    if (!m_shaderManager.loadFragmentShader(name, fragmentPath))
+    {
+        std::cerr << "Failed to load shader: " << name << " from " << fragmentPath << std::endl;
+    }
+}
+
+sf::Shader* Assets::getShader(const std::string &name)
+{
+    return m_shaderManager.getShader(name);
+}
+
+ShaderManager& Assets::getShaderManager()
+{
+    return m_shaderManager;
+}
+
 // const Animation &Assets::getAnimation(const std::string &name) const
 // {
 //     return m_animations.at(name);

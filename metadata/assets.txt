@@ -9,6 +9,7 @@ Texture Misc2 assets/imgs/misc2.png
 Texture LargeCastle assets/imgs/large_castle.png
 Texture WideWall assets/imgs/wide_wall.png
 Texture TallTower assets/imgs/tall_tower.png
+Texture ShaderTest assets/imgs/shader_test.png
 
 # Character Assets - Player
 Texture Player assets/characters/player/sprites/Player.png
