@@ -490,29 +490,9 @@ void Scene_PlayGrid::sCollision()
         }
         
         // Keep player within window bounds
-        float windowWidth = m_game->window().getSize().x;
-        float windowHeight = m_game->window().getSize().y;
-        
-        if (playerTransform->pos.x < 0)
-        {
-            playerTransform->pos.x = 0;
-            playerTransform->velocity.x = 0;
-        }
-        if (playerTransform->pos.x + playerBBox->size.x > windowWidth)
-        {
-            playerTransform->pos.x = windowWidth - playerBBox->size.x;
-            playerTransform->velocity.x = 0;
-        }
-        if (playerTransform->pos.y < 0)
-        {
-            playerTransform->pos.y = 0;
-            playerTransform->velocity.y = 0;
-        }
-        if (playerTransform->pos.y + playerBBox->size.y > windowHeight)
-        {
-            playerTransform->pos.y = windowHeight - playerBBox->size.y;
-            playerTransform->velocity.y = 0;
-        }
+    // Remove boundary restrictions - allow movement to negative positions
+    // The world should be infinite in all directions
+    // (Removed window boundary clamping code)
     }
 }
 
@@ -1016,15 +996,8 @@ bool Scene_PlayGrid::isColliding(const Vec2& pos1, const Vec2& size1, const Vec2
 
 bool Scene_PlayGrid::wouldCollideAtPosition(const Vec2& position, const Vec2& size)
 {
-    // Check window boundaries
-    float windowWidth = m_game->window().getSize().x;
-    float windowHeight = m_game->window().getSize().y;
-    
-    if (position.x < 0 || position.y < 0 || 
-        position.x + size.x > windowWidth || 
-        position.y + size.y > windowHeight) {
-        return true; // Would be outside window bounds
-    }
+    // Remove window boundary restrictions - allow movement to negative positions
+    // The world should be infinite in all directions
     
     // Check collision with entities that have collision (decoration layers 1-3)
     for (auto &entity : m_entityManager.getEntities())

@@ -71,6 +71,7 @@ protected:
     
     // UI controls
     bool m_showInfoPanel = true;      // Toggle for info panel visibility
+    bool m_showAxis = true;          // Toggle for axis display
     
     // UI elements
     sf::Text m_uiText;
@@ -107,6 +108,7 @@ protected:
     void loadAssetProperties();
     void updateCamera();
     void drawInfiniteGrid();
+    void drawAxis();
     void drawUI();
     void drawAssetPreview();
     void drawPlacedObjects();

@@ -68,6 +68,7 @@ void Scene_GridMapEditor::init()
     
     // UI controls
     registerAction(sf::Keyboard::I, "TOGGLE_INFO");       // Toggle info panel
+    registerAction(sf::Keyboard::Y, "TOGGLE_AXIS");       // Toggle axis display
     
     
     // Mouse support - use different approach to avoid key conflicts
@@ -120,6 +121,7 @@ void Scene_GridMapEditor::init()
     std::cout << "V: Show/hide collision overlay\n";
     std::cout << "Up/Down Arrows: Zoom in/out\n";
     std::cout << "I: Toggle info panel\n";
+    std::cout << "Y: Toggle axis display\n";
     std::cout << "F: Save level (to metadata/levels/)\n";
     std::cout << "L: Open level selector GUI\n";
     std::cout << "Escape: Back to menu\n";
@@ -342,6 +344,10 @@ void Scene_GridMapEditor::sDoAction(const Action& action)
         else if (action.getName() == "TOGGLE_INFO") {
             m_showInfoPanel = !m_showInfoPanel;
             std::cout << "Info panel: " << (m_showInfoPanel ? "ON" : "OFF") << std::endl;
+        }
+        else if (action.getName() == "TOGGLE_AXIS") {
+            m_showAxis = !m_showAxis;
+            std::cout << "Axis display: " << (m_showAxis ? "ON" : "OFF") << std::endl;
         }
         else if (action.getName() == "SHOW_COLLISION") {
             m_showCollision = !m_showCollision;
@@ -909,6 +915,12 @@ void Scene_GridMapEditor::sRender()
     m_game->window().setView(m_gameView);
     
     drawInfiniteGrid();
+    
+    // Draw axis if enabled
+    if (m_showAxis) {
+        drawAxis();
+    }
+    
     drawPlacedObjects();
     
     // Draw collision overlay if enabled
@@ -961,6 +973,83 @@ void Scene_GridMapEditor::drawInfiniteGrid()
     }
     
     // Cursor is now drawn separately in sRender() to ensure it's always on top
+}
+
+void Scene_GridMapEditor::drawAxis()
+{
+    Vec2 gridMin = getVisibleGridMin();
+    Vec2 gridMax = getVisibleGridMax();
+    
+    // Draw X-axis (horizontal line through y=0)
+    if (gridMin.y <= 0 && gridMax.y >= 0) {
+        float axisY = 0 * TILE_SIZE;
+        float startX = gridMin.x * TILE_SIZE;
+        float endX = gridMax.x * TILE_SIZE;
+        
+        sf::RectangleShape xAxis(sf::Vector2f(endX - startX, 2));
+        xAxis.setPosition(startX, axisY);
+        xAxis.setFillColor(sf::Color::Red);
+        m_game->window().draw(xAxis);
+        
+        // Draw X-axis labels and symbols
+        sf::Text xLabel;
+        xLabel.setFont(m_game->getAssets().getFont("ShareTech"));
+        xLabel.setCharacterSize(12);
+        xLabel.setFillColor(sf::Color::Red);
+        
+        // Plus symbol at positive X end (right side of screen)
+        if (gridMax.x > 0) {
+            xLabel.setString("+");
+            xLabel.setPosition(endX - 15, axisY - 15);
+            m_game->window().draw(xLabel);
+        }
+        
+        // Minus symbol at negative X end (left side of screen)  
+        if (gridMin.x < 0) {
+            xLabel.setString("-");
+            xLabel.setPosition(startX + 5, axisY - 15);
+            m_game->window().draw(xLabel);
+        }
+        
+        // Origin label (0,0) - only show if origin is visible
+        if (gridMin.x <= 0 && gridMax.x >= 0) {
+            xLabel.setString("(0,0)");
+            xLabel.setPosition(5, axisY + 5);
+            m_game->window().draw(xLabel);
+        }
+    }
+    
+    // Draw Y-axis (vertical line through x=0)
+    if (gridMin.x <= 0 && gridMax.x >= 0) {
+        float axisX = 0 * TILE_SIZE;
+        float startY = gridMin.y * TILE_SIZE;
+        float endY = gridMax.y * TILE_SIZE;
+        
+        sf::RectangleShape yAxis(sf::Vector2f(2, endY - startY));
+        yAxis.setPosition(axisX, startY);
+        yAxis.setFillColor(sf::Color::Green);
+        m_game->window().draw(yAxis);
+        
+        // Draw Y-axis labels and symbols
+        sf::Text yLabel;
+        yLabel.setFont(m_game->getAssets().getFont("ShareTech"));
+        yLabel.setCharacterSize(15);
+        yLabel.setFillColor(sf::Color::Green);
+        
+        // Plus symbol at positive Y end (bottom of screen)
+        if (gridMax.y > 0) {
+            yLabel.setString("+");
+            yLabel.setPosition(axisX + 5, endY - 20);
+            m_game->window().draw(yLabel);
+        }
+        
+        // Minus symbol at negative Y end (top of screen)
+        if (gridMin.y < 0) {
+            yLabel.setString("-");
+            yLabel.setPosition(axisX + 5, startY + 5);
+            m_game->window().draw(yLabel);
+        }
+    }
 }
 
 void Scene_GridMapEditor::drawPlacedObjects()
@@ -1487,7 +1576,7 @@ void Scene_GridMapEditor::drawSaveDialog()
     oss << "Enter level number (numbers only):\n";
     oss << "Filename will be: level_" << m_inputFileName << ".txt\n\n";
     oss << "Current input: " << m_inputFileName << "_\n\n";
-    oss << "Use number keys (0-9), Backspace to edit\n";
+    oss << "Use number keys (0-9) to edit\n";
     oss << "Press SPACE to confirm, C to cancel";
     
     dialogText.setString(oss.str());
