@@ -32,9 +32,7 @@ enum class Panel {
 };
 
 enum class AccordionSection {
-    ASSET_SLICING = 0,  // Configure how to slice the tileset
-    TILE_TYPES = 1,     // Manage different tile types  
-    FILE_OPERATIONS = 2 // Save/Load configurations
+    ASSET_SLICING = 0   // Configure how to slice the tileset - only section needed
 };
 
 class Scene_AutoTileConfig : public Scene {
@@ -72,6 +70,7 @@ private:
     int m_spacingY;
     int m_offsetX;      // Starting X position within texture
     int m_offsetY;      // Starting Y position within texture
+    int m_gridLineThickness; // Grid line thickness in pixels
     
     // Preview panel navigation
     float m_previewScrollX; // Scroll offset for large assets
@@ -156,9 +155,6 @@ private:
     int setupAccordionItems(AccordionSection section, int yPos);
     void setupContentPanel();
     void updateContentPanel();
-
-    
-
     
     // Accordion menu management
     void toggleAccordionSection(AccordionSection section);
@@ -169,18 +165,12 @@ private:
     // Content panel drawing methods
     void drawCurrentSectionContent(float x, float y, float width, float height);
     void drawAssetSlicingPanel(float x, float y, float width, float height);
-    void drawRuleCreationPanel(float x, float y, float width, float height);
-    void drawTileTypesPanel(float x, float y, float width, float height);
-    void drawFileOperationsPanel(float x, float y, float width, float height);
     
     // Content panel management
     
     // Navigation and input
     void handleNavigation(const std::string& direction);
     void handleAssetSlicingNavigation(const std::string& direction);
-    void handleRuleCreationNavigation(const std::string& direction);
-    void handleTileTypesNavigation(const std::string& direction);
-    void handleFileOperationsNavigation(const std::string& direction);
     void handleSelection();
     void handleConfirmation();
     void switchPanel();
@@ -195,12 +185,14 @@ private:
     std::string getFileOperationName(int operationIndex);
     void updateSlicingParameters();
     void adjustSlicingParameter(int delta);
-    void executeFileOperation(int operationIndex);
     void drawAssetTree(float x, float y, float width, float height);
     void drawSlicingForm(float x, float y, float width, float height);
     void drawAssetPreview(float x, float y, float width, float height);
     void drawSlicingGrid(float x, float y, float scale);
     void drawSlicingGridToTexture(sf::RenderTexture& texture, float x, float y, float scale);
+    
+    // Helper function to get tile content rectangle (inside grid lines)
+    sf::IntRect getTileContentRect(int tileX, int tileY) const;
     
     // Tileset operations
 
@@ -239,7 +231,7 @@ private:
     void drawTileRuleGrid(float x, float y, float width, float height);
     void drawTileRuleGridInForm(float x, float y, float width, float height);
     sf::Vector2i getTilePositionFromPixel(sf::Vector2f pixelPos);
-    bool isValidTilePosition(sf::Vector2i tilePos);
+    bool isValidTilePosition(sf::Vector2i tilePos) const;
     
     // Utility functions
     sf::Vector2i getTilesetGridPosition(sf::Vector2i mousePos);

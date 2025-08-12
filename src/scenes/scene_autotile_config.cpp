@@ -51,8 +51,6 @@ void Scene_AutoTileConfig::init() {
     registerAction(sf::Keyboard::Tab, "SWITCH_PANEL");           // Switch between Menu and Content
     registerAction(sf::Keyboard::Enter, "TOGGLE_SECTION");       // Expand/Collapse accordion section
     registerAction(sf::Keyboard::Num1, "GOTO_ASSET_SLICING");    // Jump to Asset Slicing
-    registerAction(sf::Keyboard::Num2, "GOTO_TILE_TYPES");       // Jump to Tile Types
-    registerAction(sf::Keyboard::Num3, "GOTO_FILE_OPERATIONS");  // Jump to File Operations
     
     // Context-sensitive controls (change based on current section)
     registerAction(sf::Keyboard::N, "NEW_ITEM");                 // New rule/tile type/etc
@@ -83,6 +81,7 @@ void Scene_AutoTileConfig::init() {
     m_spacingY = 0;
     m_offsetX = 0;
     m_offsetY = 0;
+    m_gridLineThickness = 1; // Default 1 pixel grid lines
     m_previewScrollX = 0;
     m_previewScrollY = 0;
     m_currentPreviewWidth = 0;
@@ -117,15 +116,6 @@ void Scene_AutoTileConfig::calculateResponsiveLayout() {
     m_panelHeight = windowSize.y - 120; // Leave space for title and bottom margin
     m_contentPanelWidth = windowSize.x - 40; // Full width minus margins
     m_menuPanelWidth = 0; // No menu panel
-    
-    std::cout << "=== FULL-WIDTH LAYOUT DEBUG ===" << std::endl;
-    std::cout << "Window size: " << windowSize.x << "x" << windowSize.y << std::endl;
-    std::cout << "Content panel: " << m_contentPanelWidth << "px (full width)" << std::endl;
-    std::cout << "Panel height: " << m_panelHeight << "px" << std::endl;
-    std::cout << "Asset tree width (20%): " << (m_contentPanelWidth * 0.2f) << "px" << std::endl;
-    std::cout << "Slicing form width (35%): " << (m_contentPanelWidth * 0.35f) << "px" << std::endl;
-    std::cout << "Preview width (45%): " << (m_contentPanelWidth * 0.45f) << "px" << std::endl;
-    std::cout << "===============================" << std::endl;
 }
 
 void Scene_AutoTileConfig::setupUI() {
@@ -153,8 +143,6 @@ void Scene_AutoTileConfig::setupUI() {
     // Center the tile type text
     sf::FloatRect tileTypeBounds = m_currentTileTypeText.getLocalBounds();
     m_currentTileTypeText.setPosition((windowSize.x - tileTypeBounds.width) / 2, 35);
-    
-    std::cout << "UI setup complete - Title at (" << m_titleText.getPosition().x << ", " << m_titleText.getPosition().y << ")" << std::endl;
 }
 
 void Scene_AutoTileConfig::setupAccordionMenu() {
@@ -216,9 +204,6 @@ void Scene_AutoTileConfig::setupAccordionMenu() {
             yPos += setupAccordionItems(static_cast<AccordionSection>(i), yPos);
         }
     }
-    
-    std::cout << "Accordion menu setup - Panel at (" << m_menuPanel.getPosition().x << ", " << m_menuPanel.getPosition().y 
-              << ") size (" << m_menuPanel.getSize().x << ", " << m_menuPanel.getSize().y << ")" << std::endl;
 }
 
 int Scene_AutoTileConfig::setupAccordionItems(AccordionSection section, int yPos) {
@@ -231,11 +216,11 @@ int Scene_AutoTileConfig::setupAccordionItems(AccordionSection section, int yPos
             itemNames = {"Configure Tile Size", "Set Grid Layout", "Adjust Margins", "Preview Slicing"};
             itemColors = {sf::Color(80, 140, 200), sf::Color(90, 150, 210), sf::Color(100, 160, 220), sf::Color(110, 170, 230)};
             break;
-        case AccordionSection::TILE_TYPES:
+//         case AccordionSection::TILE_TYPES:
             itemNames = {"Wall", "Ground", "Water", "Add New Type"};
             itemColors = {sf::Color(140, 200, 80), sf::Color(150, 210, 90), sf::Color(160, 220, 100), sf::Color(170, 230, 110)};
             break;
-        case AccordionSection::FILE_OPERATIONS:
+//         case AccordionSection::FILE_OPERATIONS:
             itemNames = {"Save Current", "Load Config", "Export All", "Import Config"};
             itemColors = {sf::Color(200, 80, 140), sf::Color(210, 90, 150), sf::Color(220, 100, 160), sf::Color(230, 110, 170)};
             break;
@@ -292,9 +277,6 @@ void Scene_AutoTileConfig::setupContentPanel() {
     
     // Setup initial content based on expanded section
     updateContentPanel();
-    
-    std::cout << "Content panel setup - Panel at (" << m_contentPanel.getPosition().x << ", " << m_contentPanel.getPosition().y 
-              << ") size (" << m_contentPanel.getSize().x << ", " << m_contentPanel.getSize().y << ")" << std::endl;
 }
 
 void Scene_AutoTileConfig::updateContentPanel() {
@@ -302,43 +284,27 @@ void Scene_AutoTileConfig::updateContentPanel() {
         case AccordionSection::ASSET_SLICING:
             m_contentTitle.setString("📐 Asset Slicing & Selection");
             break;
-        case AccordionSection::TILE_TYPES:
-            m_contentTitle.setString("🎨 Tile Type Management");
-            break;
-        case AccordionSection::FILE_OPERATIONS:
-            m_contentTitle.setString("💾 File Operations & Export");
+        default:
+            // Only asset slicing is supported
+            m_contentTitle.setString("📐 Asset Slicing & Selection");
             break;
     }
 }
 
 void Scene_AutoTileConfig::sDoAction(const Action& action) {
-    std::cout << "Action received: " << action.getName() << " (type: " << action.getType() << ")" << std::endl;
-    
     if (action.getType() == "START") {
         if (action.getName() == ActionTypes::BACK) {
-            std::cout << "Back action - returning to menu" << std::endl;
             Scene_Loading::loadMenuScene(m_game);
         }
         // 1-3 Keys: Switch tabs
         else if (action.getName() == "GOTO_ASSET_SLICING") {
-            std::cout << "Going to Asset Slicing section" << std::endl;
             expandAccordionSection(AccordionSection::ASSET_SLICING);
-        }
-        else if (action.getName() == "GOTO_TILE_TYPES") {
-            std::cout << "Going to Tile Types section" << std::endl;
-            expandAccordionSection(AccordionSection::TILE_TYPES);
-        }
-        else if (action.getName() == "GOTO_FILE_OPERATIONS") {
-            std::cout << "Going to File Operations section" << std::endl;
-            expandAccordionSection(AccordionSection::FILE_OPERATIONS);
         }
         // Tab Key: Switch panels within current tab (check for Shift modifier)
         else if (action.getName() == "SWITCH_PANEL") {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
-                std::cout << "Switching panel within current tab (reverse)" << std::endl;
                 switchPanelInCurrentTabReverse();
             } else {
-                std::cout << "Switching panel within current tab" << std::endl;
                 switchPanelInCurrentTab();
             }
         }
@@ -359,23 +325,7 @@ void Scene_AutoTileConfig::sDoAction(const Action& action) {
         else if (action.getName() == ActionTypes::SELECT || action.getName() == ActionTypes::CONFIRM) {
             handleSelection();
         }
-        // Legacy accordion toggle
-        else if (action.getName() == "TOGGLE_SECTION") {
-            std::cout << "Toggling section" << std::endl;
-            if (m_currentPanel == Panel::MENU) {
-                toggleAccordionSection(m_currentSection);
-            }
-        }
-        else if (action.getName() == "SWITCH_TILE_TYPE") {
-            std::cout << "Switching tile type" << std::endl;
-            switchTileType(1);
-        }
-        // Context-sensitive actions
-        else if (action.getName() == "NEW_ITEM") {
-            std::cout << "🆕 New item for " << getSectionName(m_currentSection) << std::endl;
-        }
         else if (action.getName() == "SAVE_ITEM") {
-            
             // Context-sensitive saving based on current section
             switch (m_currentSection) {
                 case AccordionSection::ASSET_SLICING:
@@ -396,18 +346,9 @@ void Scene_AutoTileConfig::sDoAction(const Action& action) {
                         }
                     }
                     break;
-                    
-                case AccordionSection::TILE_TYPES:
-                    // Save tile type configuration
-                    break;
-                    
-                case AccordionSection::FILE_OPERATIONS:
-                    // Save all configurations
-                    break;
             }
         }
         else if (action.getName() == "LOAD") {
-            std::cout << "📂 Load for " << getSectionName(m_currentSection) << std::endl;
         }
         else {
             std::cout << "Unhandled action: " << action.getName() << std::endl;
@@ -421,10 +362,6 @@ void Scene_AutoTileConfig::sRender() {
     sf::Vector2f viewSize = gameView.getSize();
     sf::Vector2f viewCenter = gameView.getCenter();
     
-    std::cout << "=== VIEW DEBUG ===" << std::endl;
-    std::cout << "View size: " << viewSize.x << "x" << viewSize.y << std::endl;
-    std::cout << "View center: " << viewCenter.x << "," << viewCenter.y << std::endl;
-    
     // Draw background using game view
     sf::RectangleShape background;
     background.setSize(viewSize);
@@ -437,9 +374,6 @@ void Scene_AutoTileConfig::sRender() {
     float contentY = viewCenter.y - viewSize.y / 2 + 10; // Small margin
     float contentWidth = viewSize.x - 20; // Full width minus margins
     float contentHeight = viewSize.y - 20; // Full height minus margins
-    
-    std::cout << "Content area: " << contentX << "," << contentY << " " << contentWidth << "x" << contentHeight << std::endl;
-    std::cout << "Content bounds: " << contentX << " to " << (contentX + contentWidth) << std::endl;
     
     // Draw content based on current section (always Asset Slicing for now)
     drawCurrentSectionContent(contentX, contentY, contentWidth, contentHeight);
@@ -460,25 +394,20 @@ void Scene_AutoTileConfig::drawCurrentSectionContent(float x, float y, float wid
 }
 
 void Scene_AutoTileConfig::drawAssetSlicingPanel(float x, float y, float width, float height) {
-    std::cout << "=== RENDERING DEBUG ===" << std::endl;
-    std::cout << "drawAssetSlicingPanel called with:" << std::endl;
-    std::cout << "  Position: " << x << ", " << y << std::endl;
-    std::cout << "  Size: " << width << "x" << height << std::endl;
-    
     // Title
     sf::Text title;
     title.setFont(m_game->getAssets().getFont("ShareTech"));
     title.setString("Asset Slicing & Configuration");
     title.setCharacterSize(24);
     title.setFillColor(sf::Color(80, 140, 200));
-    title.setPosition(x + 20, y + 20);
+    title.setPosition(x, y);
     m_game->window().draw(title);
     
     // Save button (right side of title area)
     float buttonWidth = 120;
-    float buttonHeight = 35;
+    float buttonHeight = 30;
     float buttonX = x + width - buttonWidth - 20;
-    float buttonY = y + 15;
+    float buttonY = y + 5;
     
     sf::RectangleShape saveButton;
     saveButton.setSize(sf::Vector2f(buttonWidth, buttonHeight));
@@ -512,47 +441,27 @@ void Scene_AutoTileConfig::drawAssetSlicingPanel(float x, float y, float width, 
     float assetTreeWidth = availableWidth * 0.2f;   // 20% of available width
     float slicingFormWidth = availableWidth * 0.35f; // 35% of available width
     float previewWidth = availableWidth * 0.45f;     // 45% of available width
-    float panelHeight = height - 60; // Leave space for title
+    float panelHeight = height - 40; // Leave space for title
     
     // Store actual preview dimensions for navigation (set BEFORE drawing preview)
     m_currentPreviewWidth = previewWidth;
     m_currentPreviewHeight = panelHeight;
-    
-    std::cout << "=== PANEL DIMENSIONS DEBUG ===" << std::endl;
-    std::cout << "Total content: " << width << "x" << height << std::endl;
-    std::cout << "Available width (after padding): " << availableWidth << std::endl;
-    std::cout << "Panel padding: " << panelPadding << "px" << std::endl;
-    std::cout << "Asset tree: " << assetTreeWidth << "x" << panelHeight << std::endl;
-    std::cout << "Slicing form: " << slicingFormWidth << "x" << panelHeight << std::endl;
-    std::cout << "Preview: " << previewWidth << "x" << panelHeight << std::endl;
-    std::cout << "Total used width: " << (assetTreeWidth + slicingFormWidth + previewWidth + totalPadding) << std::endl;
-    std::cout << "===============================" << std::endl;
+
     // Asset Tree Panel (Left) - starts at content edge
     float assetTreeX = x;
-    drawAssetTree(assetTreeX, y + 60, assetTreeWidth, panelHeight);
+    drawAssetTree(assetTreeX, y + 40, assetTreeWidth, panelHeight);
     
     // Slicing Form Panel (Center) - with padding after asset tree
     float slicingFormX = assetTreeX + assetTreeWidth + panelPadding;
-    drawSlicingForm(slicingFormX, y + 60, slicingFormWidth, panelHeight);
+    drawSlicingForm(slicingFormX, y + 40, slicingFormWidth, panelHeight);
     
     // Preview Panel (Right) - with padding after slicing form
     float previewX = slicingFormX + slicingFormWidth + panelPadding;
-    
-    std::cout << "Panel positioning:" << std::endl;
-    std::cout << "  Content area: " << x << " to " << (x + width) << " (width: " << width << ")" << std::endl;
-    std::cout << "  Asset tree: " << assetTreeX << " to " << (assetTreeX + assetTreeWidth) << " (width: " << assetTreeWidth << ")" << std::endl;
-    std::cout << "  Padding: " << (assetTreeX + assetTreeWidth) << " to " << slicingFormX << " (" << panelPadding << "px)" << std::endl;
-    std::cout << "  Slicing form: " << slicingFormX << " to " << (slicingFormX + slicingFormWidth) << " (width: " << slicingFormWidth << ")" << std::endl;
-    std::cout << "  Padding: " << (slicingFormX + slicingFormWidth) << " to " << previewX << " (" << panelPadding << "px)" << std::endl;
-    std::cout << "  Preview: " << previewX << " to " << (previewX + previewWidth) << " (width: " << previewWidth << ")" << std::endl;
-    std::cout << "  Total end: " << (previewX + previewWidth) << " vs content end: " << (x + width) << std::endl;
-    
-    drawAssetPreview(previewX, y + 60, previewWidth, panelHeight);
+
+    drawAssetPreview(previewX, y + 40, previewWidth, panelHeight);
 }
 
 void Scene_AutoTileConfig::drawAssetTree(float x, float y, float width, float height) {
-    std::cout << "drawAssetTree: " << x << "," << y << " " << width << "x" << height << std::endl;
-    
     // Asset Tree Panel Background
     sf::RectangleShape treePanel;
     treePanel.setSize(sf::Vector2f(width, height));
@@ -601,7 +510,7 @@ void Scene_AutoTileConfig::drawAssetTree(float x, float y, float width, float he
             // Asset name
             sf::Text assetName;
             assetName.setFont(m_game->getAssets().getFont("ShareTech"));
-            assetName.setString("📄 " + m_availableAssets[i]);
+            assetName.setString(m_availableAssets[i]);
             assetName.setCharacterSize(14);
             assetName.setFillColor(sf::Color::White);
             assetName.setPosition(x + 15, itemY + 8);
@@ -628,8 +537,6 @@ void Scene_AutoTileConfig::drawAssetTree(float x, float y, float width, float he
 }
 
 void Scene_AutoTileConfig::drawSlicingForm(float x, float y, float width, float height) {
-    std::cout << "drawSlicingForm: " << x << "," << y << " " << width << "x" << height << std::endl;
-    
     // Slicing Form Panel Background
     sf::RectangleShape formPanel;
     formPanel.setSize(sf::Vector2f(width, height));
@@ -649,10 +556,10 @@ void Scene_AutoTileConfig::drawSlicingForm(float x, float y, float width, float 
     m_game->window().draw(formTitle);
     
     // Form Fields - Two column layout for better space utilization
-    std::vector<std::string> fieldNames = {"Tile Width:", "Tile Height:", "Margin X:", "Margin Y:", "Spacing X:", "Spacing Y:", "Offset X:", "Offset Y:"};
-    std::vector<int*> fieldValues = {&m_tileWidth, &m_tileHeight, &m_marginX, &m_marginY, &m_spacingX, &m_spacingY, &m_offsetX, &m_offsetY};
+    std::vector<std::string> fieldNames = {"Tile Width:", "Tile Height:", "Margin X:", "Margin Y:", "Spacing X:", "Spacing Y:", "Offset X:", "Offset Y:", "Grid Line:"};
+    std::vector<int*> fieldValues = {&m_tileWidth, &m_tileHeight, &m_marginX, &m_marginY, &m_spacingX, &m_spacingY, &m_offsetX, &m_offsetY, &m_gridLineThickness};
     
-    float upperHeight = height * 0.3f; // Reduced space to close gap with rule block
+    float upperHeight = height * 0.50f; // Reduced space to close gap with rule block
     float fieldStartY = y + 40;
     float fieldHeight = 34;
     float columnWidth = (width - 30) / 2; // Two columns with margins
@@ -757,8 +664,6 @@ void Scene_AutoTileConfig::drawSlicingForm(float x, float y, float width, float 
 }
 
 void Scene_AutoTileConfig::drawAssetPreview(float x, float y, float width, float height) {
-    std::cout << "drawAssetPreview: " << x << "," << y << " " << width << "x" << height << std::endl;
-    
     // Preview Panel Background
     sf::RectangleShape previewPanel;
     previewPanel.setSize(sf::Vector2f(width, height));
@@ -789,19 +694,7 @@ void Scene_AutoTileConfig::drawAssetPreview(float x, float y, float width, float
         float previewAreaHeight = height - 50; // Account for title and bottom margin
         
         sf::Vector2u textureSize = m_currentAssetTexture.getSize();
-        
-        // Debug output to see actual dimensions
-        std::cout << "Preview Panel Debug:" << std::endl;
-        std::cout << "  Panel size: " << width << "x" << height << std::endl;
-        std::cout << "  Preview area: " << previewAreaWidth << "x" << previewAreaHeight << std::endl;
-        std::cout << "  Asset size: " << textureSize.x << "x" << textureSize.y << std::endl;
-        std::cout << "  Tile size: " << m_tileWidth << "x" << m_tileHeight << std::endl;
-        std::cout << "  Margins: " << m_marginX << "," << m_marginY << std::endl;
-        std::cout << "  Spacing: " << m_spacingX << "," << m_spacingY << std::endl;
-        std::cout << "  Offset: " << m_offsetX << "," << m_offsetY << std::endl;
-        std::cout << "  Calculated tiles: " << m_tilesX << "x" << m_tilesY << std::endl;
-        std::cout << "  Fits? " << (textureSize.x <= previewAreaWidth && textureSize.y <= previewAreaHeight ? "YES" : "NO") << std::endl;
-        
+     
         // Draw a visible border around the preview area (inside the panel)
         sf::RectangleShape previewBorder;
         previewBorder.setSize(sf::Vector2f(previewAreaWidth - 2, previewAreaHeight - 2)); // Account for border thickness
@@ -821,7 +714,6 @@ void Scene_AutoTileConfig::drawAssetPreview(float x, float y, float width, float
         // Create a render texture for clipping
         sf::RenderTexture previewTexture;
         if (previewTexture.create(previewAreaWidth, previewAreaHeight)) {
-            std::cout << "RenderTexture created: " << previewAreaWidth << "x" << previewAreaHeight << std::endl;
             previewTexture.clear(sf::Color::Transparent);
             
             // Draw asset sprite to render texture (with scroll offset)
@@ -837,11 +729,17 @@ void Scene_AutoTileConfig::drawAssetPreview(float x, float y, float width, float
                 float tilePixelX = -m_previewScrollX + m_offsetX + m_marginX + m_selectedTileInPreview.x * (m_tileWidth + m_spacingX);
                 float tilePixelY = -m_previewScrollY + m_offsetY + m_marginY + m_selectedTileInPreview.y * (m_tileHeight + m_spacingY);
                 
+                // Adjust position to be inside grid lines
+                float adjustedX = tilePixelX + m_gridLineThickness;
+                float adjustedY = tilePixelY + m_gridLineThickness;
+                float adjustedWidth = m_tileWidth - m_gridLineThickness;
+                float adjustedHeight = m_tileHeight - m_gridLineThickness;
+                
                 sf::RectangleShape tileHighlight;
-                tileHighlight.setSize(sf::Vector2f(m_tileWidth, m_tileHeight));
-                tileHighlight.setPosition(tilePixelX, tilePixelY);
+                tileHighlight.setSize(sf::Vector2f(adjustedWidth, adjustedHeight));
+                tileHighlight.setPosition(adjustedX, adjustedY);
                 tileHighlight.setFillColor(sf::Color(255, 255, 0, 100)); // Semi-transparent yellow
-                tileHighlight.setOutlineThickness(2);
+                tileHighlight.setOutlineThickness(1);
                 tileHighlight.setOutlineColor(sf::Color::Yellow);
                 previewTexture.draw(tileHighlight);
             }
@@ -849,30 +747,28 @@ void Scene_AutoTileConfig::drawAssetPreview(float x, float y, float width, float
             previewTexture.display();
             
             // Draw the render texture to the main window
+
             sf::Sprite previewSprite(previewTexture.getTexture());
             previewSprite.setPosition(previewAreaX, previewAreaY);
             m_game->window().draw(previewSprite);
             
-            std::cout << "RenderTexture drawn at: " << previewAreaX << "," << previewAreaY << std::endl;
+            // Asset info (drawn at bottom of panel, outside clipped area)
+            sf::Text assetInfo;
+            assetInfo.setFont(m_game->getAssets().getFont("ShareTech"));
+            assetInfo.setString("Size: " + std::to_string(textureSize.x) + "x" + std::to_string(textureSize.y) + 
+                    " | Tiles: " + std::to_string(m_tilesX) + "x" + std::to_string(m_tilesY) +
+                    " | Preview: " + std::to_string((int)previewAreaWidth) + "x" + std::to_string((int)previewAreaHeight) +
+                    " | Scroll: " + std::to_string((int)m_previewScrollX) + "," + std::to_string((int)m_previewScrollY));
+            assetInfo.setCharacterSize(16);
+            assetInfo.setFillColor(sf::Color(180, 180, 180));
+            assetInfo.setPosition(x + 120, y + 10);
+            m_game->window().draw(assetInfo);
         } else {
-            std::cout << "RenderTexture creation failed! Using fallback." << std::endl;
             // Fallback: draw without clipping if render texture creation fails
             m_currentAssetSprite.setScale(scale, scale);
             m_currentAssetSprite.setPosition(assetX, assetY);
             m_game->window().draw(m_currentAssetSprite);
         }
-        
-        // Asset info (drawn at bottom of panel, outside clipped area)
-        sf::Text assetInfo;
-        assetInfo.setFont(m_game->getAssets().getFont("ShareTech"));
-        assetInfo.setString("Size: " + std::to_string(textureSize.x) + "x" + std::to_string(textureSize.y) + 
-                           " | Tiles: " + std::to_string(m_tilesX) + "x" + std::to_string(m_tilesY) +
-                           " | Preview: " + std::to_string((int)previewAreaWidth) + "x" + std::to_string((int)previewAreaHeight) +
-                           " | Scroll: " + std::to_string((int)m_previewScrollX) + "," + std::to_string((int)m_previewScrollY));
-        assetInfo.setCharacterSize(8);
-        assetInfo.setFillColor(sf::Color(180, 180, 180));
-        assetInfo.setPosition(x + 5, y + height - 15);
-        m_game->window().draw(assetInfo);
 
     } else {
         // No asset loaded message
@@ -912,7 +808,7 @@ void Scene_AutoTileConfig::drawSlicingGrid(float x, float y, float scale) {
     for (int i = 0; i <= tilesX; i++) {
         float lineX = gridStartX + i * (scaledTileWidth + scaledSpacingX);
         sf::RectangleShape vLine;
-        vLine.setSize(sf::Vector2f(1, tilesY * (scaledTileHeight + scaledSpacingY) - scaledSpacingY));
+        vLine.setSize(sf::Vector2f(m_gridLineThickness, tilesY * (scaledTileHeight + scaledSpacingY) - scaledSpacingY));
         vLine.setPosition(lineX, gridStartY);
         vLine.setFillColor(sf::Color(255, 255, 0, 180)); // Semi-transparent yellow
         m_game->window().draw(vLine);
@@ -922,7 +818,7 @@ void Scene_AutoTileConfig::drawSlicingGrid(float x, float y, float scale) {
     for (int i = 0; i <= tilesY; i++) {
         float lineY = gridStartY + i * (scaledTileHeight + scaledSpacingY);
         sf::RectangleShape hLine;
-        hLine.setSize(sf::Vector2f(tilesX * (scaledTileWidth + scaledSpacingX) - scaledSpacingX, 1));
+        hLine.setSize(sf::Vector2f(tilesX * (scaledTileWidth + scaledSpacingX) - scaledSpacingX, m_gridLineThickness));
         hLine.setPosition(gridStartX, lineY);
         hLine.setFillColor(sf::Color(255, 255, 0, 180)); // Semi-transparent yellow
         m_game->window().draw(hLine);
@@ -973,7 +869,7 @@ void Scene_AutoTileConfig::drawSlicingGridToTexture(sf::RenderTexture& texture, 
     for (int i = 0; i <= tilesX; i++) {
         float lineX = gridStartX + i * (scaledTileWidth + scaledSpacingX);
         sf::RectangleShape vLine;
-        vLine.setSize(sf::Vector2f(1, tilesY * (scaledTileHeight + scaledSpacingY) - scaledSpacingY));
+        vLine.setSize(sf::Vector2f(m_gridLineThickness, tilesY * (scaledTileHeight + scaledSpacingY) - scaledSpacingY));
         vLine.setPosition(lineX, gridStartY);
         vLine.setFillColor(sf::Color(255, 255, 0, 180)); // Semi-transparent yellow
         texture.draw(vLine);
@@ -983,7 +879,7 @@ void Scene_AutoTileConfig::drawSlicingGridToTexture(sf::RenderTexture& texture, 
     for (int i = 0; i <= tilesY; i++) {
         float lineY = gridStartY + i * (scaledTileHeight + scaledSpacingY);
         sf::RectangleShape hLine;
-        hLine.setSize(sf::Vector2f(tilesX * (scaledTileWidth + scaledSpacingX) - scaledSpacingX, 1));
+        hLine.setSize(sf::Vector2f(tilesX * (scaledTileWidth + scaledSpacingX) - scaledSpacingX, m_gridLineThickness));
         hLine.setPosition(gridStartX, lineY);
         hLine.setFillColor(sf::Color(255, 255, 0, 180)); // Semi-transparent yellow
         texture.draw(hLine);
@@ -1008,321 +904,26 @@ void Scene_AutoTileConfig::drawSlicingGridToTexture(sf::RenderTexture& texture, 
     }
 }
 
-void Scene_AutoTileConfig::drawRuleCreationPanel(float x, float y, float width, float height) {
-    // Title
-    sf::Text title;
-    title.setFont(m_game->getAssets().getFont("ShareTech"));
-    title.setString("Rule Creation & Editing");
-    title.setCharacterSize(24);
-    title.setFillColor(sf::Color(200, 140, 80));
-    title.setPosition(x + 20, y + 20);
-    m_game->window().draw(title);
-    
-    // Current tile type
-    sf::Text tileTypeText;
-    tileTypeText.setFont(m_game->getAssets().getFont("ShareTech"));
-    tileTypeText.setString("Creating rules for: " + m_currentTileType);
-    tileTypeText.setCharacterSize(18);
-    tileTypeText.setFillColor(sf::Color::White);
-    tileTypeText.setPosition(x + 20, y + 60);
-    m_game->window().draw(tileTypeText);
-    
-    // 3x3 Rule grid area
-    float gridSize = 80.0f;
-    float gridStartX = x + 50;
-    float gridStartY = y + 120;
-    
-    for (int row = 0; row < 3; row++) {
-        for (int col = 0; col < 3; col++) {
-            int cellIndex = row * 3 + col;
-            sf::RectangleShape cell;
-            cell.setSize(sf::Vector2f(gridSize, gridSize));
-            cell.setPosition(gridStartX + col * (gridSize + 5), gridStartY + row * (gridSize + 5));
-            
-            if (row == 1 && col == 1) {
-                // Center cell - make background transparent to show the tile
-                cell.setFillColor(sf::Color(40, 40, 45, 100)); // Semi-transparent dark background
-            } else {
-                cell.setFillColor(sf::Color(80, 80, 85));
-            }
-            
-            // Highlight selected cell
-            if (cellIndex == m_ruleGridSelection) {
-                cell.setOutlineThickness(4);
-                cell.setOutlineColor(sf::Color::Yellow);
-            } else {
-                cell.setOutlineThickness(2);
-                cell.setOutlineColor(sf::Color::White);
-            }
-            
-            m_game->window().draw(cell);
-            
-            // Draw the current previewed tile in center cell if available
-            if (row == 1 && col == 1 && m_selectedTileTexture.getSize().x > 0) {
-                float tileScale = (gridSize - 4) / std::max(m_tileWidth, m_tileHeight);
-                m_selectedTileSprite.setScale(tileScale, tileScale);
-                m_selectedTileSprite.setPosition(
-                    gridStartX + col * (gridSize + 5) + 2, 
-                    gridStartY + row * (gridSize + 5) + 2
-                );
-                m_game->window().draw(m_selectedTileSprite);
-            }
-            
-            // Cell label with rule condition
-            sf::Text cellText;
-            cellText.setFont(m_game->getAssets().getFont("ShareTech"));
-            if (row == 1 && col == 1) {
-                // Center cell - show current previewed tile coordinates
-                cellText.setString("(" + std::to_string(m_selectedTileInPreview.x) + "," + 
-                                 std::to_string(m_selectedTileInPreview.y) + ")");
-                cellText.setFillColor(sf::Color::White);
-            } else {
-                // Show current rule condition for this cell
-                RuleCondition condition = (cellIndex < static_cast<int>(m_currentRule.size())) ? m_currentRule[cellIndex] : RuleCondition::IGNORE;
-                switch (condition) {
-                    case RuleCondition::SAME:
-                        cellText.setString("SAME");
-                        cellText.setFillColor(sf::Color::Green);
-                        break;
-                    case RuleCondition::DIFFERENT:
-                        cellText.setString("DIFF");
-                        cellText.setFillColor(sf::Color::Red);
-                        break;
-                    case RuleCondition::EMPTY:
-                        cellText.setString("EMPTY");
-                        cellText.setFillColor(sf::Color::Blue);
-                        break;
-                    case RuleCondition::IGNORE:
-                    default:
-                        cellText.setString("IGNORE");
-                        cellText.setFillColor(sf::Color(180, 180, 180));
-                        break;
-                }
-            }
-            cellText.setCharacterSize(12);
-            
-            sf::FloatRect textBounds = cellText.getLocalBounds();
-            cellText.setPosition(
-                gridStartX + col * (gridSize + 5) + (gridSize - textBounds.width) / 2,
-                gridStartY + row * (gridSize + 5) + (gridSize - textBounds.height) / 2
-            );
-            m_game->window().draw(cellText);
-        }
+sf::IntRect Scene_AutoTileConfig::getTileContentRect(int tileX, int tileY) const {
+    if (!isValidTilePosition(sf::Vector2i(tileX, tileY))) {
+        return sf::IntRect(0, 0, 0, 0); // Invalid rectangle
     }
     
-    // Rule info panel
-    sf::RectangleShape ruleInfoPanel;
-    ruleInfoPanel.setSize(sf::Vector2f(width - 400, height - 200));
-    ruleInfoPanel.setPosition(x + 350, y + 100);
-    ruleInfoPanel.setFillColor(sf::Color(45, 45, 50));
-    ruleInfoPanel.setOutlineThickness(2);
-    ruleInfoPanel.setOutlineColor(sf::Color(100, 100, 105));
-    m_game->window().draw(ruleInfoPanel);
+    // Calculate the pixel position of the tile with offset
+    int tilePixelX = m_offsetX + m_marginX + tileX * (m_tileWidth + m_spacingX);
+    int tilePixelY = m_offsetY + m_marginY + tileY * (m_tileHeight + m_spacingY);
     
-    sf::Text ruleInfo;
-    ruleInfo.setFont(m_game->getAssets().getFont("ShareTech"));
+    // Adjust for grid line thickness - return only content area inside grid lines
+    int contentStartX = tilePixelX + m_gridLineThickness;
+    int contentStartY = tilePixelY + m_gridLineThickness;
+    int contentWidth = m_tileWidth - (2 * m_gridLineThickness);
+    int contentHeight = m_tileHeight - (2 * m_gridLineThickness);
     
-    // Show current selection info
-    std::string selectionInfo = "Selected Cell: ";
-    if (m_ruleGridSelection == 4) {
-        selectionInfo += "CENTER (unchangeable)";
-    } else {
-        selectionInfo += "Position " + std::to_string(m_ruleGridSelection);
-        RuleCondition condition = (m_ruleGridSelection < static_cast<int>(m_currentRule.size())) ? m_currentRule[m_ruleGridSelection] : RuleCondition::IGNORE;
-        selectionInfo += "\nCondition: ";
-        switch (condition) {
-            case RuleCondition::SAME: selectionInfo += "SAME (Green)"; break;
-            case RuleCondition::DIFFERENT: selectionInfo += "DIFFERENT (Red)"; break;
-            case RuleCondition::EMPTY: selectionInfo += "EMPTY (Blue)"; break;
-            case RuleCondition::IGNORE: selectionInfo += "IGNORE (Gray)"; break;
-        }
-    }
+    // Ensure content dimensions are valid
+    contentWidth = std::max(1, contentWidth);
+    contentHeight = std::max(1, contentHeight);
     
-    ruleInfo.setString("Rule Configuration Panel\n\n" + selectionInfo);
-    ruleInfo.setCharacterSize(14);
-    ruleInfo.setFillColor(sf::Color::White);
-    ruleInfo.setPosition(x + 370, y + 120);
-    m_game->window().draw(ruleInfo);
-}
-
-void Scene_AutoTileConfig::drawTileTypesPanel(float x, float y, float width, float height) {
-    // Title
-    sf::Text title;
-    title.setFont(m_game->getAssets().getFont("ShareTech"));
-    title.setString("Tile Type Management");
-    title.setCharacterSize(24);
-    title.setFillColor(sf::Color(140, 200, 80));
-    title.setPosition(x + 20, y + 20);
-    m_game->window().draw(title);
-    
-    // Tile type buttons
-    std::vector<std::string> tileTypes = {"Wall", "Ground", "Water"};
-    std::vector<sf::Color> typeColors = {
-        sf::Color(120, 80, 60),   // Brown for Wall
-        sf::Color(80, 120, 60),   // Green for Ground
-        sf::Color(60, 80, 120)    // Blue for Water
-    };
-    
-    float buttonWidth = 150.0f;
-    float buttonHeight = 50.0f;
-    float buttonX = x + 50;
-    float buttonY = y + 100;
-    
-    for (size_t i = 0; i < tileTypes.size(); i++) {
-        sf::RectangleShape button;
-        button.setSize(sf::Vector2f(buttonWidth, buttonHeight));
-        button.setPosition(buttonX, buttonY + i * (buttonHeight + 10));
-        
-        // Highlight current tile type
-        if (tileTypes[i] == m_currentTileType) {
-            button.setFillColor(typeColors[i]);
-            button.setOutlineThickness(3);
-            button.setOutlineColor(sf::Color::White);
-        } else {
-            sf::Color dimmedColor = typeColors[i];
-            dimmedColor.r = dimmedColor.r * 0.6f;
-            dimmedColor.g = dimmedColor.g * 0.6f;
-            dimmedColor.b = dimmedColor.b * 0.6f;
-            button.setFillColor(dimmedColor);
-            button.setOutlineThickness(1);
-            button.setOutlineColor(sf::Color(100, 100, 100));
-        }
-        
-        m_game->window().draw(button);
-        
-        // Button text
-        sf::Text buttonText;
-        buttonText.setFont(m_game->getAssets().getFont("ShareTech"));
-        buttonText.setString(tileTypes[i]);
-        buttonText.setCharacterSize(18);
-        buttonText.setFillColor(sf::Color::White);
-        
-        sf::FloatRect textBounds = buttonText.getLocalBounds();
-        buttonText.setPosition(
-            buttonX + (buttonWidth - textBounds.width) / 2,
-            buttonY + i * (buttonHeight + 10) + (buttonHeight - textBounds.height) / 2
-        );
-        m_game->window().draw(buttonText);
-    }
-    
-    // Tile type info panel
-    sf::RectangleShape infoPanel;
-    infoPanel.setSize(sf::Vector2f(width - 300, height - 150));
-    infoPanel.setPosition(x + 250, y + 80);
-    infoPanel.setFillColor(sf::Color(45, 45, 50));
-    infoPanel.setOutlineThickness(2);
-    infoPanel.setOutlineColor(sf::Color(100, 100, 105));
-    m_game->window().draw(infoPanel);
-    
-    sf::Text infoText;
-    infoText.setFont(m_game->getAssets().getFont("ShareTech"));
-    infoText.setString("Tile Type: " + m_currentTileType + "\n\nProperties:\n- Texture: " + m_currentTileType + "_64px.png\n- Auto-tiling: Enabled\n- Rules: Available\n\nPress T to switch between types\nPress N to create new type\nPress C to delete type");
-    infoText.setCharacterSize(16);
-    infoText.setFillColor(sf::Color::White);
-    infoText.setPosition(x + 270, y + 100);
-    m_game->window().draw(infoText);
-}
-
-void Scene_AutoTileConfig::drawFileOperationsPanel(float x, float y, float width, float height) {
-    // Title
-    sf::Text title;
-    title.setFont(m_game->getAssets().getFont("ShareTech"));
-    title.setString("File Operations & Export");
-    title.setCharacterSize(24);
-    title.setFillColor(sf::Color(200, 80, 140));
-    title.setPosition(x + 20, y + 20);
-    m_game->window().draw(title);
-    
-    // Operation buttons
-    std::vector<std::string> operations = {"Save Current Tile", "Save All Configs", "Load Configuration", "Export All", "Import Config"};
-    std::vector<sf::Color> opColors = {
-        sf::Color(60, 120, 60),   // Green for Save
-        sf::Color(80, 140, 80),   // Brighter green for Save All
-        sf::Color(60, 60, 120),   // Blue for Load
-        sf::Color(120, 60, 120),  // Purple for Export
-        sf::Color(120, 120, 60)   // Yellow for Import
-    };
-    
-    float buttonWidth = 200.0f;
-    float buttonHeight = 40.0f;
-    float buttonX = x + 50;
-    float buttonY = y + 100;
-    
-    for (size_t i = 0; i < operations.size(); i++) {
-        sf::RectangleShape button;
-        button.setSize(sf::Vector2f(buttonWidth, buttonHeight));
-        button.setPosition(buttonX, buttonY + i * (buttonHeight + 10));
-        button.setFillColor(opColors[i]);
-        
-        // Highlight selected operation
-        if (static_cast<int>(i) == m_selectedFileOperation) {
-            button.setOutlineThickness(4);
-            button.setOutlineColor(sf::Color::Yellow);
-        } else {
-            button.setOutlineThickness(2);
-            button.setOutlineColor(sf::Color::White);
-        }
-        
-        m_game->window().draw(button);
-        
-        // Button text
-        sf::Text buttonText;
-        buttonText.setFont(m_game->getAssets().getFont("ShareTech"));
-        buttonText.setString(operations[i]);
-        buttonText.setCharacterSize(14);
-        buttonText.setFillColor(sf::Color::White);
-        
-        sf::FloatRect textBounds = buttonText.getLocalBounds();
-        buttonText.setPosition(
-            buttonX + (buttonWidth - textBounds.width) / 2,
-            buttonY + i * (buttonHeight + 10) + (buttonHeight - textBounds.height) / 2
-        );
-        m_game->window().draw(buttonText);
-    }
-    
-    // Status panel
-    sf::RectangleShape statusPanel;
-    statusPanel.setSize(sf::Vector2f(width - 350, height - 150));
-    statusPanel.setPosition(x + 300, y + 80);
-    statusPanel.setFillColor(sf::Color(45, 45, 50));
-    statusPanel.setOutlineThickness(2);
-    statusPanel.setOutlineColor(sf::Color(100, 100, 105));
-    m_game->window().draw(statusPanel);
-    
-    // Status text with current selection info
-    sf::Text statusText;
-    statusText.setFont(m_game->getAssets().getFont("ShareTech"));
-    
-    std::string selectedOp = (m_selectedFileOperation < static_cast<int>(operations.size())) ? operations[m_selectedFileOperation] : "None";
-    std::string statusInfo = "Selected Operation:\n" + selectedOp + "\n\n";
-    
-    // Add operation-specific info
-    switch (m_selectedFileOperation) {
-        case 0: // Save Current Tile
-            statusInfo += "Saves configuration for current tile type:\n" + m_currentTileType + "\n\nPress Space/Enter to execute";
-            break;
-        case 1: // Save All Configs
-            statusInfo += "Saves all tile configurations\nto autotile_config.json\n\nPress Space/Enter to execute";
-            break;
-        case 2: // Load Configuration
-            statusInfo += "Loads configuration from\nautotile_config.json\n\nPress Space/Enter to execute";
-            break;
-        case 3: // Export All
-            statusInfo += "Exports all configurations\nto separate files\n\nPress Space/Enter to execute";
-            break;
-        case 4: // Import Config
-            statusInfo += "Imports configuration from\nselected file\n\nPress Space/Enter to execute";
-            break;
-        default:
-            statusInfo += "Use W/S to navigate\nPress Space/Enter to execute";
-            break;
-    }
-    
-    statusText.setString("File Operations Status\n\n" + statusInfo);
-    statusText.setCharacterSize(14);
-    statusText.setFillColor(sf::Color::White);
-    statusText.setPosition(x + 320, y + 100);
-    m_game->window().draw(statusText);
+    return sf::IntRect(contentStartX, contentStartY, contentWidth, contentHeight);
 }
 
 // Accordion management methods
@@ -1373,11 +974,9 @@ void Scene_AutoTileConfig::switchPanel() {
     switch (m_currentPanel) {
         case Panel::MENU:
             m_currentPanel = Panel::CONTENT;
-            std::cout << "Switched to Content Panel - " << getSectionName(m_currentSection) << std::endl;
             break;
         case Panel::CONTENT:
             m_currentPanel = Panel::MENU;
-            std::cout << "Switched to Accordion Menu Panel" << std::endl;
             break;
         default:
             m_currentPanel = Panel::MENU;
@@ -1388,8 +987,6 @@ void Scene_AutoTileConfig::switchPanel() {
 std::string Scene_AutoTileConfig::getSectionName(AccordionSection section) {
     switch (section) {
         case AccordionSection::ASSET_SLICING: return "Asset Slicing";
-        case AccordionSection::TILE_TYPES: return "Tile Types";
-        case AccordionSection::FILE_OPERATIONS: return "File Operations";
         default: return "Unknown";
     }
 }
@@ -1401,11 +998,9 @@ void Scene_AutoTileConfig::handleNavigation(const std::string& direction) {
         case AccordionSection::ASSET_SLICING:
             handleAssetSlicingNavigation(direction);
             break;
-        case AccordionSection::TILE_TYPES:
-            handleTileTypesNavigation(direction);
-            break;
-        case AccordionSection::FILE_OPERATIONS:
-            handleFileOperationsNavigation(direction);
+        default:
+            // Only asset slicing is supported
+            handleAssetSlicingNavigation(direction);
             break;
     }
 }
@@ -1432,11 +1027,11 @@ void Scene_AutoTileConfig::switchPanelInCurrentTab() {
             updateOverlayCommands();
             break;
             
-        case AccordionSection::TILE_TYPES:
+//         case AccordionSection::TILE_TYPES:
             // For tile types, Tab could switch between type list and properties
             break;
             
-        case AccordionSection::FILE_OPERATIONS:
+//         case AccordionSection::FILE_OPERATIONS:
             // For file ops, Tab could switch between operations and status
             break;
     }
@@ -1464,11 +1059,11 @@ void Scene_AutoTileConfig::switchPanelInCurrentTabReverse() {
             updateOverlayCommands();
             break;
             
-        case AccordionSection::TILE_TYPES:
+//         case AccordionSection::TILE_TYPES:
             // For tile types, Shift+Tab could switch in reverse direction
             break;
             
-        case AccordionSection::FILE_OPERATIONS:
+//         case AccordionSection::FILE_OPERATIONS:
             // For file ops, Shift+Tab could switch in reverse direction
             break;
     }
@@ -1509,7 +1104,7 @@ void Scene_AutoTileConfig::handleAssetSlicingNavigation(const std::string& direc
                 } else {
                     // Jump back to parameters (last parameter)
                     m_inRuleGridArea = false;
-                    m_selectedFormField = 7; // Last parameter (Offset Y)
+                    m_selectedFormField = 8; // Last parameter (Grid Line)
                     
                     // Update overlay commands for parameter context
                     updateOverlayCommands();
@@ -1554,7 +1149,7 @@ void Scene_AutoTileConfig::handleAssetSlicingNavigation(const std::string& direc
                 }
             } else {
                 // Navigate down in form fields
-                if (m_selectedFormField < 7) { // 8 form fields (0-7)
+                if (m_selectedFormField < 8) { // 9 form fields (0-8)
                     m_selectedFormField++;
                 } else {
                     // Jump down to rule grid
@@ -1606,7 +1201,7 @@ void Scene_AutoTileConfig::handleAssetSlicingNavigation(const std::string& direc
 }
 
 void Scene_AutoTileConfig::adjustSlicingParameter(int delta) {
-    std::vector<int*> fieldValues = {&m_tileWidth, &m_tileHeight, &m_marginX, &m_marginY, &m_spacingX, &m_spacingY, &m_offsetX, &m_offsetY};
+    std::vector<int*> fieldValues = {&m_tileWidth, &m_tileHeight, &m_marginX, &m_marginY, &m_spacingX, &m_spacingY, &m_offsetX, &m_offsetY, &m_gridLineThickness};
     
     if (m_selectedFormField >= 0 && m_selectedFormField < static_cast<int>(fieldValues.size())) {
         int* currentValue = fieldValues[m_selectedFormField];
@@ -1628,6 +1223,9 @@ void Scene_AutoTileConfig::adjustSlicingParameter(int delta) {
             case 6: // Offset X
             case 7: // Offset Y
                 *currentValue = std::max(0, std::min(512, *currentValue)); // Allow larger offsets
+                break;
+            case 8: // Grid Line Thickness
+                *currentValue = std::max(1, std::min(10, *currentValue)); // 1-10 pixel range
                 break;
         }
         
@@ -1657,62 +1255,10 @@ void Scene_AutoTileConfig::handleSelection() {
                 }
             }
             break;
-            
-        case AccordionSection::TILE_TYPES:
-            // Select current tile type
-            break;
-            
-        case AccordionSection::FILE_OPERATIONS:
-            // Execute selected file operation
-            executeFileOperation(m_selectedFileOperation);
-            break;
     }
 }
 
-void Scene_AutoTileConfig::handleRuleCreationNavigation(const std::string& direction) {
-    // Navigate within the 3x3 rule grid
-    if (direction == "UP" && m_ruleGridSelection >= 3) {
-        m_ruleGridSelection -= 3;
-    }
-    else if (direction == "DOWN" && m_ruleGridSelection < 6) {
-        m_ruleGridSelection += 3;
-    }
-    else if (direction == "LEFT" && m_ruleGridSelection % 3 > 0) {
-        m_ruleGridSelection--;
-    }
-    else if (direction == "RIGHT" && m_ruleGridSelection % 3 < 2) {
-        m_ruleGridSelection++;
-    }
-}
 
-void Scene_AutoTileConfig::handleTileTypesNavigation(const std::string& direction) {
-    std::vector<std::string> tileTypes = {"Wall", "Ground", "Water"};
-    
-    if (direction == "UP") {
-        // Navigate up in tile type list
-        auto it = std::find(tileTypes.begin(), tileTypes.end(), m_currentTileType);
-        if (it != tileTypes.begin()) {
-            --it;
-            m_currentTileType = *it;
-        }
-    }
-    else if (direction == "DOWN") {
-        // Navigate down in tile type list
-        auto it = std::find(tileTypes.begin(), tileTypes.end(), m_currentTileType);
-        if (it != tileTypes.end() && ++it != tileTypes.end()) {
-            m_currentTileType = *it;
-        }
-    }
-}
-
-void Scene_AutoTileConfig::handleFileOperationsNavigation(const std::string& direction) {
-    if (direction == "UP" && m_selectedFileOperation > 0) {
-        m_selectedFileOperation--;
-    }
-    else if (direction == "DOWN" && m_selectedFileOperation < 4) { // 5 operations (0-4)
-        m_selectedFileOperation++;
-    }
-}
 
 void Scene_AutoTileConfig::selectTileInTileset(sf::Vector2i position) {
     m_selectedTilePos = position;
@@ -1727,19 +1273,15 @@ void Scene_AutoTileConfig::cycleRuleCondition(int cellIndex) {
     switch (m_currentRule[cellIndex]) {
         case RuleCondition::IGNORE:
             m_currentRule[cellIndex] = RuleCondition::SAME;
-            std::cout << "🟢 Cell " << cellIndex << " set to SAME" << std::endl;
             break;
         case RuleCondition::SAME:
             m_currentRule[cellIndex] = RuleCondition::DIFFERENT;
-            std::cout << "🔴 Cell " << cellIndex << " set to DIFFERENT" << std::endl;
             break;
         case RuleCondition::DIFFERENT:
             m_currentRule[cellIndex] = RuleCondition::EMPTY;
-            std::cout << "🔵 Cell " << cellIndex << " set to EMPTY" << std::endl;
             break;
         case RuleCondition::EMPTY:
             m_currentRule[cellIndex] = RuleCondition::IGNORE;
-            std::cout << "⚪ Cell " << cellIndex << " set to IGNORE" << std::endl;
             break;
     }
 }
@@ -1753,7 +1295,6 @@ void Scene_AutoTileConfig::switchTileType(int direction) {
         if (index < 0) index = types.size() - 1;
         m_currentTileType = types[index];
         m_currentTileTypeText.setString("Current: " + m_currentTileType);
-        std::cout << "Switched to tile type: " << m_currentTileType << std::endl;
     }
 }
 
@@ -1806,7 +1347,6 @@ void Scene_AutoTileConfig::initializeAvailableAssets() {
     // Create directory if it doesn't exist
     if (!std::filesystem::exists(assetsPath)) {
         std::filesystem::create_directories(assetsPath);
-        std::cout << "Created autotiles directory: " << assetsPath << std::endl;
         return;
     }
     
@@ -1821,7 +1361,6 @@ void Scene_AutoTileConfig::initializeAvailableAssets() {
                 if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || 
                     extension == ".bmp" || extension == ".tga") {
                     m_availableAssets.push_back(filename);
-                    std::cout << "Found asset: " << filename << std::endl;
                 }
             }
         }
@@ -1831,8 +1370,6 @@ void Scene_AutoTileConfig::initializeAvailableAssets() {
     
     // Sort assets alphabetically for consistent ordering
     std::sort(m_availableAssets.begin(), m_availableAssets.end());
-    
-    std::cout << "Loaded " << m_availableAssets.size() << " assets dynamically" << std::endl;
     
     // Load the first asset by default
     if (!m_availableAssets.empty()) {
@@ -1844,16 +1381,8 @@ void Scene_AutoTileConfig::loadSelectedAsset() {
     if (m_selectedAssetIndex >= 0 && m_selectedAssetIndex < static_cast<int>(m_availableAssets.size())) {
         std::string assetName = m_availableAssets[m_selectedAssetIndex];
         std::string assetPath = "assets/imgs/autotiles/" + assetName;
-        
-        std::cout << "=== LOADING ASSET ===" << std::endl;
-        std::cout << "Selected index: " << m_selectedAssetIndex << std::endl;
-        std::cout << "Asset name: " << assetName << std::endl;
-        std::cout << "Asset path: " << assetPath << std::endl;
-        
+  
         if (m_currentAssetTexture.loadFromFile(assetPath)) {
-            sf::Vector2u textureSize = m_currentAssetTexture.getSize();
-            std::cout << "Loaded texture size: " << textureSize.x << "x" << textureSize.y << std::endl;
-            
             m_currentAssetSprite.setTexture(m_currentAssetTexture);
             
             // Load the asset configuration
@@ -1868,7 +1397,6 @@ void Scene_AutoTileConfig::loadSelectedAsset() {
         } else {
             std::cout << "Failed to load texture: " << assetPath << std::endl;
         }
-        std::cout << "===================" << std::endl;
     }
 }
 
@@ -1899,10 +1427,6 @@ std::string Scene_AutoTileConfig::getFileOperationName(int operationIndex) {
 
 void Scene_AutoTileConfig::updateSlicingParameters() {
     // This will be called when form values change
-    std::cout << "Slicing parameters updated: " << m_tileWidth << "x" << m_tileHeight 
-              << " margin(" << m_marginX << "," << m_marginY << ") spacing(" << m_spacingX << "," << m_spacingY << ")"
-              << " offset(" << m_offsetX << "," << m_offsetY << ")" << std::endl;
-    
     // Update tile grid dimensions based on new parameters
     updateTileGridDimensions();
     
@@ -1919,35 +1443,7 @@ void Scene_AutoTileConfig::updateSlicingParameters() {
     
     // Reload rules for the selected tile (in case tile position changed)
     loadRulesForSelectedTile();
-    
-    std::cout << "Grid updated: " << m_tilesX << "x" << m_tilesY << " tiles, selected tile: (" 
-              << m_selectedTileInPreview.x << "," << m_selectedTileInPreview.y << ")" << std::endl;
-}
-
-void Scene_AutoTileConfig::executeFileOperation(int operationIndex) {
-    switch (operationIndex) {
-        case 0: // Save Current Tile
-            // TODO: Implement saveTileConfiguration()
-            break;
-        case 1: // Save All Configs
-            // TODO: Implement saveConfiguration()
-            break;
-        case 2: // Load Configuration
-            // TODO: Implement loadConfiguration()
-            break;
-        case 3: // Export All
-            // Export functionality would go here
-            break;
-        case 4: // Import Config
-            std::cout << "📥 Importing configuration" << std::endl;
-            // Import functionality would go here
-            break;
-        default:
-            break;
-    }
-}
-
-
+  }
 
 // Asset Configuration Methods
 void Scene_AutoTileConfig::createDefaultAssetConfig(const std::string& assetName) {
@@ -1981,7 +1477,6 @@ void Scene_AutoTileConfig::createDefaultAssetConfig(const std::string& assetName
     if (file.is_open()) {
         file << config.dump(4); // Pretty print with 4 spaces
         file.close();
-        std::cout << "Created default config for asset: " << assetName << std::endl;
     } else {
         std::cout << "Failed to create config file: " << configPath << std::endl;
     }
@@ -2014,15 +1509,7 @@ void Scene_AutoTileConfig::loadAssetConfig(const std::string& assetName) {
             m_spacingY = config.value("spacing_y", 0);
             m_offsetX = config.value("offset_x", 0);
             m_offsetY = config.value("offset_y", 0);
-            
-            std::cout << "=== LOADED ASSET CONFIG ===" << std::endl;
-            std::cout << "Asset: " << assetName << std::endl;
-            std::cout << "Config path: " << configPath << std::endl;
-            std::cout << "Tile size: " << m_tileWidth << "x" << m_tileHeight << std::endl;
-            std::cout << "Margins: " << m_marginX << "," << m_marginY << std::endl;
-            std::cout << "Spacing: " << m_spacingX << "," << m_spacingY << std::endl;
-            std::cout << "Offset: " << m_offsetX << "," << m_offsetY << std::endl;
-            std::cout << "===========================" << std::endl;
+            m_gridLineThickness = config.value("grid_line_thickness", 1);
             
             // Load tile rules if they exist
             m_tileRules.clear();
@@ -2082,6 +1569,7 @@ void Scene_AutoTileConfig::saveAssetConfig(const std::string& assetName) {
     config["spacing_y"] = m_spacingY;
     config["offset_x"] = m_offsetX;
     config["offset_y"] = m_offsetY;
+    config["grid_line_thickness"] = m_gridLineThickness;
     config["last_modified"] = std::time(nullptr);
     
     // Save tile rules
@@ -2290,19 +1778,10 @@ void Scene_AutoTileConfig::updateTileGridDimensions() {
     }
     
     sf::Vector2u textureSize = m_currentAssetTexture.getSize();
-    
-    std::cout << "=== TILE GRID CALCULATION ===" << std::endl;
-    std::cout << "Texture size: " << textureSize.x << "x" << textureSize.y << std::endl;
-    std::cout << "Tile size: " << m_tileWidth << "x" << m_tileHeight << std::endl;
-    std::cout << "Margins: " << m_marginX << "," << m_marginY << std::endl;
-    std::cout << "Spacing: " << m_spacingX << "," << m_spacingY << std::endl;
-    std::cout << "Offset: " << m_offsetX << "," << m_offsetY << std::endl;
-    
+
     // Calculate available area after offset and margins
     int availableWidth = textureSize.x - m_offsetX - 2 * m_marginX;
     int availableHeight = textureSize.y - m_offsetY - 2 * m_marginY;
-    
-    std::cout << "Available area: " << availableWidth << "x" << availableHeight << std::endl;
     
     // Calculate number of tiles based on current slicing parameters
     if (availableWidth > 0 && availableHeight > 0) {
@@ -2311,10 +1790,7 @@ void Scene_AutoTileConfig::updateTileGridDimensions() {
     } else {
         m_tilesX = m_tilesY = 0;
     }
-    
-    std::cout << "Calculated tiles: " << m_tilesX << "x" << m_tilesY << std::endl;
-    std::cout << "=============================" << std::endl;
-    
+ 
     // Ensure selected tile is within bounds
     if (m_selectedTileInPreview.x >= m_tilesX) {
         m_selectedTileInPreview.x = std::max(0, m_tilesX - 1);
@@ -2333,22 +1809,33 @@ void Scene_AutoTileConfig::extractSelectedTile() {
     int tilePixelX = m_offsetX + m_marginX + m_selectedTileInPreview.x * (m_tileWidth + m_spacingX);
     int tilePixelY = m_offsetY + m_marginY + m_selectedTileInPreview.y * (m_tileHeight + m_spacingY);
     
-    // Create a texture for the selected tile
+    // Adjust for grid line thickness - extract only content inside grid lines
+    // Since assets have at least 1px gap, we can safely use grid line thickness as offset
+    int contentStartX = tilePixelX + m_gridLineThickness;
+    int contentStartY = tilePixelY + m_gridLineThickness;
+    int contentWidth = m_tileWidth - (2 * m_gridLineThickness); // Remove grid lines from both sides
+    int contentHeight = m_tileHeight - (2 * m_gridLineThickness); // Remove grid lines from both sides
+    
+    // Ensure content dimensions are valid
+    contentWidth = std::max(1, contentWidth);
+    contentHeight = std::max(1, contentHeight);
+    
+    // Create a texture for the selected tile content (without grid lines)
     sf::Image fullImage = m_currentAssetTexture.copyToImage();
     sf::Image tileImage;
-    tileImage.create(m_tileWidth, m_tileHeight);
+    tileImage.create(contentWidth, contentHeight);
     
-    // Copy the tile pixels
-    for (int y = 0; y < m_tileHeight; y++) {
-        for (int x = 0; x < m_tileWidth; x++) {
-            if (tilePixelX + x < static_cast<int>(fullImage.getSize().x) && 
-                tilePixelY + y < static_cast<int>(fullImage.getSize().y)) {
-                tileImage.setPixel(x, y, fullImage.getPixel(tilePixelX + x, tilePixelY + y));
+    // Copy only the content pixels (inside grid lines)
+    for (int y = 0; y < contentHeight; y++) {
+        for (int x = 0; x < contentWidth; x++) {
+            if (contentStartX + x < static_cast<int>(fullImage.getSize().x) && 
+                contentStartY + y < static_cast<int>(fullImage.getSize().y)) {
+                tileImage.setPixel(x, y, fullImage.getPixel(contentStartX + x, contentStartY + y));
             }
         }
     }
     
-    // Load the extracted tile into the sprite
+    // Load the extracted tile content into the sprite
     m_selectedTileTexture.loadFromImage(tileImage);
     m_selectedTileSprite.setTexture(m_selectedTileTexture);
 }
@@ -2402,8 +1889,9 @@ void Scene_AutoTileConfig::drawTileRuleGrid(float x, float y, float width, float
     ruleTitle.setPosition(x + 10, startY);
     m_game->window().draw(ruleTitle);
     
-    // 3x3 Rule grid
-    float gridSize = std::min(availableHeight - 30, (width - 40) / 3);
+    // 3x3 Rule grid - smaller cells for better space usage
+    float maxCellSize = std::min(availableHeight - 30, (width - 40) / 3);
+    float gridSize = std::min(maxCellSize, 35.0f); // Limit cell size to 35px maximum
     float gridStartX = x + (width - gridSize * 3) / 2;
     float gridStartY = startY + 25;
     
@@ -2464,7 +1952,7 @@ void Scene_AutoTileConfig::drawTileRuleGrid(float x, float y, float width, float
 }
 
 
-bool Scene_AutoTileConfig::isValidTilePosition(sf::Vector2i tilePos) {
+bool Scene_AutoTileConfig::isValidTilePosition(sf::Vector2i tilePos) const {
     return tilePos.x >= 0 && tilePos.x < m_tilesX && tilePos.y >= 0 && tilePos.y < m_tilesY;
 }
 
@@ -2486,8 +1974,9 @@ void Scene_AutoTileConfig::drawTileRuleGridInForm(float x, float y, float width,
         m_tileHeight = 64;
     }
     
-    // 3x3 Rule grid with selected tile in center - Interactive
-    float gridSize = std::min((height - 40) / 3, (width - 40) / 3);
+    // 3x3 Rule grid with selected tile in center - Interactive, smaller cells
+    float maxCellSize = std::min((height - 40) / 3, (width - 40) / 3);
+    float gridSize = std::min(maxCellSize, 50.0f); // Limit cell size to 30px maximum for form
     float gridStartX = x + (width - gridSize * 3) / 2;
     float gridStartY = y + 25;
     
