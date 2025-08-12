@@ -1,0 +1,26 @@
+{
+    "asset_name": "ground_64px.png",
+    "created_date": 1755013178,
+    "last_modified": 1755030990,
+    "margin_x": 0,
+    "margin_y": 0,
+    "offset_x": 0,
+    "offset_y": 0,
+    "spacing_x": 0,
+    "spacing_y": 0,
+    "tile_height": 64,
+    "tile_rules": {
+        "0,1": [
+            "SAME",
+            "SAME",
+            "SAME",
+            "SAME",
+            "SAME",
+            "DIFFERENT",
+            "IGNORE",
+            "IGNORE",
+            "IGNORE"
+        ]
+    },
+    "tile_width": 64
+}

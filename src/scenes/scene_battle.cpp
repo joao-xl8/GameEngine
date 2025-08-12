@@ -211,7 +211,6 @@ void Scene_Battle::sRender() {
     static int renderCount = 0;
     renderCount++;
     if (renderCount % 60 == 1) { // Print every 60 frames (once per second at 60fps)
-        std::cout << "Scene_Battle::sRender() called (frame " << renderCount << ")" << std::endl;
     }
     
     // Get game view for proper positioning (exactly like scene_menu)
@@ -220,7 +219,6 @@ void Scene_Battle::sRender() {
     sf::Vector2f viewCenter = gameView.getCenter();
     
     if (renderCount % 60 == 1) {
-        std::cout << "View size: " << viewSize.x << "x" << viewSize.y << ", center: " << viewCenter.x << "," << viewCenter.y << std::endl;
     }
     
     // Draw background (exactly like scene_menu)

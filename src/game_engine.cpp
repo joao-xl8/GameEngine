@@ -29,9 +29,6 @@ void GameEngine::init()
             return;
         }
         
-        std::cout << "Window created: " << windowMode.width << "x" << windowMode.height 
-                  << " (" << (m_fullscreen ? "fullscreen" : "windowed") << ")" << std::endl;
-
         // Initialize ImGui with error checking
         if (ImGui::SFML::Init(m_window)) {
             m_running = true;

@@ -30,26 +30,10 @@ void CommandOverlay::update(const std::map<std::string, std::vector<int>>& regis
 {
     m_commands.clear();
     
-    // Always show navigation first
-    m_commands.push_back({"WASD", "Navigate"});
-    
-    // Check what standardized actions are available and add them
-    bool hasConfirm = false, hasCancel = false;
-    
     for (const auto& pair : registeredActions) {
         const std::string& action = pair.first;
         
-        if (action == "CONFIRM" || action == "SELECT") {
-            if (!hasConfirm) {
-                m_commands.push_back({"SPACE", "Confirm/Select"});
-                hasConfirm = true;
-            }
-        } else if (action == "CANCEL" || action == "BACK") {
-            if (!hasCancel) {
-                m_commands.push_back({"C", "Cancel/Back"});
-                hasCancel = true;
-            }
-        } else if (action == "QUIT") {
+        if (action == "QUIT") {
             m_commands.push_back({"ESC", "Exit Game"});
         } else if (action == "PAUSE") {
             m_commands.push_back({"ESC", "Pause Menu"});
@@ -205,6 +189,7 @@ std::string CommandOverlay::getKeyName(int keyCode)
         case sf::Keyboard::Enter: return "ENTER";
         case sf::Keyboard::Escape: return "ESC";
         case sf::Keyboard::Backspace: return "BKSP";
+        case sf::Keyboard::Tab: return "TAB";
         case sf::Keyboard::Up: return "UP";
         case sf::Keyboard::Down: return "DOWN";
         case sf::Keyboard::Left: return "LEFT";
@@ -221,6 +206,10 @@ std::string CommandOverlay::getKeyName(int keyCode)
         case sf::Keyboard::V: return "V";
         case sf::Keyboard::C: return "C";
         case sf::Keyboard::X: return "X";
+        case sf::Keyboard::T: return "T";
+        case sf::Keyboard::R: return "R";
+        case sf::Keyboard::N: return "N";
+        case sf::Keyboard::I: return "I";
         case sf::Keyboard::F11: return "F11";
         case sf::Keyboard::Num0: return "0";
         case sf::Keyboard::Num1: return "1";
@@ -244,26 +233,24 @@ std::string CommandOverlay::getKeyName(int keyCode)
 bool CommandOverlay::shouldShowAction(const std::string& action)
 {
     // Skip movement keys
-    if (action == "UP" || action == "DOWN" || action == "LEFT" || action == "RIGHT") {
+    if (
+        action == "UP" || 
+        action == "DOWN" || 
+        action == "LEFT" || 
+        action == "RIGHT" ||
+        action == "CHOICE_UP" ||
+        action == "CHOICE_DOWN" ||
+        action == "CONFIRM" || 
+        action == "PLACE" || 
+        action == "SELECT" ||
+        action == "CANCEL" || 
+        action == "REMOVE" || 
+        action == "BACK" ||
+        action.substr(0, 7) == "NUMBER_"
+    ) {
         return false;
     }
-    
-    // Skip choice navigation keys (contextual, not always relevant)
-    if (action == "CHOICE_UP" || action == "CHOICE_DOWN") {
-        return false;
-    }
-    
-    // Skip actions we handle specially
-    if (action == "CONFIRM" || action == "PLACE" || action == "SELECT" ||
-        action == "CANCEL" || action == "REMOVE" || action == "BACK") {
-        return false;
-    }
-    
-    // Skip number keys (too many for map editor)
-    if (action.substr(0, 7) == "NUMBER_") {
-        return false;
-    }
-    
+
     return true;
 }
 

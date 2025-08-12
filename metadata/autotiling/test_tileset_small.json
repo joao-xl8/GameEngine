@@ -1,0 +1,11 @@
+{
+    "asset_name": "test_tileset_small.png",
+    "tile_width": 32,
+    "tile_height": 32,
+    "margin_x": 1,
+    "margin_y": 1,
+    "spacing_x": 0,
+    "spacing_y": 0,
+    "created_date": 1723478400,
+    "last_modified": 1723478400
+}

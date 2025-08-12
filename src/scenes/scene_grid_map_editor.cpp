@@ -110,23 +110,6 @@ void Scene_GridMapEditor::init()
     // Clear infinite grid (it starts empty by default)
     m_infiniteGrid.clear();
     
-    std::cout << "Map Editor initialized. Controls:\n";
-    std::cout << "WASD Keys: Move cursor\n";
-    std::cout << "Space: Place object\n";
-    std::cout << "C: Remove object\n";
-    std::cout << "Q/E: Change asset\n";
-    std::cout << "Z/X: Change type\n";
-    std::cout << "R: Rotate asset\n";
-    std::cout << "T: Toggle collision on cell\n";
-    std::cout << "V: Show/hide collision overlay\n";
-    std::cout << "Up/Down Arrows: Zoom in/out\n";
-    std::cout << "I: Toggle info panel\n";
-    std::cout << "Y: Toggle axis display\n";
-    std::cout << "F: Save level (to metadata/levels/)\n";
-    std::cout << "L: Open level selector GUI\n";
-    std::cout << "Escape: Back to menu\n";
-    std::cout << "Camera follows cursor automatically\n";
-    std::cout << "Directory structure reorganized!\n";
     std::cout << "Levels: metadata/levels/ | Config: metadata/\n";
 }
 
@@ -455,11 +438,6 @@ void Scene_GridMapEditor::placeObject()
     }
     
     // Debug output for placement calculation
-    std::cout << "Placement calculation: " << m_currentAsset << " (" << props.width << "x" << props.height 
-              << ") at rotation " << m_currentRotation << "°" << std::endl;
-    std::cout << "  Cursor: (" << cursorX << ", " << cursorY << ")" << std::endl;
-    std::cout << "  Calculated placement: (" << x << ", " << y << ")" << std::endl;
-    std::cout << "  Final dimensions: " << width << "x" << height << std::endl;
     
     // Check if we can place the asset at the calculated position
     if (!canPlaceAsset(x, y, width, height)) {

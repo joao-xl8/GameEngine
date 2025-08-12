@@ -1,0 +1,46 @@
+{
+    "asset_name": "wall_64px.png",
+    "created_date": 1723478400,
+    "last_modified": 1755027424,
+    "margin_x": 0,
+    "margin_y": 0,
+    "spacing_x": 0,
+    "spacing_y": 0,
+    "tile_height": 64,
+    "tile_rules": {
+        "0,1": [
+            "SAME",
+            "SAME",
+            "IGNORE",
+            "SAME",
+            "SAME",
+            "IGNORE",
+            "SAME",
+            "IGNORE",
+            "IGNORE"
+        ],
+        "1,0": [
+            "IGNORE",
+            "IGNORE",
+            "IGNORE",
+            "IGNORE",
+            "SAME",
+            "IGNORE",
+            "SAME",
+            "SAME",
+            "IGNORE"
+        ],
+        "1,1": [
+            "DIFFERENT",
+            "DIFFERENT",
+            "SAME",
+            "IGNORE",
+            "SAME",
+            "IGNORE",
+            "IGNORE",
+            "IGNORE",
+            "IGNORE"
+        ]
+    },
+    "tile_width": 64
+}

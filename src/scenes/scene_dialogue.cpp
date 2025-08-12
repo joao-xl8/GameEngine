@@ -10,7 +10,6 @@
 Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile)
     : Scene(game), m_showingLog(false), m_logScrollOffset(0)
 {
-    std::cout << "DEBUG: Scene_Dialogue constructor called" << std::endl;
     
     loadDialogueConfig(dialogueFile);
     
@@ -28,7 +27,6 @@ Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile
     m_dialogueLog.reserve(maxLogEntries);
     std::cout << "Reserved space for " << maxLogEntries << " dialogue log entries" << std::endl;
     
-    std::cout << "DEBUG: Scene_Dialogue constructor completed" << std::endl;
 }
 
 Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile, 
@@ -39,7 +37,6 @@ Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile
       m_originalPlayerHealth(playerHealth), m_originalPlayTime(playTime),
       m_hasPreservedState(true)
 {
-    std::cout << "DEBUG: Scene_Dialogue constructor with preserved state called" << std::endl;
     std::cout << "Preserved state - Level: " << originalLevel << ", Position: (" 
               << playerPos.x << ", " << playerPos.y << "), Health: " << playerHealth << std::endl;
     
@@ -59,7 +56,6 @@ Scene_Dialogue::Scene_Dialogue(GameEngine* game, const std::string& dialogueFile
     m_dialogueLog.reserve(maxLogEntries);
     std::cout << "Reserved space for " << maxLogEntries << " dialogue log entries" << std::endl;
     
-    std::cout << "DEBUG: Scene_Dialogue constructor with preserved state completed" << std::endl;
 }
 
 void Scene_Dialogue::init()
@@ -526,7 +522,6 @@ void Scene_Dialogue::sDoAction(const Action& action)
     }
               
     if (action.getType() == "START") {
-        std::cout << "Action: " << action.getName() << " | Showing choices: " << (m_showingChoices ? "YES" : "NO") << " | Showing log: " << (m_showingLog ? "YES" : "NO") << std::endl;
         
         if (m_showingLog) {
             // Handle log navigation

@@ -125,8 +125,6 @@ void Scene_PlayGrid::init(const std::string &levelPath)
             
             if (!isOriginTile) {
                 // Skip non-origin tiles of multi-cell assets
-                std::printf("Skipping non-origin tile of %s at (%d, %d) - origin at (%d, %d)\n", 
-                           spriteName.c_str(), x, y, originX, originY);
                 continue;
             }
             
@@ -142,9 +140,6 @@ void Scene_PlayGrid::init(const std::string &levelPath)
                 continue;
             }
             processedAssets.insert(assetId);
-            
-            std::printf("Processing multi-cell asset %s (%dx%d) at origin (%d, %d)\n", 
-                       spriteName.c_str(), width, height, originX, originY);
         }
         
         // Parse layer number
@@ -393,12 +388,6 @@ void Scene_PlayGrid::sCamera()
             static int debugCounter = 0;
             if (debugCounter++ % 60 == 0) { // Print every 60 frames (roughly 1 second)
                 Vec2 offset = transform->pos - camera->position;
-                std::printf("Player: (%.1f, %.1f) | Camera: (%.1f, %.1f) | Offset: (%.1f, %.1f) | Following: %s | CameraMoved: %s\n", 
-                           transform->pos.x, transform->pos.y,
-                           camera->position.x, camera->position.y,
-                           offset.x, offset.y,
-                           camera->isFollowing ? "Yes" : "No",
-                           (prevCameraPos.x != camera->position.x || prevCameraPos.y != camera->position.y) ? "Yes" : "No");
             }
         }
     }
@@ -528,7 +517,6 @@ void Scene_PlayGrid::sMovement()
         if (m_gridMoveTimer <= 0.0f && !gridMovement->isMoving) {
             if (input->upPressed) 
             {
-                std::cout << "UP pressed - Current grid pos: " << gridMovement->gridPos.x << ", " << gridMovement->gridPos.y << std::endl;
                 // W key = UP = Move towards top of screen = Decrease Y coordinate (SFML/Level system)
                 if (gridMovement->startMoveWithCollisionCheck(Vec2{0, -1}, transform->pos, boundingBox->size, collisionCheck)) {
                     if (animation) animation->play("walk_up");
@@ -539,7 +527,6 @@ void Scene_PlayGrid::sMovement()
                     }
                     moved = true;
                     m_gridMoveTimer = m_changeGridSleep; // Start cooldown
-                    std::cout << "UP movement successful - New grid pos: " << gridMovement->gridPos.x << ", " << gridMovement->gridPos.y << std::endl;
                 }
             }
             else if (input->downPressed) 

@@ -1,0 +1,12 @@
+{
+    "asset_name": "test_tileset_large.png",
+    "created_date": 1723478400,
+    "last_modified": 1755025483,
+    "margin_x": 1,
+    "margin_y": 0,
+    "spacing_x": 0,
+    "spacing_y": 1,
+    "tile_height": 64,
+    "tile_rules": {},
+    "tile_width": 65
+}

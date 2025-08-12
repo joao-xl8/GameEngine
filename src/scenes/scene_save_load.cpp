@@ -125,7 +125,6 @@ void Scene_SaveLoad::sDoAction(const Action& action)
     }
     
     if (action.getType() == "START") {
-        std::cout << "Action received: " << action.getName() << ", Dialog active: " << (m_showOverwriteDialog ? "YES" : "NO") << std::endl;
         
         // Handle overwrite dialog input first
         if (m_showOverwriteDialog) {
@@ -331,7 +330,6 @@ void Scene_SaveLoad::showOverwriteDialog(int slotNumber)
     m_overwriteSlotNumber = slotNumber;
     m_overwriteConfirm = false; // Default to "No"
     setupOverwriteDialog();
-    std::cout << "Overwrite dialog setup complete, m_showOverwriteDialog = " << (m_showOverwriteDialog ? "true" : "false") << std::endl;
 }
 
 void Scene_SaveLoad::hideOverwriteDialog()

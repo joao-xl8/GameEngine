@@ -71,7 +71,7 @@ else ifeq ($(DETECTED_OS),Darwin)
         SFML_DIR = $(HOMEBREW_PREFIX)/opt/sfml
     endif
     
-    INCLUDES = -I$(SFML_DIR)/include -I$(IMGUI_DIR) -I$(SRC_DIR)
+    INCLUDES = -I$(SFML_DIR)/include -I$(IMGUI_DIR) -I$(SRC_DIR) -I$(HOMEBREW_PREFIX)/include
     LIBS = -L$(SFML_DIR)/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
     LIBS += -framework OpenGL -framework Foundation
     
@@ -129,6 +129,7 @@ $(BUILD_DIR):
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)scenes 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/scenes
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)graphics 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/graphics
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)systems 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/systems
+	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)constants 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/constants
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(SRC_DIR)$(PATH_SEP)ui 2>/dev/null || mkdir -p $(BUILD_DIR)/$(SRC_DIR)/ui
 	@$(MKDIR) $(BUILD_DIR)$(PATH_SEP)$(IMGUI_DIR) 2>/dev/null || mkdir -p $(BUILD_DIR)/$(IMGUI_DIR)
 
