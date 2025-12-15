@@ -22,4 +22,16 @@ public:
     EntityVec& getEntities();
     EntityVec& getEntities(const std::string &tag);
     void removeDeadEntities();
+
+    // Component queries for systems
+    template<typename... Components>
+    EntityVec getEntitiesWith() {
+        EntityVec result;
+        for (auto& entity : m_entities) {
+            if ((entity->hasComponent<Components>() && ...)) {
+                result.push_back(entity);
+            }
+        }
+        return result;
+    }
 };

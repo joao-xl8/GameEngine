@@ -4,6 +4,7 @@
 #include <stack>
 #include <SFML/Graphics.hpp>
 #include "components/engine_components.hpp"
+#include "systems/system_manager.hpp"
 #include "imgui-SFML.h"
 #include "assets.hpp"
 
@@ -38,6 +39,7 @@ protected:
     std::map<std::string, std::shared_ptr<Scene>> m_scenes;
     Assets assets;
     std::shared_ptr<CSound> m_globalSoundManager;  // Global sound manager for persistent music
+    SystemManager m_systemManager;  // ECS System Manager
     std::string m_currentScene;
     bool m_running = true;
     bool m_fullscreen = false;
@@ -72,6 +74,7 @@ public:
     sf::RenderWindow &window();
     sf::View &getGameView() { return m_gameView; }  // Add method to access game view
     std::shared_ptr<CSound> getGlobalSoundManager() { return m_globalSoundManager; }  // Access global sound manager
+    SystemManager& getSystemManager() { return m_systemManager; }  // Access system manager
     void setZoom(float zoomFactor);  // Add method to control zoom level
     float getDeltaTime() const { return m_deltaTime; }  // Get delta time for animations and timing
     

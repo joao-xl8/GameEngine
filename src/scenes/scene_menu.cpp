@@ -3,8 +3,6 @@
 #include "scene_options.hpp"
 #include "scene_grid_map_editor.hpp"
 #include "scene_shader_demo.hpp"
-#include "scene_autotile_config.hpp"
-#include "scene_autotile_editor.hpp"
 #include "scene_loading.hpp"
 #include "scene_save_load.hpp"
 #include "scene_level_selector.hpp"
@@ -27,8 +25,6 @@ void Scene_Menu::init()
     m_menuStrings.push_back("Load Game");
     m_menuStrings.push_back("Load Level");  // Add Load Level option
     m_menuStrings.push_back("Grid Map Editor");
-    m_menuStrings.push_back("Auto-Tile Config");
-    m_menuStrings.push_back("Auto-Tile Editor");
     m_menuStrings.push_back("Shader Demo");
     m_menuStrings.push_back("Options");
     m_menuStrings.push_back("Exit");
@@ -183,28 +179,6 @@ void Scene_Menu::sDoAction(const Action &action)
                     // Use loading screen for Map Editor transition
                     try {
                         Scene_Loading::loadMapEditorScene(m_game);
-                    } catch (const std::exception& e) {
-                        // If scene creation fails, just quit to prevent crash
-                        m_game->quit();
-                    }
-                }
-                else if (m_menuStrings[m_menuIndex] == "Auto-Tile Config")
-                {
-                    // Open auto-tile configuration scene
-                    try {
-                        auto autoTileConfigScene = std::make_shared<Scene_AutoTileConfig>(m_game);
-                        m_game->changeScene("AutoTileConfig", autoTileConfigScene);
-                    } catch (const std::exception& e) {
-                        // If scene creation fails, just quit to prevent crash
-                        m_game->quit();
-                    }
-                }
-                else if (m_menuStrings[m_menuIndex] == "Auto-Tile Editor")
-                {
-                    // Open auto-tile map editor scene
-                    try {
-                        auto autoTileEditorScene = std::make_shared<Scene_AutoTileEditor>(m_game);
-                        m_game->changeScene("AutoTileEditor", autoTileEditorScene);
                     } catch (const std::exception& e) {
                         // If scene creation fails, just quit to prevent crash
                         m_game->quit();

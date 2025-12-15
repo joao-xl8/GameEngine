@@ -350,17 +350,8 @@ void Scene_PlayGrid::onEnd()
 
 void Scene_PlayGrid::sAnimation()
 {
-    for (auto &entity : m_entityManager.getEntities())
-    {
-        if (entity->hasComponent<CAnimation>() && entity->hasComponent<CSprite>())
-        {
-            auto animation = entity->getComponent<CAnimation>();
-            auto sprite = entity->getComponent<CSprite>();
-            
-            // Let the animation component handle its own logic
-            animation->update(m_deltaTime, sprite->sprite);
-        }
-    }
+    // Animation is now handled by AnimationSystem
+    // This method can be removed or used for scene-specific animation logic
 }
 
 void Scene_PlayGrid::sCamera()

@@ -25,6 +25,19 @@ void Scene::registerAction(int inputKey, std::string actionName)
     }
 }
 
+void Scene::simulate(const size_t frame)
+{
+    (void)frame; // Unused parameter
+    
+    // Update entity manager
+    m_entityManager.update();
+    
+    // Update systems if not paused
+    if (!m_paused && m_game) {
+        m_systemManager.updateAll(m_entityManager, m_game->getDeltaTime());
+    }
+}
+
 void Scene::updateCommandOverlay()
 {
     if (m_commandOverlay) {

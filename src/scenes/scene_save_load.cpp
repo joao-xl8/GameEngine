@@ -26,6 +26,7 @@ void Scene_SaveLoad::init()
     // Standard confirm/cancel controls
     registerAction(sf::Keyboard::Space, ActionTypes::CONFIRM);
     registerAction(sf::Keyboard::C, ActionTypes::BACK);
+    registerAction(sf::Keyboard::Escape, ActionTypes::BACK);
     
     // Load save slots
     m_saveSlots = m_saveSystem.getAllSaveSlots();

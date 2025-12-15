@@ -211,15 +211,13 @@ public:
   std::map<std::string, AnimationData> animations;
 
   CAnimation(Vec2 size) : frameSize(size) {};
-
   ~CAnimation() {};
 
   // Add an animation definition
   void addAnimation(const std::string &name, const std::string &textureName,
                     int frameCount, float frameTime, bool flipX = false,
                     int row = 0, bool repeat = true) {
-    (void)textureName; // Reserved for future use with multiple textures per
-                       // entity
+    (void)textureName; // Reserved for future use with multiple textures per entity
     animations[name] = {row, flipX, frameCount, frameTime, repeat};
   }
 
@@ -236,54 +234,6 @@ public:
       auto &animData = animations[animationName];
       frameTime = animData.frameTime;
       repeat = animData.repeat;
-    }
-  }
-
-  // Update animation with delta time
-  void update(float deltaTime, sf::Sprite &sprite) {
-    if (animations.find(currentAnimation) == animations.end())
-      return;
-
-    frameTimer += deltaTime;
-
-    // Check if it's time to advance to next frame
-    if (frameTimer >= frameTime) {
-      frameTimer = 0.0f;
-      currentFrame++;
-
-      auto &animData = animations[currentAnimation];
-
-      // Loop animation if repeat is true
-      if (currentFrame >= animData.frameCount) {
-        if (animData.repeat) {
-          currentFrame = 0;
-        } else {
-          currentFrame = animData.frameCount - 1;
-        }
-      }
-    }
-
-    // Update sprite texture rectangle
-    updateSpriteFrame(sprite);
-  }
-
-  // Update the sprite's texture rectangle based on current animation
-  void updateSpriteFrame(sf::Sprite &sprite) {
-    if (animations.find(currentAnimation) == animations.end())
-      return;
-
-    auto &animData = animations[currentAnimation];
-
-    int frameX = currentFrame * frameSize.x;
-    int frameY = animData.row * frameSize.y;
-
-    // Set texture rectangle with flipping support
-    if (animData.flipX) {
-      sprite.setTextureRect(
-          sf::IntRect(frameX + frameSize.x, frameY, -frameSize.x, frameSize.y));
-    } else {
-      sprite.setTextureRect(
-          sf::IntRect(frameX, frameY, frameSize.x, frameSize.y));
     }
   }
 

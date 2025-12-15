@@ -24,7 +24,7 @@ if(PkgConfig_FOUND)
 endif()
 
 if(NOT SFML_FOUND)
-    find_package(SFML 2.5 COMPONENTS graphics window system audio)
+    find_package(SFML 2.6 COMPONENTS graphics window system audio)
     if(NOT SFML_FOUND)
         message(STATUS "SFML not found via find_package, trying manual detection...")
         
@@ -91,14 +91,41 @@ set(SOURCES
     main.cpp
     src/animation.cpp
     src/assets.cpp
+    src/battle_config_loader.cpp
     src/entity.cpp
     src/entity_manager.cpp
     src/game_engine.cpp
-    src/scene.cpp
-    src/scene_menu.cpp
-    src/scene_options.cpp
-    src/scene_play.cpp
     src/vec2.cpp
+    
+    # Entities
+    src/entities/character.cpp
+    src/entities/character_factory.cpp
+    src/entities/npc.cpp
+    src/entities/player.cpp
+    
+    # Graphics
+    src/graphics/shader_manager.cpp
+    
+    # Scenes
+    src/scenes/scene.cpp
+    src/scenes/scene_battle.cpp
+    src/scenes/scene_dialogue.cpp
+    src/scenes/scene_grid_map_editor.cpp
+    src/scenes/scene_level_selector.cpp
+    src/scenes/scene_loading.cpp
+    src/scenes/scene_menu.cpp
+    src/scenes/scene_options.cpp
+    src/scenes/scene_play_grid.cpp
+    src/scenes/scene_save_load.cpp
+    src/scenes/scene_shader_demo.cpp
+    src/scenes/scene_sound_settings.cpp
+    src/scenes/scene_viewport_config.cpp
+    
+    # Systems
+    src/systems/save_system.cpp
+    
+    # UI
+    src/ui/command_overlay.cpp
 )
 
 # ImGui sources
